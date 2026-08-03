@@ -12,6 +12,67 @@ initMotherTable <- function(cdm, petName, petSchema) {
   return(cdm)
 }
 
+softValFalse <- function(cdm) {
+
+  pet_val <- cdm[["pet"]] %>%
+    dplyr::collect() %>%
+    dplyr::left_join(cdm[["observation_period"]] %>% dplyr::collect() %>% dplyr::select(person_id, observation_period_start_date, observation_period_end_date), by = "person_id")
+
+  # Check 1, required columns/missing values
+  req_cols <- c("person_id", "pregnancy_id", "pregnancy_start_date", "pregnancy_end_date", "pregnancy_mode_delivery", "gestational_length_in_day", "pregnancy_single") # req cols per https://doi.org/10.1002/pds.70106,
+  # seems that pregnancy_outcome can be missing/unknown (per https://doi.org/10.1002/pds.70106 and testing of original createPregnancyCohort()) even though it is a required field!
+  # should pregnancy_mode_delivery and pregnancy_outcome be required?
+  # optional col examples: pregnancy_folic, pre_pregnancy_smoking
+
+  if(any(is.na(pet_val[req_cols]))) { # if any situation of an NA in a row for req col
+
+    check1_fails <- pet_val %>%
+      dplyr::filter(dplyr::if_any(tidyselect::all_of(req_cols), is.na))
+
+    # Filter to only keep rows which pass this check
+    # pet_val1 <- pet_val %>%
+    #   filter(!dplyr::if_any(tidyselect::all_of(req_cols), is.na))
+
+    print("At least 1 pregnancy fails check 1")
+  }
+
+  # Check 2, pregnancy end date is before pregnancy start date
+  if(any(pet_val$pregnancy_start_date > pet_val$pregnancy_end_date)) { # filter df to see instances where this occurs
+
+    check2_fails <- pet_val %>%
+      dplyr::filter(pregnancy_start_date > pregnancy_end_date)
+
+    # Filter to only keep rows which pass this check
+    # pet_val2 <- pet_val %>%
+    #   dplyr::filter(!(pregnancy_start_date > pregnancy_end_date))
+
+    print("At least 1 pregnancy fails check 2")
+  }
+
+  # Check 3, cohort duration is within the observation period
+  if(any(!(pet_val$observation_period_start_date <= pet_val$pregnancy_start_date & pet_val$pregnancy_end_date <= pet_val$observation_period_end_date))) { # filter df to see instances where this occurs
+
+    check3_fails <- pet_val %>%
+      dplyr::filter(!(observation_period_start_date <= pregnancy_start_date & pregnancy_end_date <= observation_period_end_date) | is.na(observation_period_start_date) | is.na(observation_period_end_date))
+
+    # Filter to only keep rows which pass this check
+    # pet_val3 <- pet_val %>%
+    #   dplyr::filter(observation_period_start_date <= pregnancy_start_date & pregnancy_end_date <= observation_period_end_date)
+
+    print("At least 1 pregnancy fails check 3")
+  }
+
+  # Check 4, no overlapping cohort entries
+  # Omit this check in case multiple pregnancy (twins, triplets, etc.)
+
+  # Override the pet table (?, new "checked table") to include
+  pet_val <- pet_val %>% # pregnancy table still has all the originals!
+    dplyr::anti_join(dplyr::bind_rows(check1_fails, check2_fails, check3_fails), by = colnames(pet_val)) %>%
+    dplyr::select(-c("observation_period_start_date", "observation_period_end_date"))
+
+  return(pet_val)
+}
+
 initPregnancyCohort <- function(cdm) {
   cdm$pregnancy_cohort <- cdm$pet %>%
     dplyr::mutate(
@@ -284,7 +345,9 @@ createPregnancyCohort <- function(
     petSchema = petSchema
   )
 
-  # .softValidation check here!
+  if (isFALSE(.softValidation)) {
+    cdm <- omopgenerics::insertTable(cdm, "pet", softValFalse(cdm), overwrite = TRUE)
+  }
 
   cdm <- initPregnancyCohort(cdm = cdm)
 
