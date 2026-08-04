@@ -2,7 +2,7 @@ initMotherTable <- function(cdm, petName, petSchema) {
   cdm$pet <- dplyr::tbl(
     attr(cdm, "dbcon"),
     CDMConnector::inSchema(schema = petSchema, table = petName)) %>%
-    dplyr::compute(name = CDMConnector::inSchema(attr(cdm, "write_schema"), "pet"), temporary = FALSE, overwrite = TRUE)
+    dplyr::compute(name = "pet", temporary = FALSE, overwrite = TRUE)
 
   cdm$pet <- cdm$pet %>%
     dplyr::mutate(
