@@ -2,7 +2,7 @@ initMotherTable <- function(cdm, petName, petSchema) {
   cdm$pet <- dplyr::tbl(
     attr(cdm, "dbcon"),
     CDMConnector::inSchema(schema = petSchema, table = petName)) %>%
-    dplyr::compute(name = "pet", temporary = FALSE, overwrite = TRUE)
+    dplyr::compute(name = CDMConnector::inSchema(attr(cdm, "write_schema"), "pet"), temporary = FALSE, overwrite = TRUE)
 
   cdm$pet <- cdm$pet %>%
     dplyr::mutate(
@@ -182,32 +182,55 @@ filterMultiplePregnancies <- function(tbl, outputDir) {
 
 }
 
-filterStudyPeriod <- function(tbl, NLHR, HISPEED) {
+filterStudyPeriod <- function(tbl, startDate, endDate) {
   cdm <- attr(tbl, "cdm_reference")
   snap <- CDMConnector::snapshot(cdm = cdm)
   maxStartDate <- as.Date(snap$latest_observation_period_end_date) - 365
-  startDate <- if(NLHR){
-    "2018-01-01"
-  } else if (HISPEED){
-    "2015-01-01"
-  } else{
-    "2010-01-01"
+
+  if (is.null(startDate) & is.null(endDate)) {
+    tbl %>%
+      omopgenerics::recordCohortAttrition(reason = "No study period restrictions on pregnancy start and/or end date")
   }
 
+  if (!is.null(startDate)) {
+    tbl <- tbl %>%
+      dplyr::filter(
+        .data$pregnancy_start_date >= as.Date(startDate),
+        .data$pregnancy_start_date < maxStartDate
+      ) %>%
+      omopgenerics::recordCohortAttrition(reason = sprintf("Pregnancy start >= %s and < %s (end of database - 1 year)", startDate, maxStartDate))
+
+  }
+
+  if (!is.null(endDate)) {
+    tbl <- tbl %>%
+      dplyr::filter(
+        .data$pregnancy_end_date <= as.Date(endDate)
+      ) %>%
+      dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
+      omopgenerics::recordCohortAttrition(reason = "Pregnancy end <= %s)")
+  }
+
+
   tbl %>%
-    dplyr::filter(
-      .data$pregnancy_start_date >= as.Date(startDate),
-      .data$pregnancy_start_date < maxStartDate
-    ) %>%
-    dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
-    omopgenerics::recordCohortAttrition(reason = sprintf("Pregnancy start >= %s and < %s (end of database - 1 year)", startDate, maxStartDate))
+    dplyr::compute(name = "pregnancy_cohort", temporary = FALSE)
+
+  # could set tbl <- tbl only for endDate then keep one compute inside !is.null(startDate) and one outside of the if statements!
+  # or set tbl <- tbl for both the !is.null() conditions and just keep one compute outside the if
+
+  # Scenarios this covers:
+  # 1. Null if statement + compute, works
+  # 2. Only non-Null start + compute, works
+  # 3. Only non-Null end + compute, works (setting of tbl <- tbl is redundant in this case)
+  # 4. non-Null start + non-Null end, works (setting of tbl <- tbl is necessary here to apply then endDate filtering on the already startDate filtered tbl)
+
 }
 
-inclusionCriteria <- function(tbl, minAge, maxAge, sex, NLHR, HISPEED) {
+inclusionCriteria <- function(tbl, minAge, maxAge, sex, startDate, endDate) {
   tbl %>%
     inclusionAge(minAge, maxAge) %>%
     inclusionSex(sex) %>%
-    filterStudyPeriod(NLHR, HISPEED)
+    filterStudyPeriod(startDate, endDate)
 }
 
 
@@ -222,7 +245,7 @@ filterPregnancyTable <- function(tbl, maxGestationalDuration, .softValidation = 
 
   } else
     tbl %>%
-      omopgenerics::newCohortTable(.softValidation = TRUE) # don't use omopgenerics .softvalidation either!
+    omopgenerics::newCohortTable(.softValidation = TRUE) # don't use omopgenerics .softvalidation either!
 }
 
 intersectCohorts <- function(tbl1, tbl2) {
@@ -266,6 +289,8 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' @param minAge (`numeric(1)`: `12`) Minimum age to include.
 #' @param maxAge (`numeric(1)`: `55`) Maximum age to include.
 #' @param sex (`character(2)`: `"Female"`) Sexes to include. One of, or both `c("Female", "Male")`.
+#' @param startDate (`character(1)`: `NULL`) Earliest pregnancy start date to include, follow "year-month-day" format
+#' @param endDate (`character(1)`: `NULL`) Latest pregnancy end date to include, follow "year-month-day" format
 #'
 #' @returns (`cdm_reference`) Returns the CDM with the added cohort table.
 #' @export
@@ -276,8 +301,8 @@ createPregnancyCohort <- function(
     maxGestationalDuration = 308,
     minAge = 12,
     maxAge = 55,
-    NLHR = FALSE,
-    HISPEED = FALSE,
+    startDate = NULL,
+    endDate = NULL,
     sex = "Female",
     outputDir = NULL,
     .softValidation = FALSE
@@ -293,7 +318,7 @@ createPregnancyCohort <- function(
 
   cdm$pregnancy_cohort <- cdm$pregnancy_cohort %>%
     filterPregnancyTable(maxGestationalDuration, outputDir, .softValidation = isTRUE(.softValidation)) %>% # connection to .softValidation as arg (arg FALSE returns FALSE, arg TRUE returns TRUE)
-    inclusionCriteria(minAge, maxAge, sex, NLHR, HISPEED)
+    inclusionCriteria(minAge, maxAge, sex, startDate, endDate)
 
   if (isFALSE(.softValidation)) { # only if .softValidation is FALSE will filterMultiplePregnancies() be run and pregnancy_duplicate_map.csv produced
     cdm <- loadPregnancyDuplicateMap(

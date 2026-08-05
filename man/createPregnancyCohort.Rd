@@ -11,10 +11,10 @@ createPregnancyCohort(
   maxGestationalDuration = 308,
   minAge = 12,
   maxAge = 55,
-  NLHR = FALSE,
-  HISPEED = FALSE,
+  startDate = NULL,
+  endDate = NULL,
   sex = "Female",
-  outputDir,
+  outputDir = NULL,
   .softValidation = FALSE
 )
 }
@@ -28,6 +28,10 @@ createPregnancyCohort(
 \item{minAge}{(\code{numeric(1)}: \code{12}) Minimum age to include.}
 
 \item{maxAge}{(\code{numeric(1)}: \code{55}) Maximum age to include.}
+
+\item{startDate}{(\code{character(1)}: \code{NULL}) Earliest pregnancy start date to include, follow "year-month-day" format}
+
+\item{endDate}{(\code{character(1)}: \code{NULL}) Latest pregnancy end date to include, follow "year-month-day" format}
 
 \item{sex}{(\code{character(2)}: \code{"Female"}) Sexes to include. One of, or both \code{c("Female", "Male")}.}
 
