@@ -12,7 +12,7 @@ initMotherTable <- function(cdm, petName, petSchema) {
   return(cdm)
 }
 
-initPregnancyCohort <- function(cdm) {
+initPregnancyCohort <- function(cdm, keepExtensionTable) {
   cdm$pregnancy_cohort <- cdm$pet %>%
     dplyr::mutate(
       cohort_definition_id = 101,
@@ -22,6 +22,11 @@ initPregnancyCohort <- function(cdm) {
     dplyr::rename(subject_id = "person_id") %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE, overwrite = TRUE) %>%
     omopgenerics::newCohortTable(.softValidation = TRUE)
+
+  if (keepExtensionTable == FALSE) {
+    cdm <- omopgenerics::dropSourceTable(cdm = cdm, name = "pet")
+  }
+
   return(cdm)
 }
 
@@ -298,6 +303,7 @@ createPregnancyCohort <- function(
     cdm,
     petName,
     petSchema,
+    keepExtensionTable = TRUE,
     maxGestationalDuration = 308,
     minAge = 12,
     maxAge = 55,
@@ -314,7 +320,7 @@ createPregnancyCohort <- function(
     petSchema = petSchema
   )
 
-  cdm <- initPregnancyCohort(cdm = cdm)
+  cdm <- initPregnancyCohort(cdm = cdm, keepExtensionTable)
 
   cdm$pregnancy_cohort <- cdm$pregnancy_cohort %>%
     filterPregnancyTable(maxGestationalDuration, outputDir, .softValidation = isTRUE(.softValidation)) %>% # connection to .softValidation as arg (arg FALSE returns FALSE, arg TRUE returns TRUE)
