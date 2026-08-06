@@ -2,7 +2,7 @@ initMotherTable <- function(cdm, petName, petSchema) {
   cdm$pregnancy_extension_table <- dplyr::tbl(
     attr(cdm, "dbcon"),
     CDMConnector::inSchema(schema = petSchema, table = petName)) %>%
-    dplyr::compute(name = CDMConnector::inSchema(attr(cdm, "write_schema"), "pregnancy_extension_table"), temporary = FALSE, overwrite = TRUE)
+    dplyr::compute(name = "pregnancy_extension_table", temporary = FALSE, overwrite = TRUE)
 
   cdm$pregnancy_extension_table <- cdm$pregnancy_extension_table %>%
     dplyr::mutate(
@@ -193,6 +193,8 @@ filterStudyPeriod <- function(tbl, startDate, endDate) {
   maxStartDate <- as.Date(snap$latest_observation_period_end_date) - 365
 
   if (is.null(startDate) & is.null(endDate)) {
+    # tbl <- tbl %>%
+
     tbl %>%
       omopgenerics::recordCohortAttrition(reason = "No study period restrictions on pregnancy start and/or end date")
   }
@@ -215,7 +217,6 @@ filterStudyPeriod <- function(tbl, startDate, endDate) {
       dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
       omopgenerics::recordCohortAttrition(reason = "Pregnancy end <= %s)")
   }
-
 
   tbl %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE)
@@ -298,6 +299,7 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' @param endDate (`character(1)`: `NULL`) Latest pregnancy end date to include, follow "year-month-day" format
 #'
 #' @returns (`cdm_reference`) Returns the CDM with the added cohort table.
+#' @import dplyr
 #' @export
 createPregnancyCohort <- function(
     cdm,
