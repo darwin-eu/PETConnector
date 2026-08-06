@@ -1,10 +1,10 @@
 initMotherTable <- function(cdm, petName, petSchema) {
-  cdm$pet <- dplyr::tbl(
+  cdm$pregnancy_extension_table <- dplyr::tbl(
     attr(cdm, "dbcon"),
     CDMConnector::inSchema(schema = petSchema, table = petName)) %>%
-    dplyr::compute(name = CDMConnector::inSchema(attr(cdm, "write_schema"), "pet"), temporary = FALSE, overwrite = TRUE)
+    dplyr::compute(name = CDMConnector::inSchema(attr(cdm, "write_schema"), "pregnancy_extension_table"), temporary = FALSE, overwrite = TRUE)
 
-  cdm$pet <- cdm$pet %>%
+  cdm$pregnancy_extension_table <- cdm$pregnancy_extension_table %>%
     dplyr::mutate(
       pregnancy_start_date = as.Date(.data$pregnancy_start_date),
       pregnancy_end_date = as.Date(.data$pregnancy_end_date)
@@ -13,7 +13,7 @@ initMotherTable <- function(cdm, petName, petSchema) {
 }
 
 initPregnancyCohort <- function(cdm, keepExtensionTable) {
-  cdm$pregnancy_cohort <- cdm$pet %>%
+  cdm$pregnancy_cohort <- cdm$pregnancy_extension_table %>%
     dplyr::mutate(
       cohort_definition_id = 101,
       cohort_start_date = .data$pregnancy_start_date,
@@ -23,8 +23,8 @@ initPregnancyCohort <- function(cdm, keepExtensionTable) {
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE, overwrite = TRUE) %>%
     omopgenerics::newCohortTable(.softValidation = TRUE)
 
-  if (keepExtensionTable == FALSE) {
-    cdm <- omopgenerics::dropSourceTable(cdm = cdm, name = "pet")
+  if (isFALSE(keepExtensionTable)) {
+    cdm <- omopgenerics::dropSourceTable(cdm = cdm, name = "pregnancy_extension_table")
   }
 
   return(cdm)
@@ -283,10 +283,10 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 
 #' createPregnancyCohort
 #'
-#' Creates the pregnancy cohort from a specified (PET) table in a specified schema
+#' Creates the pregnancy cohort from a specified pregnancy extension table (PET) in a specified schema
 #'
 #' @param cdm (`cdm_reference`) Created with i.e. `CDMConnector::cdmFromCon`.
-#' @param petTable (`character(1)`) Name of the mother extention table.
+#' @param petTable (`character(1)`) Name of the mother extension table.
 #' @param petSchema (`character(1)`) Name of the schema where the mother extension table exists.
 #' @param pregnancyCohortTableName (`character(1)`) Name of the mother cohort table.
 #' @param cohortDefinitionId (`numeric(1)`) Cohort definitionId.
@@ -323,7 +323,7 @@ createPregnancyCohort <- function(
   cdm <- initPregnancyCohort(cdm = cdm, keepExtensionTable)
 
   cdm$pregnancy_cohort <- cdm$pregnancy_cohort %>%
-    filterPregnancyTable(maxGestationalDuration, outputDir, .softValidation = isTRUE(.softValidation)) %>% # connection to .softValidation as arg (arg FALSE returns FALSE, arg TRUE returns TRUE)
+    filterPregnancyTable(maxGestationalDuration, outputDir, .softValidation = .softValidation) %>% # alt to isTRUE(.softValidation) (connection to .softValidation as arg, arg FALSE returns FALSE, arg TRUE returns TRUE)
     inclusionCriteria(minAge, maxAge, sex, startDate, endDate)
 
   if (isFALSE(.softValidation)) { # only if .softValidation is FALSE will filterMultiplePregnancies() be run and pregnancy_duplicate_map.csv produced

@@ -8,6 +8,7 @@ createPregnancyCohort(
   cdm,
   petName,
   petSchema,
+  keepExtensionTable = TRUE,
   maxGestationalDuration = 308,
   minAge = 12,
   maxAge = 55,
@@ -35,7 +36,7 @@ createPregnancyCohort(
 
 \item{sex}{(\code{character(2)}: \code{"Female"}) Sexes to include. One of, or both \code{c("Female", "Male")}.}
 
-\item{petTable}{(\code{character(1)}) Name of the mother extention table.}
+\item{petTable}{(\code{character(1)}) Name of the mother extension table.}
 
 \item{pregnancyCohortTableName}{(\code{character(1)}) Name of the mother cohort table.}
 
@@ -45,5 +46,5 @@ createPregnancyCohort(
 (\code{cdm_reference}) Returns the CDM with the added cohort table.
 }
 \description{
-Creates the pregnancy cohort from a specified (PET) table in a specified schema
+Creates the pregnancy cohort from a specified pregnancy extension table (PET) in a specified schema
 }
