@@ -15,7 +15,7 @@ createPregnancyCohort(
   startDate = NULL,
   endDate = NULL,
   sex = "Female",
-  outputDir = NULL,
+  outputDir,
   .softValidation = FALSE
 )
 }
