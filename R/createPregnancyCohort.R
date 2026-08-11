@@ -81,20 +81,10 @@ filterGestationalLength <- function(tbl, nDays_min, nDays_max) {
   tbl %>%
     dplyr::filter(!!CDMConnector::datediff("pregnancy_start_date", "pregnancy_end_date") <= nDays_max) %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
-    omopgenerics::recordCohortAttrition(reason = sprintf("Gestational length <= %s days", nDays_max))
-
-  if(!is.null(nDays_min)) {
-    tbl %>%
-      dplyr::filter(!!CDMConnector::datediff("pregnancy_start_date", "pregnancy_end_date") >= nDays_min) %>%
-      dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
-      omopgenerics::recordCohortAttrition(reason = sprintf("Gestational length >= %s days ", nDays_min))
-  } else {
-    tbl %>%
-      omopgenerics::recordCohortAttrition(reason = "Minimum gestational duration restrictions: NONE")
-  }
-
-  tbl %>%
-    dplyr::compute(name = "pregnancy_cohort", temporary = FALSE)
+    omopgenerics::recordCohortAttrition(reason = sprintf("Gestational length <= %s days", nDays_max)) %>%
+    dplyr::filter(!!CDMConnector::datediff("pregnancy_start_date", "pregnancy_end_date") >= nDays_min) %>%
+    dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
+    omopgenerics::recordCohortAttrition(reason = sprintf("Gestational length >= %s days ", nDays_min))
 
 }
 
@@ -321,7 +311,7 @@ createPregnancyCohort <- function(
     petTable,
     petSchema,
     keepExtensionTable = TRUE,
-    minGestationalDuration = NULL,
+    minGestationalDuration = 0,
     maxGestationalDuration = 308,
     minAge = 12,
     maxAge = 55,
@@ -338,7 +328,7 @@ createPregnancyCohort <- function(
   checkmate::assertClass(x = petTable, classes = "character", add = assertions) # check that table exists in cdm
   checkmate::assertClass(x = petSchema, classes = "character", add = assertions)
   checkmate::assertLogical(x = keepExtensionTable, len = 1, add = assertions)
-  checkmate::assertNumber(x = minGestationalDuration, finite = TRUE, null.ok = TRUE, add = assertions) # single finite numeric value provided
+  checkmate::assertNumber(x = minGestationalDuration, finite = TRUE, add = assertions) # single finite numeric value provided
   checkmate::assertNumber(x = maxGestationalDuration, finite = TRUE, add = assertions) # single finite numeric value provided
   checkmate::assertNumber(x = minAge, upper = maxAge, finite = TRUE, add = assertions) # shouldn't be larger than provided max age
   checkmate::assertNumber(x = maxAge, lower = minAge, finite = TRUE, add = assertions) # shouldn't be smaller than provided min age
