@@ -321,8 +321,8 @@ createPregnancyCohort <- function(
   # Check inputs
   assertions <- checkmate::makeAssertCollection()
   checkmate::assertClass(x = cdm, classes = "cdm_reference", add = assertions)
-  checkmate::assertClass(x = petName, classes = "character", add = assertions) # check that this exists in cdm?
-  checkmate::assertClass(x = petSchema, classes = "character", add = assertions) # check this against (attr(cdm, "write_schema"))?
+  checkmate::assertChoice(x = petName, choices = names(cdm), add = assertions) # check that table exists in cdm
+  checkmate::assertChoice(x = petSchema, choices = attr(cdm, "write_schema"), add = assertions)
   checkmate::assertLogical(x = keepExtensionTable, len = 1, add = assertions)
   checkmate::assertNumber(x = maxGestationalDuration, finite = TRUE, add = assertions) # single finite numeric value provided
   checkmate::assertNumber(x = minAge, upper = maxAge, finite = TRUE, add = assertions) # shouldn't be larger than provided max age
