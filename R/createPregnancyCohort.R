@@ -79,7 +79,7 @@ filterStartEndDate <- function(tbl) {
 
 filterGestationalLength <- function(tbl, nDays) {
   tbl %>%
-    dplyr::filter(!!CDMConnector::datediff("pregnancy_start_date", "pregnancy_end_date") < nDays) %>%
+    dplyr::filter(!!CDMConnector::datediff("pregnancy_start_date", "pregnancy_end_date") <= nDays) %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = sprintf("Gestational length <%s days", nDays)) %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
@@ -321,15 +321,15 @@ createPregnancyCohort <- function(
   # Check inputs
   assertions <- checkmate::makeAssertCollection()
   checkmate::assertClass(x = cdm, classes = "cdm_reference", add = assertions)
-  checkmate::assertChoice(x = petName, choices = names(cdm), add = assertions) # check that table exists in cdm
-  checkmate::assertChoice(x = petSchema, choices = attr(cdm, "write_schema"), add = assertions)
+  checkmate::assertClass(x = petName, classes = "character", add = assertions) # check that table exists in cdm
+  checkmate::assertClass(x = petSchema, classes = "character", add = assertions)
   checkmate::assertLogical(x = keepExtensionTable, len = 1, add = assertions)
   checkmate::assertNumber(x = maxGestationalDuration, finite = TRUE, add = assertions) # single finite numeric value provided
   checkmate::assertNumber(x = minAge, upper = maxAge, finite = TRUE, add = assertions) # shouldn't be larger than provided max age
   checkmate::assertNumber(x = maxAge, lower = minAge, finite = TRUE, add = assertions) # shouldn't be smaller than provided min age
-  checkmate::assertDate(x = as.Date(startDate, "%Y-%m-%d"),  upper = if (!is.null(endDate)) as.Date(endDate, "%Y-%m-%d") else NULL, min.len = 0, max.len = 1, add = assertions) # shouldn't be greater than the end date
-  checkmate::assertDate(x = as.Date(endDate, "%Y-%m-%d"), lower = if (!is.null(startDate)) as.Date(startDate, "%Y-%m-%d") else NULL, min.len = 0, max.len = 1, add = assertions) # shouldn't be less than the start date
-  checkmate::assertCharacter(x = sex, min.len = 1, max.len = 2, pattern = "Female|Male",  add = assertions) # don't check with tolower, case sensitive filtering
+  checkmate::assertDate(x = as.Date(startDate, "%Y-%m-%d"), min.len = 0, max.len = 1, add = assertions) # shouldn't be greater than the end date
+  checkmate::assertDate(x = as.Date(endDate,"%Y-%m-%d"), min.len = 0, max.len = 1, add = assertions) # shouldn't be less than the start date
+  checkmate::assertChoice(x = str_to_sentence(sex), choices = c("Male", "Female"),  add = assertions) # don't check with tolower, case sensitive filtering
   checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE,  add = assertions) # will overwrite pregnancy_duplicate_map.csv if one already exisists there
   checkmate::assertLogical(x = .softValidation, len = 1, add = assertions) # will overwrite pregnancy_duplicate_map.csv if one already exisists there
   checkmate::reportAssertions(assertions)
@@ -347,7 +347,7 @@ createPregnancyCohort <- function(
 
   cdm$pregnancy_cohort <- cdm$pregnancy_cohort %>%
     filterPregnancyTable(maxGestationalDuration, outputDir, .softValidation = .softValidation) %>% # alt to isTRUE(.softValidation) (connection to .softValidation as arg, arg FALSE returns FALSE, arg TRUE returns TRUE)
-    inclusionCriteria(minAge, maxAge, sex, startDate, endDate)
+    inclusionCriteria(minAge, maxAge, str_to_sentence(sex), startDate, endDate)
 
   if (isFALSE(.softValidation)) { # only if .softValidation is FALSE will filterMultiplePregnancies() be run and pregnancy_duplicate_map.csv produced
     cdm <- loadPregnancyDuplicateMap(
