@@ -1,7 +1,7 @@
-initMotherTable <- function(cdm, petName, petSchema) {
+initMotherTable <- function(cdm, petTable, petSchema) {
   cdm$pregnancy_extension_table <- dplyr::tbl(
     attr(cdm, "dbcon"),
-    CDMConnector::inSchema(schema = petSchema, table = petName)) %>%
+    CDMConnector::inSchema(schema = petSchema, table = petTable)) %>%
     dplyr::compute(name = "pregnancy_extension_table", temporary = FALSE, overwrite = TRUE)
 
   cdm$pregnancy_extension_table <- cdm$pregnancy_extension_table %>%
@@ -72,19 +72,30 @@ filterInObservation <- function(table) {
 
 filterStartEndDate <- function(tbl) {
   tbl %>%
-    dplyr::filter(.data$pregnancy_start_date < .data$pregnancy_end_date) %>%
+    dplyr::filter(.data$pregnancy_start_date <= .data$pregnancy_end_date) %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = "Pregnancy end date > pregnancy start_date")
 }
 
-filterGestationalLength <- function(tbl, nDays) {
+filterGestationalLength <- function(tbl, nDays_min, nDays_max) {
   tbl %>%
-    dplyr::filter(!!CDMConnector::datediff("pregnancy_start_date", "pregnancy_end_date") <= nDays) %>%
+    dplyr::filter(!!CDMConnector::datediff("pregnancy_start_date", "pregnancy_end_date") <= nDays_max) %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
-    omopgenerics::recordCohortAttrition(reason = sprintf("Gestational length <%s days", nDays)) %>%
-    dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
-    dplyr::filter(.data$gestational_length_in_day > 0) %>%
-    omopgenerics::recordCohortAttrition(reason = "Gestational length days > 0")
+    omopgenerics::recordCohortAttrition(reason = sprintf("Gestational length <= %s days", nDays_max))
+
+  if(!is.null(nDays_min)) {
+    tbl %>%
+      dplyr::filter(!!CDMConnector::datediff("pregnancy_start_date", "pregnancy_end_date") >= nDays_min) %>%
+      dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
+      omopgenerics::recordCohortAttrition(reason = sprintf("Gestational length >= %s days ", nDays_min))
+  } else {
+    tbl %>%
+      omopgenerics::recordCohortAttrition(reason = "Minimum gestational duration restrictions: NONE")
+  }
+
+  tbl %>%
+    dplyr::compute(name = "pregnancy_cohort", temporary = FALSE)
+
 }
 
 filterMultiplePregnancies <- function(tbl, outputDir) {
@@ -196,7 +207,7 @@ filterStudyPeriod <- function(tbl, startDate, endDate) {
     # tbl <- tbl %>%
 
     tbl %>%
-      omopgenerics::recordCohortAttrition(reason = "No study period restrictions on pregnancy start and/or end date")
+      omopgenerics::recordCohortAttrition(reason = "Study period restrictions on pregnancy start and/or end date: NONE")
   }
 
   if (!is.null(startDate)) {
@@ -240,12 +251,12 @@ inclusionCriteria <- function(tbl, minAge, maxAge, sex, startDate, endDate) {
 }
 
 
-filterPregnancyTable <- function(tbl, maxGestationalDuration, .softValidation = FALSE, outputDir) {
+filterPregnancyTable <- function(tbl, minGestationalDuration, maxGestationalDuration, .softValidation = FALSE, outputDir) {
   if (isFALSE(.softValidation)) {
     tbl %>%
       filterInObservation() %>%
       filterStartEndDate() %>%
-      filterGestationalLength(nDays = maxGestationalDuration) %>%
+      filterGestationalLength(nDays_min = minGestationalDuration, nDays_max = maxGestationalDuration) %>%
       filterMultiplePregnancies(outputDir) %>%
       omopgenerics::newCohortTable()
 
@@ -287,27 +298,30 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' Creates the pregnancy cohort from a specified pregnancy extension table (PET) in a specified schema
 #'
 #' @param cdm (`cdm_reference`) Created with i.e. `CDMConnector::cdmFromCon`.
-#' @param petTable (`character(1)`) Name of the mother extension table.
-#' @param petSchema (`character(1)`) Name of the schema where the mother extension table exists.
-#' @param pregnancyCohortTableName (`character(1)`) Name of the mother cohort table.
-#' @param cohortDefinitionId (`numeric(1)`) Cohort definitionId.
+#' @param petTable (`character(1)`) Name of the Pregnancy Extension Table.
+#' @param petSchema (`character(1)`)  Name of the schema where the Pregnancy Extension Table resides
+#' @param minGestationalDuration (`numeric(1)`: `NULL`) Minimum gestational duration to include.
 #' @param maxGestationalDuration (`numeric(1)`: `308`) Maximum gestational duration to include.
 #' @param minAge (`numeric(1)`: `12`) Minimum age to include.
 #' @param maxAge (`numeric(1)`: `55`) Maximum age to include.
 #' @param sex (`character(2)`: `"Female"`) Sexes to include. One of, or both `c("Female", "Male")`.
-#' @param startDate (`character(1)`: `NULL`) Earliest pregnancy start date to include, follow "year-month-day" format
-#' @param endDate (`character(1)`: `NULL`) Latest pregnancy end date to include, follow "year-month-day" format
+#' @param startDate (`Date(1)`: `NULL`) Earliest pregnancy start date to include, e.g. as.Date("2001-09-20", "%Y-%m-%d")
+#' @param endDate (`Date(1)`: `NULL`) Latest pregnancy end date to include, e.g as.Date("10/20/21", "%m/%d/%y")
 #'
+#' @note A pregnancy of multiples should be recorded with one pregnancy record
+#' - Multiple pregnancies of the same pregnancy_id these will be collapsed to one record.
+#' - If a multiples pregnancy with different pregnancy_ids for a birthing parent is recognized, then this will be collapsed to one pregnancy record with the smallest pregnancy_id kept to represent it
 #' @returns (`cdm_reference`) Returns the CDM with the added cohort table.
 #' @import dplyr
 #' @import checkmate
-
+#' @importFrom stringr str_to_sentence
 #' @export
 createPregnancyCohort <- function(
     cdm,
-    petName,
+    petTable,
     petSchema,
     keepExtensionTable = TRUE,
+    minGestationalDuration = NULL,
     maxGestationalDuration = 308,
     minAge = 12,
     maxAge = 55,
@@ -321,14 +335,15 @@ createPregnancyCohort <- function(
   # Check inputs
   assertions <- checkmate::makeAssertCollection()
   checkmate::assertClass(x = cdm, classes = "cdm_reference", add = assertions)
-  checkmate::assertClass(x = petName, classes = "character", add = assertions) # check that table exists in cdm
+  checkmate::assertClass(x = petTable, classes = "character", add = assertions) # check that table exists in cdm
   checkmate::assertClass(x = petSchema, classes = "character", add = assertions)
   checkmate::assertLogical(x = keepExtensionTable, len = 1, add = assertions)
+  checkmate::assertNumber(x = minGestationalDuration, finite = TRUE, null.ok = TRUE, add = assertions) # single finite numeric value provided
   checkmate::assertNumber(x = maxGestationalDuration, finite = TRUE, add = assertions) # single finite numeric value provided
   checkmate::assertNumber(x = minAge, upper = maxAge, finite = TRUE, add = assertions) # shouldn't be larger than provided max age
   checkmate::assertNumber(x = maxAge, lower = minAge, finite = TRUE, add = assertions) # shouldn't be smaller than provided min age
-  checkmate::assertDate(x = as.Date(startDate, "%Y-%m-%d"), min.len = 0, max.len = 1, add = assertions) # shouldn't be greater than the end date
-  checkmate::assertDate(x = as.Date(endDate,"%Y-%m-%d"), min.len = 0, max.len = 1, add = assertions) # shouldn't be less than the start date
+  checkmate::assertDate(x = startDate, len = 1, null.ok = TRUE, add = assertions) # shouldn't be greater than the end date
+  checkmate::assertDate(x = endDate, len = 1, null.ok = TRUE, add = assertions) # shouldn't be less than the start date
   checkmate::assertChoice(x = str_to_sentence(sex), choices = c("Male", "Female"),  add = assertions) # don't check with tolower, case sensitive filtering
   checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE,  add = assertions) # will overwrite pregnancy_duplicate_map.csv if one already exisists there
   checkmate::assertLogical(x = .softValidation, len = 1, add = assertions) # will overwrite pregnancy_duplicate_map.csv if one already exisists there
@@ -338,7 +353,7 @@ createPregnancyCohort <- function(
   # pregnancy_extension_table
   cdm <- initMotherTable(
     cdm = cdm,
-    petName = petName,
+    petTable = petTable,
     petSchema = petSchema
   )
 
@@ -346,7 +361,7 @@ createPregnancyCohort <- function(
   cdm <- initPregnancyCohort(cdm = cdm, keepExtensionTable)
 
   cdm$pregnancy_cohort <- cdm$pregnancy_cohort %>%
-    filterPregnancyTable(maxGestationalDuration, outputDir, .softValidation = .softValidation) %>% # alt to isTRUE(.softValidation) (connection to .softValidation as arg, arg FALSE returns FALSE, arg TRUE returns TRUE)
+    filterPregnancyTable(minGestationalDuration, maxGestationalDuration, outputDir, .softValidation = .softValidation) %>% # alt to isTRUE(.softValidation) (connection to .softValidation as arg, arg FALSE returns FALSE, arg TRUE returns TRUE)
     inclusionCriteria(minAge, maxAge, str_to_sentence(sex), startDate, endDate)
 
   if (isFALSE(.softValidation)) { # only if .softValidation is FALSE will filterMultiplePregnancies() be run and pregnancy_duplicate_map.csv produced
