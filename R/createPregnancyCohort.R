@@ -294,16 +294,23 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' @param maxGestationalDuration (`numeric(1)`: `308`) Maximum gestational duration to include.
 #' @param minAge (`numeric(1)`: `12`) Minimum age to include.
 #' @param maxAge (`numeric(1)`: `55`) Maximum age to include.
-#' @param sex (`character(2)`: `"Female"`) Sexes to include. One of, or both `c("Female", "Male")`.
+#' @param sex (`character(2)`: `"Female"`) Sexes to include. One of or both `c("Female", "Male")`.
 #' @param startDate (`Date(1)`: `NULL`) Earliest pregnancy start date to include, e.g. as.Date("2001-09-20", "%Y-%m-%d")
 #' @param endDate (`Date(1)`: `NULL`) Latest pregnancy end date to include, e.g as.Date("10/20/21", "%m/%d/%y")
-#'
-#' @note A pregnancy of multiples should be recorded with one pregnancy record
+#' @param keepExtensionTable (`logical(1)`: `TRUE`) Should the intermediate table between the petTable and pregnancy_cohort be kept, default = TRUE
+#' @param outputDir (`path`) Path to output pregnancy_duplicate_map.csv to
+#' @param .softValidation (`logical(1)`: `FALSE`) Should a softValidation be done? default = FALSE
+
+#' @note A pregnancy of multiples will be recorded with one pregnancy record
 #' - Multiple pregnancies of the same pregnancy_id these will be collapsed to one record.
 #' - If a multiples pregnancy with different pregnancy_ids for a birthing parent is recognized, then this will be collapsed to one pregnancy record with the smallest pregnancy_id kept to represent it
 #' @returns (`cdm_reference`) Returns the CDM with the added cohort table.
 #' @import dplyr
 #' @import checkmate
+#' @import omopgenerics
+#' @import PatientProfiles
+#' @import CDMConnector
+#' @importFrom tidyr unnest_longer
 #' @importFrom stringr str_to_sentence
 #' @export
 createPregnancyCohort <- function(
@@ -337,7 +344,7 @@ createPregnancyCohort <- function(
   checkmate::assertDate(x = endDate, len = 1, null.ok = TRUE, add = assertions)
   checkmate::assertSubset(x = stringr::str_to_sentence(sex), choices = c("Female", "Male"), empty.ok = FALSE, add = assertions) # throw error for null unlike assertChoice
   checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE,  add = assertions) # will overwrite pregnancy_duplicate_map.csv if one already exists there
-  checkmate::assertLogical(x = .softValidation, len = 1, add = assertions) # will overwrite pregnancy_duplicate_map.csv if one already exists there
+  checkmate::assertLogical(x = .softValidation, len = 1, add = assertions)
 
   checkmate::reportAssertions(assertions)
 
@@ -354,7 +361,7 @@ createPregnancyCohort <- function(
 
   cdm$pregnancy_cohort <- cdm$pregnancy_cohort %>%
     filterPregnancyTable(minGestationalDuration, maxGestationalDuration, outputDir, .softValidation = .softValidation) %>% # alt to isTRUE(.softValidation) (connection to .softValidation as arg, arg FALSE returns FALSE, arg TRUE returns TRUE)
-    inclusionCriteria(minAge, maxAge, str_to_sentence(sex), startDate, endDate)
+    inclusionCriteria(minAge, maxAge, stringr::str_to_sentence(sex), startDate, endDate)
 
   if (isFALSE(.softValidation)) { # only if .softValidation is FALSE will filterMultiplePregnancies() be run and pregnancy_duplicate_map.csv produced
     cdm <- loadPregnancyDuplicateMap(

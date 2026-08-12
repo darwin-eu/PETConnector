@@ -14,5 +14,10 @@ Suggests:
 Config/testthat/edition: 3
 Config/testthat/parallel: true
 Imports: 
+    CDMConnector,
     checkmate,
-    dplyr
+    dplyr,
+    omopgenerics,
+    PatientProfiles,
+    stringr,
+    tidyr
