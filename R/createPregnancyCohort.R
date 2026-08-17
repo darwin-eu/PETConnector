@@ -343,8 +343,11 @@ createPregnancyCohort <- function(
   checkmate::assertDate(x = startDate, len = 1, null.ok = TRUE, add = assertions)
   checkmate::assertDate(x = endDate, len = 1, null.ok = TRUE, add = assertions)
   checkmate::assertSubset(x = stringr::str_to_sentence(sex), choices = c("Female", "Male"), empty.ok = FALSE, add = assertions) # throw error for null unlike assertChoice
-  checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE,  add = assertions) # will overwrite pregnancy_duplicate_map.csv if one already exists there
   checkmate::assertLogical(x = .softValidation, len = 1, add = assertions)
+
+  if (isFALSE(.softValidation)) {
+    checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE,  add = assertions) # will overwrite pregnancy_duplicate_map.csv if one already exists there
+  }
 
   checkmate::reportAssertions(assertions)
 
