@@ -12,10 +12,10 @@ getNumberRecords <- function(tbl) {
     dplyr::pull(.data$n)
 }
 
-initPerinatal <- function(cdm, perinatalSchema, perinatalTable) {
+initPerinatal <- function(cdm, childSchema, childTable) {
   cdm$peri_et <- dplyr::tbl(
-    src = attr(cdm, "dbcon"),
-    CDMConnector::inSchema(schema = perinatalSchema, table = perinatalTable)
+    src = attr(cdm, "dbcon") ,
+    CDMConnector::inSchema(schema = childSchema, table = childTable)
   ) %>%
     dplyr::compute(name = CDMConnector::inSchema(attr(cdm, "write_schema"), "peri_et"), temporary = FALSE, overwrite = TRUE)
   return(cdm)
@@ -26,7 +26,7 @@ createPerinatalCohortFromTbl <- function(cdm) {
     dplyr::left_join(
       cdm[["pregnancy_duplicate_map"]] %>%
         dplyr::select(removed_pregnancy_id, kept_pregnancy_id),
-      by = c("pregnancy_id" = "removed_pregnancy_id")
+      by = c("pregnancy_id" = "removed_pregnancy_id") # pregnancy_id is unique! Two people cannot have the same pregnancy_id, this is a safe join
     ) %>%
     dplyr::mutate(
       pregnancy_id = dplyr::coalesce(kept_pregnancy_id, pregnancy_id)
@@ -63,11 +63,11 @@ createPerinatalCohortFromTbl <- function(cdm) {
   return(cdm)
 }
 
-initPerinatalCohort <- function(cdm, outputDir, relationshipConceptId = c(40485452, 4285883)) {
+initPerinatalCohort <- function(cdm, outputDir, childConceptIds, parentCohortTable) {
   pregnancyCols <- colnames(cdm$pregnancy_cohort)
 
-  cdm$child_cohort <- cdm$fact_relationship %>%
-    dplyr::filter(.data$relationship_concept_id %in% relationshipConceptId) %>%
+  cdm$child_cohort <- cdm[[parentCohortTable]] %>%
+    dplyr::filter(.data$relationship_concept_id %in% childConceptIds) %>%
     dplyr::rename(
       subject_id = "fact_id_1",
       parent_id = "fact_id_2"
@@ -99,7 +99,7 @@ initPerinatalCohort <- function(cdm, outputDir, relationshipConceptId = c(404854
       "parent_id",
       cohort_definition_id = "cohort_definition_id.x",
       "subject_id",
-      cohort_start_date = "cohort_end_date.y",
+      cohort_start_date = "cohort_end_date.y", # y, child cohort_start_date = pregnancy cohort_end_date
       cohort_end_date = "cohort_end_date.x",
       dplyr::any_of(pregnancyCols)
     ) %>%
@@ -222,43 +222,91 @@ filterPregnancyCohort <- function(tbl) {
     omopgenerics::recordCohortAttrition(reason = "Filter only children with parent in pregnancy cohort")
 }
 
-#' createPerinatalCohort
+#' createChildCohort
 #'
-#' @param cdm (`cdm_reference`)
-#' @param perinatalSchema (`character(1)`)
-#' @param perinatalTable (`character(1)`)
-#' @param relationshipConceptId (`numeric(1)`: `NULL`) When set to `NULL` it
-#' will use the specified Perinatal Extension Table. When concepts are
-#' provided, it will use the concept_relationship table to link persons with
-#' the provided relationship concept to the Pregnancy Extension Table.
-#' @param outputDir (`character(1)`)
+#' @param cdm (`cdm_reference`) CDM reference object
+#' @param parentCohortTable (`cohort_table`: `NULL`) Cohort table to link the children to
+#' @param childSchema (`character(1)`: `NULL`) Name of the schema where the Child Extension Table resides
+#' @param childTable (`character(1)`: `NULL`) Name of the Child Extension Table
+#' @param childConceptIds (`numeric(n)`: `c(40485452, 4285883)`) Concepts to use to link the child to the parent. I.e. `40485452` = Child of subject
+#' @param outputDir (`path`: `NULL`) Path to output child_cohort-attrition.csv to if generating child_cohort from parentCohortTable
+#' @param .softValidation (`logical(1)`: `FALSE`) Should a softValidation be done? default = FALSE
 #'
 #' @returns `cdm_reference`
+#' @import dplyr
+#' @import CDMConnector
+#' @import omopgenerics
+#' @import PatientProfiles
+#' @import checkmate
 #' @export
-createPerinatalCohort <- function(cdm, perinatalSchema, perinatalTable, outputDir, relationshipConceptId = c(40485452, 4285883)) {
+createChildCohort <- function(
+    cdm,
+    parentCohortTable = NULL,
+    childSchema = NULL,
+    childTable = NULL,
+    childConceptIds = c(40485452, 4285883), # child -> parent ("child of subject" non-standard, "child" standard), why not 4326600?
+    outputDir = NULL,
+    .softValidation = FALSE
+) {
 
-  if (is.null(relationshipConceptId)) {
-    cdm <- initPerinatal(cdm = cdm, perinatalSchema = perinatalSchema, perinatalTable = perinatalTable)
+  # Check inputs
+  assertions <- checkmate::makeAssertCollection()
+
+  checkmate::assertClass(x = cdm, classes = "cdm_reference", add = assertions)
+  checkmate::assertClass(x = parentCohortTable, classes = "character",  null.ok = TRUE, add = assertions) # don't need to check against names(cdm)
+  checkmate::assertClass(x = childSchema, classes = "character", add = assertions) # don't need to check against (attr(cdm, "write_schema")
+  checkmate::assertClass(x = childTable, classes = "character", null.ok = TRUE, add = assertions) # don't need to check against names(cdm)
+  checkmate::assertNumeric(x = childConceptIds, null.ok = TRUE, add = assertions)
+  if (!is.null(outputDir)) {
+    checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE, add = assertions) # will overwrite child_cohort-attrition.csv if one already exists there
+  }
+  checkmate::assertLogical(x = .softValidation, len = 1, add = assertions)
+
+  if (
+    (is.null(childTable) & is.null(parentCohortTable)) |
+    (!is.null(childTable) & !is.null(parentCohortTable))
+  ) {
+    assertions$push(
+      "You must provide either a parentCohortTable or a childTable to create a child_cohort table "
+    )
+  }
+
+
+  if ((!is.null(parentCohortTable) & is.null(outputDir))
+  ) {
+    assertions$push(
+      "If creating the child_cohort table from the parentCohortTable, an outputDir must be provided"
+    )
+  }
+  checkmate::reportAssertions(assertions)
+
+  # Create child_cohort from childTable
+  if (is.null(parentCohortTable)) { # parentCohortTable condition instead of childConceptIds to keep c(40485452, 4285883) as default for childConceptIds instead of NULL    cdm <- initPerinatal(cdm , childSchema, childTable)
+    cdm <- initPerinatal(cdm = cdm, childSchema = childSchema, childTable = childTable)
     cdm <- createPerinatalCohortFromTbl(cdm = cdm)
 
-    keptIds <- cdm$pregnancy_cohort %>%
-      select(pregnancy_id) %>%
-      pull()
+    # Check validity of child extension table
+    if (isFALSE(.softValidation)) {
+      keptIds <- cdm$pregnancy_cohort %>%
+        dplyr::select(pregnancy_id) %>%
+        dplyr::pull()
 
-    cdm$child_cohort <- cdm$child_cohort %>%
-      dplyr::filter(pregnancy_id %in% keptIds) %>%
-      dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
-      omopgenerics::recordCohortAttrition(reason = "Filter only children with parent in pregnancy cohort") %>%
-      dplyr::distinct() %>%
-      omopgenerics::recordCohortAttrition("Removing duplicate children") %>%
-      filterLiveBirth() %>%
-      select(-person_id) %>%
-      dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
+      cdm$child_cohort <- cdm$child_cohort %>%
+        dplyr::filter(pregnancy_id %in% keptIds) %>%
+        dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
+        omopgenerics::recordCohortAttrition(reason = "Filter only children with parent in pregnancy cohort") %>%
+        dplyr::distinct() %>%
+        omopgenerics::recordCohortAttrition("Removing duplicate children") %>%
+        filterLiveBirth() %>%
+        dplyr::select(-person_id) %>%
+        dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
+    }
 
 
+    # Create child_cohort from parentCohortTable
+  } else if (!is.null(parentCohortTable) & !is.null(outputDir)) {
 
-  } else {
-    cdm <- initPerinatalCohort(cdm = cdm, outputDir = outputDir, relationshipConceptId = relationshipConceptId)
+    cdm <- initPerinatalCohort(cdm = cdm, outputDir = outputDir, childConceptIds = childConceptIds, parentCohortTable = parentCohortTable) # parentCohortTable
 
     cdm$child_cohort <- cdm$child_cohort  %>%
       dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
