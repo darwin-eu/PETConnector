@@ -108,7 +108,6 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, parentCohortTab
   # omopgenerics::recordCohortAttrition(reason = "Filter children to to Pregnancy Extension Table")
 
 
-
   cdm$child_cohort <- cdm$child_cohort %>%
     dplyr::left_join(cdm$person, by = dplyr::join_by(subject_id == person_id)) %>%
     dplyr::mutate(year_match = !!CDMConnector::datepart(date = "pregnancy_end_date", interval = "year")) %>%
@@ -171,56 +170,53 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, parentCohortTab
     )
   )
 
-  write.csv(attrition, file = file.path(outputDir, "child_cohort-attrition.csv"))
+  write.csv(attrition, file = file.path(outputDir, "child_cohort-attrition.csv"), row.names = FALSE)
 
   return(cdm)
 }
 
-filterNegativeAges <- function(tbl) {
-  cols <- colnames(tbl)
+# filterNegativeAges <- function(tbl) {
+#   cols <- colnames(tbl)
+#
+#   tbl %>%
+#     PatientProfiles::addAge(indexDate = "pregnancy_end_date") %>%
+#     dplyr::filter(!.data$age < 0) %>%
+#     dplyr::select(dplyr::any_of(cols)) %>%
+#     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
+#     omopgenerics::recordCohortAttrition(reason = "Filter out children with negative age")
+# }
 
-  tbl %>%
-    PatientProfiles::addAge(indexDate = "pregnancy_end_date") %>%
-    dplyr::filter(!.data$age < 0) %>%
-    dplyr::select(dplyr::any_of(cols)) %>%
-    dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
-    omopgenerics::recordCohortAttrition(reason = "Filter out children with negative age")
-}
-
-filterNoParent <- function(tbl) {
-  tbl %>%
-    dplyr::filter(!is.na(.data$parent_id)) %>%
-    dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
-    omopgenerics::recordCohortAttrition(reason = "Filter out children with no parent")
-}
+# filterNoParent <- function(tbl) {
+#   tbl %>%
+#     dplyr::filter(!is.na(.data$parent_id)) %>%
+#     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
+#     omopgenerics::recordCohortAttrition(reason = "Filter out children with no parent")
+# }
 
 filterLiveBirth <- function(tbl){
   tbl %>%
-    dplyr::filter(.data$pregnancy_outcome == 4092289) %>%
-    omopgenerics::recordCohortAttrition(reason = "Filter to live birth")
+    dplyr::filter(.data$pregnancy_outcome == 4092289)
 }
 
-filterMultipleParents <- function(tbl) {
-  # Filter multiple pregnancies
-  temp_n_parents <- tbl %>%
-    dplyr::group_by(.data$subject_id, .data$parent_id) %>%
-    dplyr::summarise(n_parents = dplyr::n()) %>%
-    dplyr::filter(.data$n_parents == 1)
+# filterMultipleParents <- function(tbl) {
+#   # Filter multiple pregnancies
+#   temp_n_parents <- tbl %>%
+#     dplyr::group_by(.data$subject_id, .data$parent_id) %>%
+#     dplyr::summarise(n_parents = dplyr::n()) %>%
+#     dplyr::filter(.data$n_parents == 1)
+#
+#   tbl %>%
+#     dplyr::inner_join(temp_n_parents, by = "subject_id") %>%
+#     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
+#     omopgenerics::recordCohortAttrition(reason = "Filter children from multiple parents")
+# }
 
-  tbl %>%
-    dplyr::inner_join(temp_n_parents, by = "subject_id") %>%
-    dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
-    omopgenerics::recordCohortAttrition(reason = "Filter children from multiple parents")
-}
-
-filterPregnancyCohort <- function(tbl) {
-
-
-  tbl %>%
-    dplyr::filter(pregnancy_id %in% keptIds) %>%
-    dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
-    omopgenerics::recordCohortAttrition(reason = "Filter only children with parent in pregnancy cohort")
-}
+# filterPregnancyCohort <- function(tbl) {
+#   tbl %>%
+#     dplyr::filter(pregnancy_id %in% keptIds) %>%
+#     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
+#     omopgenerics::recordCohortAttrition(reason = "Filter only children with parent in pregnancy cohort")
+# }
 
 #' createChildCohort
 #'
@@ -260,7 +256,7 @@ createChildCohort <- function(
   if (!is.null(outputDir)) {
     checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE, add = assertions) # will overwrite child_cohort-attrition.csv if one already exists there
   }
-  checkmate::assertLogical(x = .softValidation, len = 1, add = assertions)
+  checkmate::assertLogical(x = .softValidation, len = 1, add = assertions) # fine to keep default FALSE even if using parentCohortTable
 
   if (
     (is.null(childTable) & is.null(parentCohortTable)) |
@@ -297,13 +293,14 @@ createChildCohort <- function(
         omopgenerics::recordCohortAttrition(reason = "Filter only children with parent in pregnancy cohort") %>%
         dplyr::distinct() %>%
         omopgenerics::recordCohortAttrition("Removing duplicate children") %>%
-        filterLiveBirth() %>%
+        filterLiveBirth() %>% # cohort attrition recorded in function
+        omopgenerics::recordCohortAttrition(reason = "Filter to live birth") %>%
         dplyr::select(-person_id) %>%
         dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
     }
 
 
-    # Create child_cohort from parentCohortTable
+  # Create child_cohort from parentCohortTable
   } else if (!is.null(parentCohortTable) & !is.null(outputDir)) {
 
     cdm <- initPerinatalCohort(cdm = cdm, outputDir = outputDir, childConceptIds = childConceptIds, parentCohortTable = parentCohortTable) # parentCohortTable
