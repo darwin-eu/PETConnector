@@ -16,7 +16,7 @@ cdm <- TestGenerator::patientsCDM(
 )
 
 # Records included in pregnancy_cohort when createPregnancyCohort() is run with default parameters
-includedWithDefaults <- dplyr::tibble( # excluded will make it more difficult with twin preg 6
+includedWithDefaults <- tibble::tibble( # excluded will make it more difficult with twin preg 6
   subject_id = c(11, 9, 9, 14, 17, 18, 100, 102),
   pregnancy_id = c(6, 4, 5, 8, 10, 11, 100, 71),
 )

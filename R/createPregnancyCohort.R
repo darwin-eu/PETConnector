@@ -144,7 +144,7 @@ filterMultiplePregnancies <- function(tbl, outputDir) {
     dplyr::select(!all_ids) %>%
     dplyr::compute()
 
-  write.csv(removed_mapping, file.path(outputDir, "pregnancy_duplicate_map.csv"), row.names = FALSE)
+  utils::write.csv(removed_mapping, file.path(outputDir, "pregnancy_duplicate_map.csv"), row.names = FALSE)
   # 3 — Keep only the canonical pregnancy IDs
   kept_ids <- grouped %>% pull(kept_pregnancy_id)
 
@@ -306,12 +306,16 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' - If a multiples pregnancy with different pregnancy_ids for a birthing parent is recognized, then this will be collapsed to one pregnancy record with the smallest pregnancy_id kept to represent it
 #' @returns (`cdm_reference`) Returns the CDM with the added cohort table.
 #' @import dplyr
+#' @importFrom omopgenerics newCohortTable dropSourceTable recordCohortAttrition
 #' @import checkmate
-#' @import omopgenerics
 #' @import PatientProfiles
 #' @import CDMConnector
 #' @importFrom tidyr unnest_longer
 #' @importFrom stringr str_to_sentence
+#' @importFrom utils write.csv
+#' @importFrom purrr map2
+#' @importFrom readr read_csv
+#' @importFrom tibble tibble
 #' @export
 createPregnancyCohort <- function(
     cdm,
@@ -375,5 +379,6 @@ createPregnancyCohort <- function(
 
 
   return(cdm)
+  # checkmate makeAssertCollection assertClass assertLogical assertNumber assertDate assertSubset assertPathForOutput reportAssertions
 
 }
