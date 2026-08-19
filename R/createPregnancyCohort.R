@@ -1,7 +1,8 @@
 initMotherTable <- function(cdm, petTable, petSchema) {
   cdm$pregnancy_extension_table <- dplyr::tbl(
     attr(cdm, "dbcon"),
-    CDMConnector::inSchema(schema = petSchema, table = petTable)) %>%
+    CDMConnector::inSchema(schema = petSchema, table = petTable)
+  ) %>%
     dplyr::compute(name = "pregnancy_extension_table", temporary = FALSE, overwrite = TRUE)
 
   cdm$pregnancy_extension_table <- cdm$pregnancy_extension_table %>%
@@ -85,7 +86,6 @@ filterGestationalLength <- function(tbl, nDays_min, nDays_max) {
     dplyr::filter(!!CDMConnector::datediff("pregnancy_start_date", "pregnancy_end_date") >= nDays_min) %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = sprintf("Gestational length >= %s days ", nDays_min))
-
 }
 
 filterMultiplePregnancies <- function(tbl, outputDir) {
@@ -172,20 +172,20 @@ filterMultiplePregnancies <- function(tbl, outputDir) {
     dplyr::left_join(
       cdm$observation_period %>%
         dplyr::select(
-          subject_id = "person_id", "observation_period_start_date", "observation_period_end_date")
+          subject_id = "person_id", "observation_period_start_date", "observation_period_end_date"
+        )
     ) %>%
     dplyr::filter(
-      .data$cohort_start_date >= .data$observation_period_start_date
-      & .data$cohort_start_date <= .data$observation_period_end_date
+      .data$cohort_start_date >= .data$observation_period_start_date &
+        .data$cohort_start_date <= .data$observation_period_end_date
     ) %>%
     dplyr::filter(
-      .data$cohort_end_date >= .data$observation_period_start_date
-      & .data$cohort_end_date <= .data$observation_period_end_date
+      .data$cohort_end_date >= .data$observation_period_start_date &
+        .data$cohort_end_date <= .data$observation_period_end_date
     ) %>%
     dplyr::select(!c("observation_period_start_date", "observation_period_end_date")) %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = "No overlapping pregnancy records")
-
 }
 
 filterStudyPeriod <- function(tbl, startDate, endDate) {
@@ -207,7 +207,6 @@ filterStudyPeriod <- function(tbl, startDate, endDate) {
         .data$pregnancy_start_date < maxStartDate
       ) %>%
       omopgenerics::recordCohortAttrition(reason = sprintf("Pregnancy start >= %s and < %s (end of database - 1 year)", startDate, maxStartDate))
-
   }
 
   if (!is.null(endDate)) {
@@ -230,7 +229,6 @@ filterStudyPeriod <- function(tbl, startDate, endDate) {
   # 2. Only non-Null start + compute, works
   # 3. Only non-Null end + compute, works (setting of tbl <- tbl is redundant in this case)
   # 4. non-Null start + non-Null end, works (setting of tbl <- tbl is necessary here to apply then endDate filtering on the already startDate filtered tbl)
-
 }
 
 inclusionCriteria <- function(tbl, minAge, maxAge, sex, startDate, endDate) {
@@ -249,10 +247,10 @@ filterPregnancyTable <- function(tbl, minGestationalDuration, maxGestationalDura
       filterGestationalLength(nDays_min = minGestationalDuration, nDays_max = maxGestationalDuration) %>%
       filterMultiplePregnancies(outputDir) %>%
       omopgenerics::newCohortTable()
-
-  } else
+  } else {
     tbl %>%
-    omopgenerics::newCohortTable(.softValidation = TRUE) # don't use omopgenerics .softvalidation either!
+      omopgenerics::newCohortTable(.softValidation = TRUE)
+  } # don't use omopgenerics .softvalidation either!
 }
 
 intersectCohorts <- function(tbl1, tbl2) {
@@ -274,10 +272,10 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
     )
   }
   cdm <- CDMConnector::insertTable(
-    cdm        = cdm,
-    name       = "pregnancy_duplicate_map",
-    table      =  map_df,
-    overwrite  = TRUE,
+    cdm = cdm,
+    name = "pregnancy_duplicate_map",
+    table = map_df,
+    overwrite = TRUE,
     temporary = FALSE
   )
   return(cdm)
@@ -330,10 +328,9 @@ createPregnancyCohort <- function(
     endDate = NULL,
     sex = "Female",
     outputDir,
-    .softValidation = FALSE
-) {
+    .softValidation = FALSE) {
 
-  # Check inputs
+  # Check inputs ----
   assertions <- checkmate::makeAssertCollection()
 
   checkmate::assertClass(x = cdm, classes = "cdm_reference", add = assertions)
@@ -350,25 +347,39 @@ createPregnancyCohort <- function(
   checkmate::assertLogical(x = .softValidation, len = 1, add = assertions)
 
   if (isFALSE(.softValidation)) {
-    checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE,  add = assertions) # will overwrite pregnancy_duplicate_map.csv if one already exists there
+    checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE, add = assertions) # will overwrite pregnancy_duplicate_map.csv if one already exists there
   }
 
   checkmate::reportAssertions(assertions)
 
 
-  # pregnancy_extension_table
+  # pregnancy_extension_table ----
   cdm <- initMotherTable(
     cdm = cdm,
     petTable = petTable,
     petSchema = petSchema
   )
 
-  # pregnancy_cohort table
-  cdm <- initPregnancyCohort(cdm = cdm, keepExtensionTable)
+  # pregnancy_cohort table ----
+  cdm <- initPregnancyCohort(
+    cdm = cdm,
+    keepExtensionTable = keepExtensionTable
+  )
 
   cdm$pregnancy_cohort <- cdm$pregnancy_cohort %>%
-    filterPregnancyTable(minGestationalDuration, maxGestationalDuration, outputDir, .softValidation = .softValidation) %>% # alt to isTRUE(.softValidation) (connection to .softValidation as arg, arg FALSE returns FALSE, arg TRUE returns TRUE)
-    inclusionCriteria(minAge, maxAge, stringr::str_to_sentence(sex), startDate, endDate)
+    filterPregnancyTable(
+      minGestationalDuration = minGestationalDuration,
+      maxGestationalDuration = maxGestationalDuration,
+      outputDir = outputDir,
+      .softValidation = .softValidation
+    ) %>% # alt to isTRUE(.softValidation) (connection to .softValidation as arg, arg FALSE returns FALSE, arg TRUE returns TRUE)
+    inclusionCriteria(
+      minAge = minAge,
+      maxAge = maxAge,
+      sex = stringr::str_to_sentence(sex),
+      startDate = startDate,
+      endDate = endDate
+    )
 
   if (isFALSE(.softValidation)) { # only if .softValidation is FALSE will filterMultiplePregnancies() be run and pregnancy_duplicate_map.csv produced
     cdm <- loadPregnancyDuplicateMap(
@@ -377,8 +388,5 @@ createPregnancyCohort <- function(
     )
   }
 
-
   return(cdm)
-  # checkmate makeAssertCollection assertClass assertLogical assertNumber assertDate assertSubset assertPathForOutput reportAssertions
-
 }
