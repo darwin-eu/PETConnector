@@ -192,10 +192,10 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   # Pregnancy starts prior to observation start ----
   outsideObsStart <- pregnancy_cohort %>%
     dplyr::filter(
-      (subject_id == 20 & pregnancy_id == 13) | # represents 2 records in pregnancy table, no corresponding person in person table nor observation_period
-        (subject_id == 1 & pregnancy_id == 1) |
-        (subject_id == 1 & pregnancy_id == 2) |
-        (subject_id == 1 & pregnancy_id == 3) # these pregnancies in pregnancy_extension_table start prior to obs start
+      (subject_id == 20 & pregnancy_id == 13) # represents 2 records in pregnancy table, no corresponding person in person table nor observation_period
+      | (subject_id == 1 & pregnancy_id == 1)
+      | (subject_id == 1 & pregnancy_id == 2)
+      | (subject_id == 1 & pregnancy_id == 3) # these pregnancies in pregnancy_extension_table start prior to obs start
     )
 
   expect_equal(
@@ -247,8 +247,8 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   # Pregnancy start after pregnancy end ----
   pregStartAfterEnd <- pregnancy_cohort %>%
     dplyr::filter(
-      (subject_id == 14 & pregnancy_id == 7) |
-        (subject_id == 19 & pregnancy_id == 12)
+      (subject_id == 14 & pregnancy_id == 7)
+      | (subject_id == 19 & pregnancy_id == 12)
     )
 
   expect_equal(
@@ -350,11 +350,11 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
   # Gestation duration greater than maxGestationalDuration ----
   outsideMaxGestDur <- pregnancy_cohort %>%
     dplyr::filter(
-      (subject_id == 17 & pregnancy_id == 10) |
-        (subject_id == 11 & pregnancy_id == 6) |
-        (subject_id == 100 & pregnancy_id == 100) |
-        (subject_id == 102 & pregnancy_id == 71) |
-        (subject_id == 102 & pregnancy_id == 72)
+      (subject_id == 17 & pregnancy_id == 10)
+      | (subject_id == 11 & pregnancy_id == 6)
+      | (subject_id == 100 & pregnancy_id == 100)
+      | (subject_id == 102 & pregnancy_id == 71)
+      | (subject_id == 102 & pregnancy_id == 72)
     )
 
   expect_equal(
@@ -404,8 +404,8 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
   # Exact minGestationalDuration and maxGestationalDuration ----
   exactGestDur <- pregnancy_cohort %>%
     dplyr::filter(
-      (subject_id == 14 & pregnancy_id == 8) |
-        (subject_id == 18 & pregnancy_id == 11)
+      (subject_id == 14 & pregnancy_id == 8)
+      | (subject_id == 18 & pregnancy_id == 11)
     )
 
   expect_equal(
@@ -451,9 +451,9 @@ testthat::test_that("Filtering on Age goes as expected", {
   # Age at pregnancy start less than minAge ----
   outsideMinAge <- pregnancy_cohort %>%
     dplyr::filter(
-      (subject_id == 11 & pregnancy_id == 6) |
-        (subject_id == 100 & pregnancy_id == 100) |
-        (subject_id == 102 & pregnancy_id == 71)
+      (subject_id == 11 & pregnancy_id == 6)
+      | (subject_id == 100 & pregnancy_id == 100)
+      | (subject_id == 102 & pregnancy_id == 71)
     )
 
   expect_equal(
@@ -473,8 +473,8 @@ testthat::test_that("Filtering on Age goes as expected", {
   # Exact minAge and maxAge ----
   exactAge <- pregnancy_cohort %>%
     dplyr::filter(
-      (subject_id == 18 & pregnancy_id == 11) |
-        (subject_id == 14 & pregnancy_id == 8)
+      (subject_id == 18 & pregnancy_id == 11)
+      | (subject_id == 14 & pregnancy_id == 8)
     )
 
   expect_equal(
@@ -605,8 +605,8 @@ testthat::test_that("Filtering on endDate goes as expected", {
   # Pregnancy ends after our endDate ----
   outsideEndDate <- pregnancy_cohort %>%
     dplyr::filter(
-      (subject_id == 9 & pregnancy_id == 5) |
-        (subject_id == 17 & pregnancy_id == 10)
+      (subject_id == 9 & pregnancy_id == 5)
+      | (subject_id == 17 & pregnancy_id == 10)
     )
 
   expect_equal(
@@ -616,9 +616,9 @@ testthat::test_that("Filtering on endDate goes as expected", {
 
   onEndDate <- pregnancy_cohort %>%
     dplyr::filter(
-      (subject_id == 11 & pregnancy_id == 6) |
-        (subject_id == 100 & pregnancy_id == 100) |
-        (subject_id == 102 & pregnancy_id == 71)
+      (subject_id == 11 & pregnancy_id == 6)
+      | (subject_id == 100 & pregnancy_id == 100)
+      | (subject_id == 102 & pregnancy_id == 71)
     )
 
   expect_equal(
@@ -680,9 +680,9 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
   # Pregnancy ends after our endDate ----
   outsideStartEnd <- pregnancy_cohort %>%
     dplyr::filter(
-      (subject_id == 18 & pregnancy_id == 11) |
-        (subject_id == 9 & pregnancy_id == 5) |
-        (subject_id == 17 & pregnancy_id == 10)
+      (subject_id == 18 & pregnancy_id == 11)
+      | (subject_id == 9 & pregnancy_id == 5)
+      | (subject_id == 17 & pregnancy_id == 10)
     )
 
   expect_equal(
@@ -692,10 +692,10 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
 
   onStartEnd <- pregnancy_cohort %>%
     dplyr::filter(
-      (subject_id == 14 & pregnancy_id == 8) |
-        (subject_id == 11 & pregnancy_id == 6) |
-        (subject_id == 100 & pregnancy_id == 100) |
-        (subject_id == 102 & pregnancy_id == 71)
+      (subject_id == 14 & pregnancy_id == 8)
+      | (subject_id == 11 & pregnancy_id == 6)
+      | (subject_id == 100 & pregnancy_id == 100)
+      | (subject_id == 102 & pregnancy_id == 71)
     )
 
   expect_equal(
