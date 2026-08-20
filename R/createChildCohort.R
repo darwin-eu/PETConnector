@@ -63,10 +63,10 @@ createPerinatalCohortFromTbl <- function(cdm) {
   return(cdm)
 }
 
-initPerinatalCohort <- function(cdm, outputDir, childConceptIds, parentCohortTable, collapseDupRecords) {
+initPerinatalCohort <- function(cdm, outputDir, childConceptIds, collapseDupRecords) {
   pregnancyCols <- colnames(cdm$pregnancy_cohort)
 
-  cdm$child_cohort <- cdm[[parentCohortTable]] %>%
+  cdm$child_cohort <- cdm[["fact_relationship"]] %>%
     dplyr::filter(.data$relationship_concept_id %in% childConceptIds) %>%
     dplyr::rename(
       subject_id = "fact_id_1",
@@ -262,12 +262,11 @@ filterLiveBirth <- function(tbl){
 #' createChildCohort
 #'
 #' @param cdm (`cdm_reference`) CDM reference object
-#' @param parentCohortTable (`cohort_table`: `NULL`) Cohort table to link the children to
 #' @param collapseDupRecords (`logical(1)`: `TRUE`) If creating child_cohort from the fact_relationship table, collapse duplicated records to one record per child. In the case that a subject id is duplicated but the rest of the record isn't, all records for the subject_id will be filtered out
 #' @param childSchema (`character(1)`: `NULL`) Name of the schema where the Child Extension Table resides
 #' @param childTable (`character(1)`: `NULL`) Name of the Child Extension Table
 #' @param childConceptIds (`numeric(n)`: `c(40485452, 4285883)`) Concepts to use to link the child to the parent. I.e. `40485452` = Child of subject
-#' @param outputDir (`path`: `NULL`) Path to output child_cohort-attrition.csv to if generating child_cohort from parentCohortTable
+#' @param outputDir (`path`: `NULL`) Path to output child_cohort-attrition.csv to if generating child_cohort from fact_relationship table (not using Child Extension Table)
 #' @param .softValidation (`logical(1)`: `FALSE`) Should a softValidation be done? default = FALSE
 #'
 #' @returns `cdm_reference`
@@ -280,11 +279,10 @@ filterLiveBirth <- function(tbl){
 #' @export
 createChildCohort <- function(
     cdm,
-    parentCohortTable = NULL,
+    childConceptIds = c(40485452, 4285883), # child -> parent ("child of subject" non-standard, "child" standard)
     collapseDupRecords = TRUE,
     childSchema = NULL,
     childTable = NULL,
-    childConceptIds = c(40485452, 4285883), # child -> parent ("child of subject" non-standard, "child" standard), why not 4326600?
     outputDir = NULL,
     .softValidation = FALSE
 ) {
@@ -293,38 +291,36 @@ createChildCohort <- function(
   assertions <- checkmate::makeAssertCollection()
 
   checkmate::assertClass(x = cdm, classes = "cdm_reference", add = assertions)
-  checkmate::assertClass(x = parentCohortTable, classes = "character",  null.ok = TRUE, add = assertions) # don't need to check against names(cdm)
-  checkmate::assertClass(x = childSchema, classes = "character", add = assertions) # don't need to check against (attr(cdm, "write_schema")
+  checkmate::assertClass(x = childSchema, classes = "character", null.ok = TRUE, add = assertions) # don't need to check against (attr(cdm, "write_schema")
   checkmate::assertClass(x = childTable, classes = "character", null.ok = TRUE, add = assertions) # don't need to check against names(cdm)
-  checkmate::assertNumeric(x = childConceptIds, null.ok = TRUE, add = assertions)
 
-  if (!is.null(parentCohortTable)) {
+  if (is.null(childTable) & is.null(childSchema)) { # meaning, we create child_cohort from fact_relationship (parentCohortTable) + childConceptIds
+    checkmate::assertNumeric(x = childConceptIds, null.ok = FALSE, add = assertions)
     checkmate::assertLogical(x = collapseDupRecords, len = 1, add = assertions)
     checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE, add = assertions) # will overwrite child_cohort-attrition.csv if one already exists there
+
+    if(is.null(outputDir)) {
+      assertions$push(
+        "When creating the child_cohort table from the fact_relationship table, an outputDir must be provided"
+      )
+    }
   }
 
-  checkmate::assertLogical(x = .softValidation, len = 1, add = assertions) # fine to keep default FALSE even if using parentCohortTable
+  if (!is.null(childTable) & !is.null(childSchema)) {
+    checkmate::assertLogical(x = .softValidation, len = 1, add = assertions)
+  }
 
-  if (
-    (is.null(childTable) & is.null(parentCohortTable)) |
-    (!is.null(childTable) & !is.null(parentCohortTable))
-  ) {
+  if ((!is.null(childTable) & is.null(childSchema))
+      | (is.null(childTable) & !is.null(childSchema))) {
     assertions$push(
-      "You must provide either a parentCohortTable or a childTable to create a child_cohort table "
+      "Double check that you have provided both a childTable and childSchema if you don't want to create child_cohort from the fact_relationship table"
     )
   }
 
-
-  if ((!is.null(parentCohortTable) & is.null(outputDir))
-  ) {
-    assertions$push(
-      "If creating the child_cohort table from the parentCohortTable, an outputDir must be provided"
-    )
-  }
   checkmate::reportAssertions(assertions)
 
   # Create child_cohort from childTable
-  if (is.null(parentCohortTable)) { # parentCohortTable condition instead of childConceptIds to keep c(40485452, 4285883) as default for childConceptIds instead of NULL    cdm <- initPerinatal(cdm , childSchema, childTable)
+  if (!is.null(childTable) & !is.null(childSchema)) {
     cdm <- initPerinatal(cdm = cdm, childSchema = childSchema, childTable = childTable)
     cdm <- createPerinatalCohortFromTbl(cdm = cdm)
 
@@ -347,10 +343,13 @@ createChildCohort <- function(
     }
 
 
-  # Create child_cohort from parentCohortTable
-  } else if (!is.null(parentCohortTable) & !is.null(outputDir)) {
+  # Create child_cohort from fact_relationship table
+  } else { # will be is.null(childTable) & is.null(childSchema), we have a checkmate catch for cases when 1/2 args provided
 
-    cdm <- initPerinatalCohort(cdm = cdm, outputDir = outputDir, childConceptIds = childConceptIds, parentCohortTable = parentCohortTable, collapseDupRecords = collapseDupRecords) # parentCohortTable
+    cdm <- initPerinatalCohort(cdm = cdm,
+                               outputDir = outputDir,
+                               childConceptIds = childConceptIds,
+                               collapseDupRecords = collapseDupRecords)
 
     cdm$child_cohort <- cdm$child_cohort  %>%
       dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
