@@ -207,6 +207,10 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, parentCohortTab
       .softValidation = FALSE # table should not be messy anymore, use this sanity check
     )
 
+  attrition <- attrition %>%
+    dplyr::mutate(reason_id = row_number()) %>% # add in post to account for optional filter (i.e collapseDupRecords)
+    dplyr::relocate(reason_id, .before = reason)
+
   utils::write.csv(attrition, file = file.path(outputDir, "child_cohort-attrition.csv"), row.names = FALSE)
 
   return(cdm)
