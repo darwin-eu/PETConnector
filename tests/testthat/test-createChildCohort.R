@@ -1,0 +1,419 @@
+cdm <- omopgenerics::insertTable(
+  cdm = cdm,
+  name = "pregnancy_cohort",
+  table = pregnancy_cohort
+)
+
+cdm <- omopgenerics::insertTable(
+  cdm = cdm,
+  name = "pregnancy_duplicate_map",
+  table = pregnancy_duplicate_map
+)
+
+testthat::test_that("input args are as expected", {
+  expect_error(
+    createChildCohort(
+      cdm = cdm,
+      parentCohortTable = "fact_relationship", # also specified a childTable,
+      collapseDupRecords = "TRUE", # character instead of logical when parentCohortTable provided
+      childSchema = TRUE, # logical instead of character
+      childTable = "infant",  # also specified a parentCohortTable
+      childConceptIds = c("40485452", "4285883"), # character instead of numeric
+      outputDir = NULL, # no dir even though parentCohortTable specified
+      .softValidation = NULL # NULL instead of logical
+    ),
+    "7 assertions failed:"
+  )
+
+  expect_error(
+    createChildCohort(
+      cdm = cdm,
+      parentCohortTable = "fact_relationship",
+      collapseDupRecords = TRUE,
+      childSchema = "main",
+      childTable = NULL,
+      childConceptIds = c(40485452),
+      outputDir = "path/to/nowhere", # doesn't exist
+      .softValidation = FALSE
+    ),
+    "1 assertions failed:"
+  )
+
+  expect_error(
+    createChildCohort(
+      cdm = "hello", # character instead of cdm_reference
+      parentCohortTable = NULL, # no childTable specified
+      collapseDupRecords = TRUE, # won't be checked, no parentCohortTable
+      childSchema = NULL, # NULL instead of character
+      childTable = NULL,  # no parentCohortTable specified
+      childConceptIds = NULL,
+      outputDir = "path/to/nowhere",# shouldn't be checked, path doesn't exist
+      .softValidation = "FALSE" # character nstead of logical
+    ),
+    "4 assertions failed:"
+  )
+
+  expect_error(
+    createChildCohort(
+      cdm = cdm,
+      parentCohortTable = "fact_relationship",
+      collapseDupRecords = 123, # numeric instead of logical
+      childSchema = "main",
+      childTable = NULL,
+      childConceptIds = NULL,
+      outputDir = "path/to/nowhere", # doesn't exist and parentCohortTable specified
+      .softValidation = TRUE
+    ),
+    "2 assertions failed:"
+  )
+
+  expect_no_error(
+    createChildCohort(
+      cdm = cdm,
+      parentCohortTable = NULL,
+      collapseDupRecords = 123, # shouldn't be checked, numeric instead of logical
+      childSchema = "main",
+      childTable = "infant",
+      childConceptIds = NULL,
+      outputDir = "path/to/nowhere", # shouldn't be checked, path doesn't exist
+      .softValidation = TRUE
+    ),
+  )
+
+  expect_no_error(
+    createChildCohort(
+      cdm = cdm,
+      parentCohortTable = "fact_relationship",
+      childSchema = "main",
+      outputDir = testthat::test_path("testthat_testOutput")
+      # .softValidation = TRUE # irrelevant when using parentCohortTable
+    ),
+  )
+  expect_no_error(
+    createChildCohort(
+      cdm = cdm,
+      childTable = "infant",
+      childSchema = "main",
+      .softValidation = TRUE
+    ),
+  )
+})
+
+testthat::test_that("Creating child_cohort from childTable + .softValidation = TRUE goes as expected", {
+
+  test_cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    childTable = "infant",
+    childSchema = "main",
+    .softValidation = TRUE
+  )
+
+  attrition_tbl <- omopgenerics::attrition(test_cdm[["child_cohort"]])
+
+  child_cohort <- test_cdm[["child_cohort"]] %>%
+    dplyr::collect()
+
+  # Sanity check multiple pregnancy IDs for twins ----
+  # createPerinatalCohortFromTbl() looks to kept IDs
+  expect_equal(
+    nrow(
+      child_cohort %>%
+        dplyr::filter(pregnancy_id == 71)
+      ),
+    3
+  )
+
+  expect_equal(
+    nrow(
+      child_cohort %>%
+        dplyr::filter(pregnancy_id == 72)
+      ), # this pregnancy_id should be dropped
+    0
+  )
+
+  # With .softValidation = TRUE----
+  expect_equal(
+    nrow(child_cohort),
+    13
+  )
+
+  expect_contains(
+    colnames(child_cohort),
+    "person_id" # should persist if .softValidation = TRUE
+  )
+
+  # Check attrition ----
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 1) # 1, Initial qualifying events
+
+  expect_equal(
+    attrition_subset %>% pull(excluded_records),
+    0
+  )
+
+  expect_equal(
+    attrition_subset %>% pull(excluded_subjects),
+    0
+  )
+})
+
+testthat::test_that("Creating child_cohort from childTable + .softValidation = FALSE goes as expected", {
+
+  test_cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    childTable = "infant",
+    childSchema = "main",
+    .softValidation = FALSE
+  )
+
+  attrition_tbl <- omopgenerics::attrition(test_cdm[["child_cohort"]])
+
+  child_cohort <- test_cdm[["child_cohort"]] %>%
+    dplyr::collect()
+
+  # Sanity check multiple pregnancy IDs for twins ----
+  # createPerinatalCohortFromTbl() looks to kept IDs
+  expect_equal(
+    nrow(
+      child_cohort %>%
+        dplyr::filter(pregnancy_id == 71)
+      ),
+    2
+  )
+
+  expect_equal(
+    nrow(
+      child_cohort %>%
+        dplyr::filter(pregnancy_id == 72)
+      ), # this pregnancy_id should be dropped
+    0
+  )
+
+  # With .softValidation = FALSE ----
+  expect_equal(
+    nrow(child_cohort),
+    4
+  )
+
+  expect_disjoint(
+    "person_id",
+    colnames(child_cohort)
+  )
+
+  # Parent is not in pregnancy cohort ----
+  notInPregCohort <- child_cohort %>%
+    dplyr::filter(
+      pregnancy_id == 1
+      | pregnancy_id == 2
+      | pregnancy_id == 3
+      | pregnancy_id == 7
+      | pregnancy_id == 9
+    )
+
+  expect_equal(
+    nrow(notInPregCohort),
+    0
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 2) # 2, Filter only children with parent in pregnancy cohort
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
+    6 # 2 records for pregnancy 1
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
+    5
+  )
+
+  # Duplicate child ----
+  duplicateChild <- child_cohort %>%
+    dplyr::filter(pregnancy_id == 71 & infant_id == 17) # pregnancy_id == 8 & infant_id == 111 is filtered out downstream as a non-live birth
+
+  expect_equal(
+    nrow(duplicateChild),
+    1
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 3) # 3, Removing duplicate children
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
+    2  # preg 8/inf 111 & preg 71/inf 17
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
+    0 # 1 record per duplicate child persists
+  )
+
+  # Not live birth ----
+  nonLiveBirth <- child_cohort %>%
+    dplyr::filter(pregnancy_id == 8 & infant_id == 111)
+
+  expect_equal(
+    nrow(nonLiveBirth),
+    0
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 4) # 4, Filter to live birth
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
+    1
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
+    1
+  )
+
+})
+
+testthat::test_that("Creating child_cohort from parentCohortTable goes as expected", {
+
+  test_cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    parentCohortTable = "fact_relationship",
+    childSchema = "main",
+    collapseDupRecords = TRUE,
+    outputDir = testthat::test_path("testthat_testOutput")
+  )
+
+  # Check that child_cohort-attrition.csv was created ----
+  expect_true(file.exists(file.path(childCohortAttritionFile)))
+
+  attrition_tbl <- read.csv(file.path(childCohortAttritionFile), sep = ",", header = TRUE)
+
+  child_cohort <- test_cdm[["child_cohort"]] %>% dplyr::collect()
+
+  # relationship_concept_id not in childConceptIds ----
+  # notInChildConceptIds <- child_cohort %>%
+  #   dplyr::filter(relationship_concept_id == 4326600)
+  #
+  # expect_equal(
+  #   nrow(notInChildConceptIds),
+  #   0
+  # )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 1) # 1, Initial qualifying events
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_records),
+    24 # attrition recording occurs after left_join() with observation_period with "bad" duplicate
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_subjects),
+    13 # subjects: c(1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15)
+  )
+
+  # Parent not in pregnancy_cohort ----
+  notInPregCohort <- child_cohort %>%
+    dplyr::filter(parent_id %in% c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15))
+
+  expect_equal(
+    nrow(notInPregCohort),
+    0
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 2) # 2, Filter children for birthing parent in pregnancy cohort
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_records),
+    5
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_subjects),
+    3
+  )
+
+  # Parent's pregnancy end year doesn't match child's birth year ----
+  birthYearMismatch <- child_cohort %>%
+    dplyr::filter(subject_id == 15) # pregnancy ended 2020/baby born 2022
+
+  expect_equal(
+    nrow(birthYearMismatch),
+    0
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 3) # 3, Filter children where birth_year == birthing parent's year of pregnancy_end_date
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_records),
+    4
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_subjects),
+    2
+  )
+
+  # Duplicate child, records are exactly identical
+  duplicateChildExact <- child_cohort %>%
+    dplyr::filter(subject_id == 12)
+
+  expect_equal(
+    nrow(duplicateChildExact),
+    1  # one record for the duplicate should persist
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 4) # 4, Filter duplicate infants to keep only one record
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_records),
+    2
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_subjects),
+    3
+  )
+
+  # Duplicate subject_id for child, collapseDupRecords = TRUE so these records are NOT identical
+  duplicateSubjectId <- child_cohort %>%
+    dplyr::filter(subject_id == 13)
+
+  expect_equal(
+    nrow(duplicateSubjectId),
+    0 # subject_id 13 has a "bad' duplicate, all records of child 13 should be removed
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 5) # 5, Filter out infants with duplicated subject_id
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_records),
+    1
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_subjects),
+    1
+  )
+})
