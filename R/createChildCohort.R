@@ -107,6 +107,14 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, parentCohortTab
     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
   # omopgenerics::recordCohortAttrition(reason = "Filter children to to Pregnancy Extension Table")
 
+  attrition <- dplyr::bind_rows(
+    attrition,
+    data.frame(
+      reason = "Filter children for birthing parent in pregnancy cohort",
+      number_subjects = getNumberSubjects(cdm$child_cohort),
+      number_records = getNumberRecords(cdm$child_cohort)
+    )
+  )
 
   cdm$child_cohort <- cdm$child_cohort %>%
     dplyr::left_join(cdm$person, by = dplyr::join_by(subject_id == person_id)) %>%
@@ -115,6 +123,15 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, parentCohortTab
     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
   # omopgenerics::recordCohortAttrition(reason = "Filter infants where birth_year == year of pregnancy_end_date")
 
+  attrition <- dplyr::bind_rows(
+    attrition,
+    data.frame(
+      reason = "Filter children where birth_year == birthing parent's year of pregnancy_end_date",
+      # "Filter children correct pregnancy for birthing parent in pregnancy Cohort"
+      number_subjects = getNumberSubjects(cdm$child_cohort),
+      number_records = getNumberRecords(cdm$child_cohort)
+    )
+  )
   # attrition <- dplyr::bind_rows(
   #   attrition,
   #   data.frame(
@@ -123,15 +140,48 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, parentCohortTab
   #     number_records = getNumberRecords(cdm$child_cohort)
   #   )
   # )
+  # attrition <- dplyr::bind_rows(
+  #   attrition,
+  #   data.frame(
+  #     reason = "Filter children correct pregnancy for birthing parent in pregnancy Cohort ",
+  #     number_subjects = getNumberSubjects(cdm$child_cohort),
+  #     number_records = getNumberRecords(cdm$child_cohort)
+  #   )
+  # )
+
+  # Reduce duplicate child records to one record
+  cdm$child_cohort <- cdm$child_cohort %>%
+    dplyr::mutate(row_id = row_number())
+
+  dupChild <- cdm$child_cohort %>%
+    dplyr::group_by(across(-row_id)) %>% # group by all cols except row number
+    dplyr::summarise( # and collapse identical rows
+      row_id = stringr::str_flatten(row_id, collapse = ","), # paste() + collapse incompatabile with DB paste() translation
+      .groups = "drop"
+    ) %>%
+    dplyr::select(row_id) %>%
+    dplyr::collect() %>%
+    dplyr::rowwise() %>% # can only use rowwise post-collect
+    dplyr::mutate(keep_id = min(as.numeric(strsplit(row_id, ",")[[1]]))) %>%
+    dplyr::ungroup() %>%
+    dplyr::pull(keep_id)
+
+
+  cdm$child_cohort <- cdm$child_cohort %>%
+    filter(row_id %in% dupChild) %>%
+    select(-row_id) %>%
+    dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
+
   attrition <- dplyr::bind_rows(
     attrition,
     data.frame(
-      reason = "Filter children correct pregnancy for birthing parent in pregnancy Cohort ",
+      reason = "Filter duplicate infants to keep only one record",
       number_subjects = getNumberSubjects(cdm$child_cohort),
       number_records = getNumberRecords(cdm$child_cohort)
     )
   )
 
+  # Based on subject_id only, filter OUT instances of duplicate children
   multipleIds <- cdm$child_cohort %>%
     dplyr::group_by(.data$subject_id) %>%
     dplyr::summarise(n = dplyr::n()) %>%
@@ -140,7 +190,6 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, parentCohortTab
 
   cdm$child_cohort <- cdm$child_cohort %>%
     dplyr::filter(!.data$subject_id %in% multipleIds$subject_id)
-  # omopgenerics::recordCohortAttrition(reason = "Filter out duplicate infants")
 
   attrition <- dplyr::bind_rows(
     attrition,
@@ -170,7 +219,7 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, parentCohortTab
     )
   )
 
-  write.csv(attrition, file = file.path(outputDir, "child_cohort-attrition.csv"), row.names = FALSE)
+  utils::write.csv(attrition, file = file.path(outputDir, "child_cohort-attrition.csv"), row.names = FALSE)
 
   return(cdm)
 }
@@ -231,13 +280,14 @@ filterLiveBirth <- function(tbl){
 #' @returns `cdm_reference`
 #' @import dplyr
 #' @import CDMConnector
-#' @import omopgenerics
 #' @import PatientProfiles
 #' @import checkmate
+#' @importFrom omopgenerics newCohortTable recordCohortAttrition
+#' @importFrom utils write.csv
 #' @export
 createChildCohort <- function(
     cdm,
-    parentCohortTable = NULL,
+    parentCohortTable = "fact_relationship",
     childSchema = NULL,
     childTable = NULL,
     childConceptIds = c(40485452, 4285883), # child -> parent ("child of subject" non-standard, "child" standard), why not 4326600?
