@@ -60,7 +60,7 @@ testthat::test_that("input args are as expected", {
       childConceptIds = NULL,
       outputDir = "path/to/nowhere", # shouldn't be checked, path doesn't exist
       .softValidation = TRUE
-    ),
+    )
   )
 
   expect_no_error(
@@ -70,7 +70,7 @@ testthat::test_that("input args are as expected", {
       # childConceptIds = c(40485452, 4285883),
       # collapseDupRecords = TRUE,
       outputDir = testthat::test_path("testthat_testOutput")
-    ),
+    )
   )
 
   expect_no_error(
@@ -79,7 +79,7 @@ testthat::test_that("input args are as expected", {
       childTable = "infant",
       childSchema = "main",
       .softValidation = TRUE
-    ),
+    )
   )
 })
 

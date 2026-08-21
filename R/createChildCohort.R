@@ -25,13 +25,13 @@ createPerinatalCohortFromTbl <- function(cdm) {
   cdm$child_cohort <- cdm$peri_et %>%
     dplyr::left_join(
       cdm[["pregnancy_duplicate_map"]] %>%
-        dplyr::select(removed_pregnancy_id, kept_pregnancy_id),
-      by = c("pregnancy_id" = "removed_pregnancy_id") # pregnancy_id is unique! Two people cannot have the same pregnancy_id, this is a safe join
+        dplyr::select("removed_pregnancy_id", "kept_pregnancy_id"),
+      by = c(pregnancy_id = "removed_pregnancy_id") # pregnancy_id is unique! Two people cannot have the same pregnancy_id, this is a safe join
     ) %>%
     dplyr::mutate(
-      pregnancy_id = dplyr::coalesce(kept_pregnancy_id, pregnancy_id)
+      pregnancy_id = dplyr::coalesce(.data$kept_pregnancy_id, .data$pregnancy_id)
     ) %>%
-    dplyr::select(-kept_pregnancy_id) %>%
+    dplyr::select(-c("kept_pregnancy_id")) %>%
     dplyr::compute(
       name = "child_cohort",
       temporary = FALSE,
@@ -320,11 +320,11 @@ createChildCohort <- function(
     # Check validity of child extension table
     if (isFALSE(.softValidation)) {
       keptIds <- cdm$pregnancy_cohort %>%
-        dplyr::select(pregnancy_id) %>%
+        dplyr::select("pregnancy_id") %>%
         dplyr::pull()
 
       cdm$child_cohort <- cdm$child_cohort %>%
-        dplyr::filter(pregnancy_id %in% keptIds) %>%
+        dplyr::filter(.data$pregnancy_id %in% keptIds) %>%
         dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
         omopgenerics::recordCohortAttrition(reason = "Filter only children with parent in pregnancy cohort") %>%
         dplyr::distinct() %>%
@@ -333,7 +333,7 @@ createChildCohort <- function(
         omopgenerics::recordCohortAttrition("Filter out infants with duplicated subject_id") %>%
         filterLiveBirth() %>% # cohort attrition recorded in function
         omopgenerics::recordCohortAttrition(reason = "Filter to live births") %>%
-        dplyr::select(-person_id) %>%
+        dplyr::select(-c("person_id")) %>%
         dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
     }
 
