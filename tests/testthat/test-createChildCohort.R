@@ -288,7 +288,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
 
 })
 
-testthat::test_that("Creating child_cohort from parentCohortTable goes as expected", {
+testthat::test_that("Creating child_cohort from parentCohortTable goes as expected, collapseDupRecords = TRUE", {
 
   test_cdm <- PETConnector::createChildCohort(
     cdm = cdm,
@@ -303,15 +303,13 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   child_cohort <- test_cdm[["child_cohort"]] %>% dplyr::collect()
 
-  # relationship_concept_id not in childConceptIds ----
-  # notInChildConceptIds <- child_cohort %>%
-  #   dplyr::filter(relationship_concept_id == 4326600)
-  #
-  # expect_equal(
-  #   nrow(notInChildConceptIds),
-  #   0
-  # )
+  # Check of rows in final child_cohort ----
+  expect_equal(
+    nrow(child_cohort),
+    1
+  )
 
+  # Initial qualifying events attrition check ----
   attrition_subset <- attrition_tbl %>%
     dplyr::filter(reason_id == 1) # 1, Initial qualifying events
 
@@ -445,5 +443,140 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
     attrition_subset %>%
       dplyr::pull(number_subjects),
     1
+  )
+})
+
+testthat::test_that("Creating child_cohort from parentCohortTable goes as expected, collapseDupRecords = FALSE", {
+
+  test_cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    collapseDupRecords = FALSE,
+    outputDir = testthat::test_path("testthat_testOutput")
+  )
+
+  # Check that child_cohort-attrition.csv was created ----
+  expect_true(file.exists(file.path(childCohortAttritionFile)))
+
+  attrition_tbl <- read.csv(file.path(childCohortAttritionFile), sep = ",", header = TRUE)
+
+  child_cohort <- test_cdm[["child_cohort"]] %>% dplyr::collect()
+
+  # Check of rows in final child_cohort ----
+  expect_equal(
+    nrow(child_cohort),
+    0
+  )
+
+  # Initial qualifying events attrition check ----
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 1) # 1, Initial qualifying events
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_records),
+    25 # attrition recording occurs after left_join() with observation_period with "bad" duplicate
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_subjects),
+    14 # subjects: c(1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 25)
+  )
+
+  # Parent not in pregnancy_cohort ----
+  notInPregCohort <- child_cohort %>%
+    dplyr::filter(parent_id %in% c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15))
+
+  expect_equal(
+    nrow(notInPregCohort),
+    0
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 2) # 2, Filter children for birthing parent in pregnancy cohort
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_records),
+    6
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_subjects),
+    4
+  )
+
+  # Parent's pregnancy end year doesn't match child's birth year ----
+  birthYearMismatch <- child_cohort %>%
+    dplyr::filter(subject_id == 15) # pregnancy ended 2020/baby born 2022
+
+  expect_equal(
+    nrow(birthYearMismatch),
+    0
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 3) # 3, Filter children where birth_year == birthing parent's year of pregnancy_end_date
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_records),
+    5
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_subjects),
+    3
+  )
+
+  # Duplicate subject_id for child, collapseDupRecords = FALSE so these records can be duplicated ----
+  duplicateSubjectId <- child_cohort %>%
+    dplyr::filter(subject_id == 13 | subject_id == 12)
+
+  expect_equal(
+    nrow(duplicateSubjectId),
+    0 # subject_id 13 has a "bad' duplicate, all records of child 13 should be removed
+    # subject_id 12 has an identical duplicate, should also be removed here when collapseDupRecords = FALSE
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 4) # 4, Filter out infants with duplicated subject_id
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_records),
+    1
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_subjects),
+    1
+  )
+
+  # Not live birth ----
+  nonLiveBirth <- child_cohort %>%
+    dplyr::filter(pregnancy_id == 27 & subject_id == 25)
+
+  expect_equal(
+    nrow(nonLiveBirth),
+    0
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 5) # 5, Filter to live births
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_records),
+    0
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(number_subjects),
+    0
   )
 })
