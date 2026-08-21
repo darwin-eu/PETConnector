@@ -14,26 +14,24 @@ testthat::test_that("input args are as expected", {
   expect_error(
     createChildCohort(
       cdm = cdm,
-      parentCohortTable = "fact_relationship", # also specified a childTable,
-      collapseDupRecords = "TRUE", # character instead of logical when parentCohortTable provided
+      collapseDupRecords = "TRUE", # won't be checked (childSchema is not NULL), character instead of logical
       childSchema = TRUE, # logical instead of character
-      childTable = "infant",  # also specified a parentCohortTable
-      childConceptIds = c("40485452", "4285883"), # character instead of numeric
-      outputDir = NULL, # no dir even though parentCohortTable specified
+      childTable = "infant",
+      childConceptIds = c("40485452", "4285883"), # won't be checked, character instead of numeric
+      outputDir = NULL,
       .softValidation = NULL # NULL instead of logical
     ),
-    "7 assertions failed:"
+    "2 assertions failed:"
   )
 
   expect_error(
     createChildCohort(
       cdm = cdm,
-      parentCohortTable = "fact_relationship",
       collapseDupRecords = TRUE,
-      childSchema = "main",
-      childTable = NULL,
-      childConceptIds = c(40485452),
-      outputDir = "path/to/nowhere", # doesn't exist
+      childSchema = "main", # provided childSchema without childTable
+      childTable = NULL, # provided childTable without childSchema
+      childConceptIds = c("40485452"), # won't be checked, character instead of numeric
+      outputDir = "path/to/nowhere", # won't be checked, doesn't exist
       .softValidation = FALSE
     ),
     "1 assertions failed:"
@@ -42,35 +40,20 @@ testthat::test_that("input args are as expected", {
   expect_error(
     createChildCohort(
       cdm = "hello", # character instead of cdm_reference
-      parentCohortTable = NULL, # no childTable specified
-      collapseDupRecords = TRUE, # won't be checked, no parentCohortTable
-      childSchema = NULL, # NULL instead of character
-      childTable = NULL,  # no parentCohortTable specified
-      childConceptIds = NULL,
-      outputDir = "path/to/nowhere",# shouldn't be checked, path doesn't exist
-      .softValidation = "FALSE" # character nstead of logical
+      collapseDupRecords = 123, # numeric instead of logical,
+      childSchema = NULL,
+      childTable = NULL,
+      childConceptIds = NULL, # NULL instead of character
+      outputDir = "path/to/nowhere",# path doesn't exist
+      .softValidation = "FALSE" # won't be checked, character instead of logical
     ),
     "4 assertions failed:"
-  )
-
-  expect_error(
-    createChildCohort(
-      cdm = cdm,
-      parentCohortTable = "fact_relationship",
-      collapseDupRecords = 123, # numeric instead of logical
-      childSchema = "main",
-      childTable = NULL,
-      childConceptIds = NULL,
-      outputDir = "path/to/nowhere", # doesn't exist and parentCohortTable specified
-      .softValidation = TRUE
-    ),
-    "2 assertions failed:"
   )
 
   expect_no_error(
     createChildCohort(
       cdm = cdm,
-      parentCohortTable = NULL,
+      # parentCohortTable = NULL,
       collapseDupRecords = 123, # shouldn't be checked, numeric instead of logical
       childSchema = "main",
       childTable = "infant",
@@ -83,12 +66,12 @@ testthat::test_that("input args are as expected", {
   expect_no_error(
     createChildCohort(
       cdm = cdm,
-      parentCohortTable = "fact_relationship",
-      childSchema = "main",
+      childConceptIds = c(40485452, 4285883),
+      collapseDupRecords = TRUE,
       outputDir = testthat::test_path("testthat_testOutput")
-      # .softValidation = TRUE # irrelevant when using parentCohortTable
     ),
   )
+
   expect_no_error(
     createChildCohort(
       cdm = cdm,
@@ -134,7 +117,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
   # With .softValidation = TRUE----
   expect_equal(
     nrow(child_cohort),
-    13
+    14
   )
 
   expect_contains(
@@ -192,7 +175,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   # With .softValidation = FALSE ----
   expect_equal(
     nrow(child_cohort),
-    4
+    5
   )
 
   expect_disjoint(
@@ -284,8 +267,6 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   test_cdm <- PETConnector::createChildCohort(
     cdm = cdm,
-    parentCohortTable = "fact_relationship",
-    childSchema = "main",
     collapseDupRecords = TRUE,
     outputDir = testthat::test_path("testthat_testOutput")
   )
@@ -384,13 +365,13 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
   expect_equal(
     attrition_subset %>%
       dplyr::pull(number_records),
-    2
+    3
   )
 
   expect_equal(
     attrition_subset %>%
       dplyr::pull(number_subjects),
-    3
+    2
   )
 
   # Duplicate subject_id for child, collapseDupRecords = TRUE so these records are NOT identical
