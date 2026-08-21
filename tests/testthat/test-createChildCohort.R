@@ -14,14 +14,14 @@ testthat::test_that("input args are as expected", {
   expect_error(
     createChildCohort(
       cdm = cdm,
-      collapseDupRecords = "TRUE", # won't be checked (childSchema is not NULL), character instead of logical
+      collapseDupRecords = "TRUE", # character instead of logical
       childSchema = TRUE, # logical instead of character
       childTable = "infant",
       childConceptIds = c("40485452", "4285883"), # won't be checked, character instead of numeric
       outputDir = NULL,
       .softValidation = NULL # NULL instead of logical
     ),
-    "2 assertions failed:"
+    "3 assertions failed:"
   )
 
   expect_error(
@@ -54,7 +54,7 @@ testthat::test_that("input args are as expected", {
     createChildCohort(
       cdm = cdm,
       # parentCohortTable = NULL,
-      collapseDupRecords = 123, # shouldn't be checked, numeric instead of logical
+      collapseDupRecords = TRUE,
       childSchema = "main",
       childTable = "infant",
       childConceptIds = NULL,
@@ -130,22 +130,23 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
     dplyr::filter(reason_id == 1) # 1, Initial qualifying events
 
   expect_equal(
-    attrition_subset %>% pull(excluded_records),
+    attrition_subset %>% dplyr::pull(excluded_records),
     0
   )
 
   expect_equal(
-    attrition_subset %>% pull(excluded_subjects),
+    attrition_subset %>% dplyr::pull(excluded_subjects),
     0
   )
 })
 
-testthat::test_that("Creating child_cohort from childTable + .softValidation = FALSE goes as expected", {
+testthat::test_that("Creating child_cohort from childTable + .softValidation = FALSE goes as expected; collapseDupRecords = TRUE,", {
 
   test_cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     childTable = "infant",
     childSchema = "main",
+    collapseDupRecords = TRUE,
     .softValidation = FALSE
   )
 
@@ -175,7 +176,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   # With .softValidation = FALSE ----
   expect_equal(
     nrow(child_cohort),
-    5
+    3
   )
 
   expect_disjoint(
@@ -214,16 +215,16 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   )
 
   # Duplicate child ----
-  duplicateChild <- child_cohort %>%
+  duplicateChildExact <- child_cohort %>%
     dplyr::filter(pregnancy_id == 71 & infant_id == 17) # pregnancy_id == 8 & infant_id == 111 is filtered out downstream as a non-live birth
 
   expect_equal(
-    nrow(duplicateChild),
+    nrow(duplicateChildExact),
     1
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 3) # 3, Removing duplicate children
+    dplyr::filter(reason_id == 3) # 3, Filter duplicate infants to keep only one record
 
   expect_equal(
     attrition_subset %>%
@@ -237,6 +238,30 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     0 # 1 record per duplicate child persists
   )
 
+  # Duplicate subject_id for child, collapseDupRecords = TRUE so these records are NOT identical ----
+  duplicateSubjectId <- child_cohort %>%
+    dplyr::filter(subject_id == 13)
+
+  expect_equal(
+    nrow(duplicateSubjectId),
+    0 # subject_id 13 has a "bad' duplicate, all records of child 13 should be removed
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 4) # 4, Filter out infants with duplicated subject_id
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
+    2
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
+    1
+  )
+
   # Not live birth ----
   nonLiveBirth <- child_cohort %>%
     dplyr::filter(pregnancy_id == 8 & infant_id == 111)
@@ -247,7 +272,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 4) # 4, Filter to live birth
+    dplyr::filter(reason_id == 5) # 5, Filter to live birth
 
   expect_equal(
     attrition_subset %>%
@@ -350,7 +375,7 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
     2
   )
 
-  # Duplicate child, records are exactly identical
+  # Duplicate child, records are exactly identical ----
   duplicateChildExact <- child_cohort %>%
     dplyr::filter(subject_id == 12)
 
@@ -374,7 +399,7 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
     2
   )
 
-  # Duplicate subject_id for child, collapseDupRecords = TRUE so these records are NOT identical
+  # Duplicate subject_id for child, collapseDupRecords = TRUE so these records are NOT identical ----
   duplicateSubjectId <- child_cohort %>%
     dplyr::filter(subject_id == 13)
 
