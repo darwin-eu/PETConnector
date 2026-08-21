@@ -17,7 +17,7 @@ initPerinatal <- function(cdm, childSchema, childTable) {
     src = attr(cdm, "dbcon"),
     CDMConnector::inSchema(schema = childSchema, table = childTable)
   ) %>%
-    dplyr::compute(name = CDMConnector::inSchema(attr(cdm, "write_schema"), "peri_et"), temporary = FALSE, overwrite = TRUE)
+    dplyr::compute(name = "peri_et", temporary = FALSE, overwrite = TRUE)
   return(cdm)
 }
 
