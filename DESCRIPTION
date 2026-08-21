@@ -18,4 +18,9 @@ Imports:
     checkmate,
     dplyr,
     omopgenerics,
-    PatientProfiles
+    PatientProfiles,
+    purrr,
+    readr,
+    stringr,
+    tibble,
+    tidyr

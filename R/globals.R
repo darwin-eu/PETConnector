@@ -10,6 +10,10 @@ if (getRversion() >= "2.15.1") {
     "kept_pregnancy_id",
     "removed_ids",
     "removed_pregnancy_id",
-    "age"
+    "age",
+    "person_id",
+    "parent_id",
+    "reason_id",
+    "reason"
   ))
 }

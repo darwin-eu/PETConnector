@@ -22,7 +22,7 @@ pregDupFile <- file.path(outputDir, "pregnancy_duplicate_map.csv")
 childCohortAttritionFile <- file.path(outputDir, "child_cohort-attrition.csv")
 
 # Create a pregnancy cohort table to test createChildCohort()
-pregnancy_cohort <- dplyr::tibble( # excluded will make it more difficult with twin preg 6
+pregnancy_cohort <- tibble::tibble( # excluded will make it more difficult with twin preg 6
   cohort_definition_id = c(101, 101, 101, 101, 101, 101, 101, 101),
   subject_id = as.integer(c(9, 11, 14, 17, 18, 100, 102, 9)),
   cohort_start_date = as.Date(c("2023-01-01", "2021-04-10", "2019-12-31", "2023-09-27", "2013-09-27", "2021-04-10", "2021-04-10", "2022-01-01"), "%Y-%m-%d"),
@@ -41,7 +41,7 @@ pregnancy_cohort <- dplyr::tibble( # excluded will make it more difficult with t
   sex = c("Female", "Female", "Female", "Female", "Female", "Female", "Female", "Female")
 )
 
-pregnancy_duplicate_map <- dplyr::tibble(
+pregnancy_duplicate_map <- tibble::tibble(
   subject_id = 102,
   pregnancy_start_date = as.Date("2021-04-10", "%Y-%m-%d"),
   pregnancy_end_date = as.Date("2022-01-07", "%Y-%m-%d"),
