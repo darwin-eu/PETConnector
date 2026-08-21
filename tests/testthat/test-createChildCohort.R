@@ -44,7 +44,7 @@ testthat::test_that("input args are as expected", {
       childSchema = NULL,
       childTable = NULL,
       childConceptIds = NULL, # NULL instead of character
-      outputDir = "path/to/nowhere",# path doesn't exist
+      outputDir = "path/to/nowhere", # path doesn't exist
       .softValidation = "FALSE" # won't be checked, character instead of logical
     ),
     "4 assertions failed:"
@@ -84,7 +84,6 @@ testthat::test_that("input args are as expected", {
 })
 
 testthat::test_that("Creating child_cohort from childTable + .softValidation = TRUE goes as expected", {
-
   test_cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     childTable = "infant",
@@ -103,7 +102,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
     nrow(
       child_cohort %>%
         dplyr::filter(pregnancy_id == 71)
-      ),
+    ),
     3
   )
 
@@ -111,7 +110,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
     nrow(
       child_cohort %>%
         dplyr::filter(pregnancy_id == 72)
-      ), # this pregnancy_id should be dropped
+    ), # this pregnancy_id should be dropped
     0
   )
 
@@ -142,7 +141,6 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
 })
 
 testthat::test_that("Creating child_cohort from childTable + .softValidation = FALSE goes as expected", {
-
   test_cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     childTable = "infant",
@@ -161,7 +159,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     nrow(
       child_cohort %>%
         dplyr::filter(pregnancy_id == 71)
-      ),
+    ),
     2
   )
 
@@ -169,7 +167,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     nrow(
       child_cohort %>%
         dplyr::filter(pregnancy_id == 72)
-      ), # this pregnancy_id should be dropped
+    ), # this pregnancy_id should be dropped
     0
   )
 
@@ -229,7 +227,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    2  # preg 8/inf 111 & preg 71/inf 17
+    2 # preg 8/inf 111 & preg 71/inf 17
   )
 
   expect_equal(
@@ -285,11 +283,9 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
       dplyr::pull(excluded_subjects),
     1
   )
-
 })
 
 testthat::test_that("Creating child_cohort from parentCohortTable goes as expected, collapseDupRecords = TRUE", {
-
   test_cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     collapseDupRecords = TRUE,
@@ -379,7 +375,7 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   expect_equal(
     nrow(duplicateChildExact),
-    1  # one record for the duplicate should persist
+    1 # one record for the duplicate should persist
   )
 
   attrition_subset <- attrition_tbl %>%
@@ -447,7 +443,6 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 })
 
 testthat::test_that("Creating child_cohort from parentCohortTable goes as expected, collapseDupRecords = FALSE", {
-
   test_cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     collapseDupRecords = FALSE,

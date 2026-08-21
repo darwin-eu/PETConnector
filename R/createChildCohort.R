@@ -14,7 +14,7 @@ getNumberRecords <- function(tbl) {
 
 initPerinatal <- function(cdm, childSchema, childTable) {
   cdm$peri_et <- dplyr::tbl(
-    src = attr(cdm, "dbcon") ,
+    src = attr(cdm, "dbcon"),
     CDMConnector::inSchema(schema = childSchema, table = childTable)
   ) %>%
     dplyr::compute(name = CDMConnector::inSchema(attr(cdm, "write_schema"), "peri_et"), temporary = FALSE, overwrite = TRUE)
@@ -38,11 +38,12 @@ createPerinatalCohortFromTbl <- function(cdm) {
       overwrite = TRUE
     )
 
-  cdm$child_cohort <-  cdm$child_cohort %>%
+  cdm$child_cohort <- cdm$child_cohort %>%
     dplyr::left_join(cdm$pregnancy_cohort, by = dplyr::join_by(pregnancy_id == pregnancy_id)) %>%
     dplyr::mutate(
       cohort_definition_id = 102,
-      parent_id = subject_id) %>%
+      parent_id = subject_id
+    ) %>%
     dplyr::mutate(
       subject_id = .data$infant_id
     ) %>%
@@ -71,7 +72,7 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, collapseDupReco
     dplyr::rename(
       subject_id = "fact_id_1",
       parent_id = "fact_id_2"
-    )  %>%
+    ) %>%
     dplyr::left_join(cdm$observation_period, by = dplyr::join_by(subject_id == person_id)) %>%
     dplyr::mutate(
       cohort_definition_id = 102,
@@ -132,7 +133,7 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, collapseDupReco
   )
 
 
-  if(isTRUE(collapseDupRecords)) {
+  if (isTRUE(collapseDupRecords)) {
     cdm$child_cohort <- cdm$child_cohort %>%
       distinct() %>%
       dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
@@ -199,7 +200,6 @@ filterDuplicateIds <- function(tbl) {
   tbl <- tbl %>%
     dplyr::filter(!.data$subject_id %in% multipleIds$subject_id) %>%
     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
-
 }
 
 # filterNegativeAges <- function(tbl) {
@@ -220,7 +220,7 @@ filterDuplicateIds <- function(tbl) {
 #     omopgenerics::recordCohortAttrition(reason = "Filter out children with no parent")
 # }
 
-filterLiveBirth <- function(tbl){
+filterLiveBirth <- function(tbl) {
   tbl %>%
     dplyr::filter(.data$pregnancy_outcome == 4092289)
 }
@@ -254,7 +254,7 @@ filterLiveBirth <- function(tbl){
 #' @param childSchema (`character(1)`: `NULL`) Name of the schema where the Child Extension Table resides
 #' @param childTable (`character(1)`: `NULL`) Name of the Child Extension Table
 #' @param childConceptIds (`numeric(n)`: `c(40485452, 4285883)`) Concepts to use to link the child to the parent. I.e. `40485452` = Child of subject
-#' @param outputDir (`path`: `NULL`) Path to output child_cohort-attrition.csv to if generating child_cohort from fact_relationship table (not using Child Extension Table)
+#' @param outputDir (`path`: `NULL`) Path to output child_cohort-attrition.csv to if generating child_cohort from fact_relationship table
 #' @param .softValidation (`logical(1)`: `FALSE`) Should a softValidation be done? default = FALSE
 #'
 #' @note Completely identical records will be:
@@ -278,10 +278,9 @@ createChildCohort <- function(
     childTable = NULL,
     collapseDupRecords = TRUE,
     outputDir = NULL,
-    .softValidation = FALSE
-) {
+    .softValidation = FALSE) {
 
-  # Check inputs
+  # Check inputs ----
   assertions <- checkmate::makeAssertCollection()
 
   checkmate::assertClass(x = cdm, classes = "cdm_reference", add = assertions)
@@ -293,7 +292,7 @@ createChildCohort <- function(
     checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE, add = assertions) # will overwrite child_cohort-attrition.csv if one already exists there
     checkmate::assertLogical(x = collapseDupRecords, len = 1, add = assertions)
 
-    if(is.null(outputDir)) {
+    if (is.null(outputDir)) {
       assertions$push(
         "When creating the child_cohort table from the fact_relationship table, an outputDir must be provided"
       )
@@ -304,8 +303,8 @@ createChildCohort <- function(
     checkmate::assertLogical(x = .softValidation, len = 1, add = assertions)
   }
 
-  if ((!is.null(childTable) & is.null(childSchema))
-      | (is.null(childTable) & !is.null(childSchema))) {
+  if ((!is.null(childTable) & is.null(childSchema)) |
+    (is.null(childTable) & !is.null(childSchema))) {
     assertions$push(
       "Double check that you have provided both a childTable and childSchema if you don't want to create child_cohort from the fact_relationship table"
     )
@@ -313,7 +312,7 @@ createChildCohort <- function(
 
   checkmate::reportAssertions(assertions)
 
-  # Create child_cohort from childTable
+  # Create child_cohort from childTable ----
   if (!is.null(childTable) & !is.null(childSchema)) {
     cdm <- initPerinatal(cdm = cdm, childSchema = childSchema, childTable = childTable)
     cdm <- createPerinatalCohortFromTbl(cdm = cdm)
@@ -333,21 +332,23 @@ createChildCohort <- function(
         filterDuplicateIds() %>%
         omopgenerics::recordCohortAttrition("Filter out infants with duplicated subject_id") %>%
         filterLiveBirth() %>% # cohort attrition recorded in function
-        omopgenerics::recordCohortAttrition(reason = "Filter to live birth") %>%
+        omopgenerics::recordCohortAttrition(reason = "Filter to live births") %>%
         dplyr::select(-person_id) %>%
         dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
     }
 
 
-  # Create child_cohort from fact_relationship table
+  # Create child_cohort from fact_relationship table ----
   } else { # will be is.null(childTable) & is.null(childSchema), we have a checkmate catch for cases when 1/2 args provided
 
-    cdm <- initPerinatalCohort(cdm = cdm,
-                               outputDir = outputDir,
-                               childConceptIds = childConceptIds,
-                               collapseDupRecords = collapseDupRecords)
+    cdm <- initPerinatalCohort(
+      cdm = cdm,
+      outputDir = outputDir,
+      childConceptIds = childConceptIds,
+      collapseDupRecords = collapseDupRecords
+    )
 
-    cdm$child_cohort <- cdm$child_cohort  %>%
+    cdm$child_cohort <- cdm$child_cohort %>%
       dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
   }
 
