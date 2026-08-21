@@ -14,14 +14,14 @@ testthat::test_that("input args are as expected", {
   expect_error(
     createChildCohort(
       cdm = cdm,
-      collapseDupRecords = "TRUE", # character instead of logical
+      collapseDupRecords = "TRUE", # won't be checked, character instead of logical
       childSchema = TRUE, # logical instead of character
       childTable = "infant",
       childConceptIds = c("40485452", "4285883"), # won't be checked, character instead of numeric
       outputDir = NULL,
       .softValidation = NULL # NULL instead of logical
     ),
-    "3 assertions failed:"
+    "2 assertions failed:"
   )
 
   expect_error(
@@ -54,7 +54,7 @@ testthat::test_that("input args are as expected", {
     createChildCohort(
       cdm = cdm,
       # parentCohortTable = NULL,
-      collapseDupRecords = TRUE,
+      collapseDupRecords = 123, # shouldn't be checked, numeric instead of logical
       childSchema = "main",
       childTable = "infant",
       childConceptIds = NULL,
@@ -146,7 +146,6 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     cdm = cdm,
     childTable = "infant",
     childSchema = "main",
-    collapseDupRecords = TRUE,
     .softValidation = FALSE
   )
 

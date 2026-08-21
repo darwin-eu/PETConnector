@@ -105,7 +105,6 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, collapseDupReco
     ) %>%
     dplyr::filter(!is.na(.data$pregnancy_id)) %>%
     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
-  # omopgenerics::recordCohortAttrition(reason = "Filter children to to Pregnancy Extension Table")
 
   attrition <- dplyr::bind_rows(
     attrition,
@@ -121,7 +120,6 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, collapseDupReco
     dplyr::mutate(year_match = !!CDMConnector::datepart(date = "pregnancy_end_date", interval = "year")) %>%
     dplyr::filter(.data$year_match == .data$year_of_birth) %>%
     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
-  # omopgenerics::recordCohortAttrition(reason = "Filter infants where birth_year == year of pregnancy_end_date")
 
   attrition <- dplyr::bind_rows(
     attrition,
@@ -135,30 +133,9 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, collapseDupReco
 
 
   if(isTRUE(collapseDupRecords)) {
-    # Reduce duplicate child records to one record per subject_id
-    # cdm$child_cohort <- cdm$child_cohort %>%
-    #   dplyr::mutate(row_id = row_number())
-    #
-    # dupChild <- cdm$child_cohort %>%
-    #   dplyr::group_by(across(-row_id)) %>% # group by all cols except row number
-    #   dplyr::summarise( # and collapse identical rows
-    #     row_id = stringr::str_flatten(row_id, collapse = ","), # paste() + collapse incompatible with DB paste() translation
-    #     .groups = "drop"
-    #   ) %>%
-    #   dplyr::select(row_id) %>%
-    #   dplyr::collect() %>%
-    #   dplyr::rowwise() %>% # can only use rowwise post-collect
-    #   dplyr::mutate(keep_id = min(as.numeric(strsplit(row_id, ",")[[1]]))) %>%
-    #   dplyr::ungroup() %>%
-    #   dplyr::pull(keep_id)
-    #
-    #
-    # cdm$child_cohort <- cdm$child_cohort %>%
-    #   filter(row_id %in% dupChild) %>%
-    #   select(-row_id) %>%
-    #   dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
-
-    collapseRecords(cdm$child_cohort)
+    cdm$child_cohort <- cdm$child_cohort %>%
+      distinct() %>%
+      dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
 
     attrition <- dplyr::bind_rows(
       attrition,
@@ -169,16 +146,6 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, collapseDupReco
       )
     )
   }
-#
-#   multipleIds <- cdm$child_cohort %>% # based on subject_id only, filter OUT instances of duplicate children
-#     dplyr::group_by(.data$subject_id) %>%
-#     dplyr::summarise(n = dplyr::n()) %>%
-#     dplyr::filter(.data$n > 1) %>%
-#     dplyr::collect()
-#
-#   cdm$child_cohort <- cdm$child_cohort %>%
-#     dplyr::filter(!.data$subject_id %in% multipleIds$subject_id) %>%
-#     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
 
   filterDuplicateIds(cdm$child_cohort)
 
@@ -221,30 +188,6 @@ initPerinatalCohort <- function(cdm, outputDir, childConceptIds, collapseDupReco
   return(cdm)
 }
 
-
-collapseRecords <- function(tbl) {
-  tbl <- tbl %>%
-    dplyr::mutate(row_id = row_number())
-
-  dupChild <- tbl %>%
-    dplyr::group_by(across(-row_id)) %>% # group by all cols except row number
-    dplyr::summarise( # and collapse identical rows
-      row_id = stringr::str_flatten(row_id, collapse = ","), # paste() + collapse incompatible with DB paste() translation
-      .groups = "drop"
-    ) %>%
-    dplyr::select(row_id) %>%
-    dplyr::collect() %>%
-    dplyr::rowwise() %>% # can only use rowwise post-collect
-    dplyr::mutate(keep_id = min(as.numeric(strsplit(row_id, ",")[[1]]))) %>%
-    dplyr::ungroup() %>%
-    dplyr::pull(keep_id)
-
-
-  tbl <- tbl %>%
-    filter(row_id %in% dupChild) %>%
-    select(-row_id) %>%
-    dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
-}
 
 filterDuplicateIds <- function(tbl) {
   multipleIds <- tbl %>% # based on subject_id only, filter OUT instances of duplicate children
@@ -304,14 +247,22 @@ filterLiveBirth <- function(tbl){
 
 #' createChildCohort
 #'
+#' Creates the child cohort from a specified child extension table or the fact_relationship table if no child extension table and schema are provided
+#'
 #' @param cdm (`cdm_reference`) CDM reference object
-#' @param collapseDupRecords (`logical(1)`: `TRUE`) Collapse duplicated records to one record per child. In the case that a subject id is duplicated but the rest of the record isn't, all records for the subject_id will be filtered out
+#' @param collapseDupRecords (`logical(1)`: `TRUE`) When TRUE and when creating child_cohort from fact_relationship table, collapses duplicated records to one record per child. In the case that a subject id is duplicated but the rest of the record isn't, all records for the subject_id will be filtered out
 #' @param childSchema (`character(1)`: `NULL`) Name of the schema where the Child Extension Table resides
 #' @param childTable (`character(1)`: `NULL`) Name of the Child Extension Table
 #' @param childConceptIds (`numeric(n)`: `c(40485452, 4285883)`) Concepts to use to link the child to the parent. I.e. `40485452` = Child of subject
 #' @param outputDir (`path`: `NULL`) Path to output child_cohort-attrition.csv to if generating child_cohort from fact_relationship table (not using Child Extension Table)
 #' @param .softValidation (`logical(1)`: `FALSE`) Should a softValidation be done? default = FALSE
 #'
+#' @note Completely identical records will be:
+#' - Collapse to one record if creating the child_cohort table from childTable
+#' - Collapse to one record if creating the child_cohort table from fact_relationship table and collapseDupRecords = TRUE
+#'
+#' @note Records with identical subject_ids where other record information varies will be:
+#' - Completely filtered out. Every record with that subject ID will be filtered out of child_cohort
 #' @returns `cdm_reference`
 #' @import dplyr
 #' @import CDMConnector
@@ -336,11 +287,11 @@ createChildCohort <- function(
   checkmate::assertClass(x = cdm, classes = "cdm_reference", add = assertions)
   checkmate::assertClass(x = childSchema, classes = "character", null.ok = TRUE, add = assertions) # don't need to check against (attr(cdm, "write_schema")
   checkmate::assertClass(x = childTable, classes = "character", null.ok = TRUE, add = assertions) # don't need to check against names(cdm)
-  checkmate::assertLogical(x = collapseDupRecords, len = 1, add = assertions)
 
   if (is.null(childTable) & is.null(childSchema)) { # meaning, we create child_cohort from fact_relationship (parentCohortTable) + childConceptIds
     checkmate::assertNumeric(x = childConceptIds, null.ok = FALSE, add = assertions)
     checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE, add = assertions) # will overwrite child_cohort-attrition.csv if one already exists there
+    checkmate::assertLogical(x = collapseDupRecords, len = 1, add = assertions)
 
     if(is.null(outputDir)) {
       assertions$push(
@@ -376,15 +327,9 @@ createChildCohort <- function(
       cdm$child_cohort <- cdm$child_cohort %>%
         dplyr::filter(pregnancy_id %in% keptIds) %>%
         dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
-        omopgenerics::recordCohortAttrition(reason = "Filter only children with parent in pregnancy cohort")
-
-      if(isTRUE(collapseDupRecords)) {
-      cdm$child_cohort <- cdm$child_cohort %>%
-        collapseRecords() %>%
-        omopgenerics::recordCohortAttrition("Filter duplicate infants to keep only one record")
-      }
-
-      cdm$child_cohort <- cdm$child_cohort %>%
+        omopgenerics::recordCohortAttrition(reason = "Filter only children with parent in pregnancy cohort") %>%
+        dplyr::distinct() %>%
+        omopgenerics::recordCohortAttrition("Filter duplicate infants to keep only one record") %>%
         filterDuplicateIds() %>%
         omopgenerics::recordCohortAttrition("Filter out infants with duplicated subject_id") %>%
         filterLiveBirth() %>% # cohort attrition recorded in function
