@@ -13,6 +13,7 @@ Config/testthat/parallel: true
 Imports: 
     CDMConnector,
     checkmate,
+    DBI,
     dplyr,
     omopgenerics,
     PatientProfiles,
