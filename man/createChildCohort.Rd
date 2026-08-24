@@ -23,7 +23,7 @@ createChildCohort(
 
 \item{childTable}{(\code{character(1)}: \code{NULL}) Name of the Child Extension Table}
 
-\item{collapseDupRecords}{(\code{logical(1)}: \code{TRUE}) When TRUE and when creating child_cohort from fact_relationship table, collapses duplicated records to one record per child. In the case that a subject id is duplicated but the rest of the record isn't, all records for the subject_id will be filtered out}
+\item{collapseDupRecords}{(\code{logical(1)}: \code{TRUE}) When TRUE, collapses duplicated records to one record per child. In the case that a subject id is duplicated but the rest of the record isn't, all records for the subject_id will be filtered out}
 
 \item{outputDir}{(\code{path}: \code{NULL}) Path to output child_cohort-attrition.csv to if generating child_cohort from fact_relationship table}
 
@@ -36,14 +36,5 @@ createChildCohort(
 Creates the child cohort from a specified child extension table or the fact_relationship table if no child extension table and schema are provided
 }
 \note{
-Completely identical records will be:
-\itemize{
-\item Collapse to one record if creating the child_cohort table from childTable
-\item Collapse to one record if creating the child_cohort table from fact_relationship table and collapseDupRecords = TRUE
-}
-
-Records with identical subject_ids where other record information varies will be:
-\itemize{
-\item Completely filtered out. Every record with that subject ID will be filtered out of child_cohort
-}
+After collapsing duplicate records (collapseDupRecords = TRUE) or not (collapseDupRecords = FALSE), records with identical subject_ids will be completely filtered out. Every record with that subject ID will be filtered out of child_cohort.
 }

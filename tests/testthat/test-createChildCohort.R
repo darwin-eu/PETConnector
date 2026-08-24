@@ -14,14 +14,14 @@ testthat::test_that("input args are as expected", {
   expect_error(
     createChildCohort(
       cdm = cdm,
-      collapseDupRecords = "TRUE", # won't be checked, character instead of logical
+      collapseDupRecords = "TRUE", # character instead of logical
       childSchema = TRUE, # logical instead of character
       childTable = "infant",
       childConceptIds = c("40485452", "4285883"), # won't be checked, character instead of numeric
       outputDir = NULL,
       .softValidation = NULL # NULL instead of logical
     ),
-    "2 assertions failed:"
+    "3 assertions failed:"
   )
 
   expect_error(
@@ -53,8 +53,7 @@ testthat::test_that("input args are as expected", {
   expect_no_error(
     createChildCohort(
       cdm = cdm,
-      # parentCohortTable = NULL,
-      collapseDupRecords = 123, # shouldn't be checked, numeric instead of logical
+      collapseDupRecords = FALSE,
       childSchema = "main",
       childTable = "infant",
       childConceptIds = NULL,
@@ -67,8 +66,6 @@ testthat::test_that("input args are as expected", {
     createChildCohort(
       cdm = cdm,
       collapseDupRecords = TRUE,
-      # childConceptIds = c(40485452, 4285883),
-      # collapseDupRecords = TRUE,
       outputDir = testthat::test_path("testthat_testOutput")
     )
   )
@@ -76,6 +73,7 @@ testthat::test_that("input args are as expected", {
   expect_no_error(
     createChildCohort(
       cdm = cdm,
+      collapseDupRecords = TRUE,
       childTable = "infant",
       childSchema = "main",
       .softValidation = TRUE
@@ -140,11 +138,12 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
   )
 })
 
-testthat::test_that("Creating child_cohort from childTable + .softValidation = FALSE goes as expected", {
+testthat::test_that("Creating child_cohort from childTable + .softValidation = FALSE + collapseDupRecords = TRUE goes as expected", {
   test_cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     childTable = "infant",
     childSchema = "main",
+    collapseDupRecords = TRUE,
     .softValidation = FALSE
   )
 
@@ -282,6 +281,108 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     attrition_subset %>%
       dplyr::pull(excluded_subjects),
     1
+  )
+})
+
+testthat::test_that("Creating child_cohort from childTable + .softValidation = FALSE + collapseDupRecords = FALSE goes as expected", {
+  test_cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    childTable = "infant",
+    childSchema = "main",
+    collapseDupRecords = FALSE,
+    .softValidation = FALSE
+  )
+
+  attrition_tbl <- omopgenerics::attrition(test_cdm[["child_cohort"]])
+
+  child_cohort <- test_cdm[["child_cohort"]] %>%
+    dplyr::collect()
+
+  # Sanity check multiple pregnancy IDs for twins ----
+  # createPerinatalCohortFromTbl() looks to kept IDs
+  expect_equal(
+    nrow(
+      child_cohort %>%
+        dplyr::filter(pregnancy_id == 71)
+    ),
+    1, # instead of being collapsed, we completely dropped preg 71/subject 17! Only preg 71/subject 18 persists
+  )
+
+  expect_equal(
+    nrow(
+      child_cohort %>%
+        dplyr::filter(pregnancy_id == 72)
+    ), # this pregnancy_id should be dropped
+    0
+  )
+
+  # With .softValidation = FALSE ----
+  expect_equal(
+    nrow(child_cohort),
+    2
+  )
+
+  expect_disjoint(
+    "person_id",
+    colnames(child_cohort)
+  )
+
+  # Parent is not in pregnancy cohort ----
+  notInPregCohort <- child_cohort %>%
+    dplyr::filter(
+      pregnancy_id == 1
+      | pregnancy_id == 2
+      | pregnancy_id == 3
+      | pregnancy_id == 7
+      | pregnancy_id == 9
+    )
+
+  expect_equal(
+    nrow(notInPregCohort),
+    0
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 2) # 2, Filter only children with parent in pregnancy cohort
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
+    6 # 2 records for pregnancy 1
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
+    5
+  )
+
+  # Duplicate subject_id for child, collapseDupRecords = FALSE so some of these records are IDENTICAL ----
+  duplicateSubjectId <- child_cohort %>%
+    dplyr::filter(
+      subject_id == 13
+      | subject_id == 17
+      | subject_id == 111
+    )
+
+  expect_equal(
+    nrow(duplicateSubjectId),
+    0
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 3) # 4, Filter out infants with duplicated subject_id
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
+    6
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
+    3
   )
 })
 
