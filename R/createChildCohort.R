@@ -64,7 +64,7 @@ createPerinatalCohortFromTbl <- function(cdm) {
   return(cdm)
 }
 
-initPerinatalCohort <- function(cdm, outputDir, childConceptIds, collapseDupRecords) {
+createPerinatalCohortFromFactRel <- function(cdm, outputDir, childConceptIds, collapseDupRecords) {
   pregnancyCols <- colnames(cdm$pregnancy_cohort)
 
   cdm$child_cohort <- cdm[["fact_relationship"]] %>%
@@ -302,7 +302,7 @@ createChildCohort <- function(
   if ((!is.null(childTable) & is.null(childSchema)) |
     (is.null(childTable) & !is.null(childSchema))) {
     assertions$push(
-      "Double check that you have provided both a childTable and childSchema if you don't want to create child_cohort from the fact_relationship table"
+      "Double check that you have provided both a childTable and childSchema if you want to create the child_cohort from the childTable."
     )
   }
 
@@ -343,7 +343,7 @@ createChildCohort <- function(
   # Create child_cohort from fact_relationship table ----
   } else { # will be is.null(childTable) & is.null(childSchema), we have a checkmate catch for cases when 1/2 args provided
 
-    cdm <- initPerinatalCohort(
+    cdm <- createPerinatalCohortFromFactRel(
       cdm = cdm,
       outputDir = outputDir,
       childConceptIds = childConceptIds,

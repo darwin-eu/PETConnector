@@ -82,16 +82,16 @@ testthat::test_that("input args are as expected", {
 })
 
 testthat::test_that("Creating child_cohort from childTable + .softValidation = TRUE goes as expected", {
-  test_cdm <- PETConnector::createChildCohort(
+  cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     childTable = "infant",
     childSchema = "main",
     .softValidation = TRUE
   )
 
-  attrition_tbl <- omopgenerics::attrition(test_cdm[["child_cohort"]])
+  attrition_tbl <- omopgenerics::attrition(cdm[["child_cohort"]])
 
-  child_cohort <- test_cdm[["child_cohort"]] %>%
+  child_cohort <- cdm[["child_cohort"]] %>%
     dplyr::collect()
 
   # Sanity check multiple pregnancy IDs for twins ----
@@ -139,7 +139,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
 })
 
 testthat::test_that("Creating child_cohort from childTable + .softValidation = FALSE + collapseDupRecords = TRUE goes as expected", {
-  test_cdm <- PETConnector::createChildCohort(
+  cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     childTable = "infant",
     childSchema = "main",
@@ -147,9 +147,9 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     .softValidation = FALSE
   )
 
-  attrition_tbl <- omopgenerics::attrition(test_cdm[["child_cohort"]])
+  attrition_tbl <- omopgenerics::attrition(cdm[["child_cohort"]])
 
-  child_cohort <- test_cdm[["child_cohort"]] %>%
+  child_cohort <- cdm[["child_cohort"]] %>%
     dplyr::collect()
 
   # Sanity check multiple pregnancy IDs for twins ----
@@ -285,7 +285,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
 })
 
 testthat::test_that("Creating child_cohort from childTable + .softValidation = FALSE + collapseDupRecords = FALSE goes as expected", {
-  test_cdm <- PETConnector::createChildCohort(
+  cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     childTable = "infant",
     childSchema = "main",
@@ -293,9 +293,9 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     .softValidation = FALSE
   )
 
-  attrition_tbl <- omopgenerics::attrition(test_cdm[["child_cohort"]])
+  attrition_tbl <- omopgenerics::attrition(cdm[["child_cohort"]])
 
-  child_cohort <- test_cdm[["child_cohort"]] %>%
+  child_cohort <- cdm[["child_cohort"]] %>%
     dplyr::collect()
 
   # Sanity check multiple pregnancy IDs for twins ----
@@ -387,7 +387,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
 })
 
 testthat::test_that("Creating child_cohort from parentCohortTable goes as expected, collapseDupRecords = TRUE", {
-  test_cdm <- PETConnector::createChildCohort(
+  cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     collapseDupRecords = TRUE,
     outputDir = testthat::test_path("testthat_testOutput")
@@ -398,7 +398,7 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   attrition_tbl <- read.csv(file.path(childCohortAttritionFile), sep = ",", header = TRUE)
 
-  child_cohort <- test_cdm[["child_cohort"]] %>% dplyr::collect()
+  child_cohort <- cdm[["child_cohort"]] %>% dplyr::collect()
 
   # Check of rows in final child_cohort ----
   expect_equal(
@@ -544,7 +544,7 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 })
 
 testthat::test_that("Creating child_cohort from parentCohortTable goes as expected, collapseDupRecords = FALSE", {
-  test_cdm <- PETConnector::createChildCohort(
+  cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     collapseDupRecords = FALSE,
     outputDir = testthat::test_path("testthat_testOutput")
@@ -555,7 +555,7 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   attrition_tbl <- read.csv(file.path(childCohortAttritionFile), sep = ",", header = TRUE)
 
-  child_cohort <- test_cdm[["child_cohort"]] %>% dplyr::collect()
+  child_cohort <- cdm[["child_cohort"]] %>% dplyr::collect()
 
   # Check of rows in final child_cohort ----
   expect_equal(
