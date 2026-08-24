@@ -202,48 +202,10 @@ filterDuplicateIds <- function(tbl) {
     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
 }
 
-# filterNegativeAges <- function(tbl) {
-#   cols <- colnames(tbl)
-#
-#   tbl %>%
-#     PatientProfiles::addAge(indexDate = "pregnancy_end_date") %>%
-#     dplyr::filter(!.data$age < 0) %>%
-#     dplyr::select(dplyr::any_of(cols)) %>%
-#     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
-#     omopgenerics::recordCohortAttrition(reason = "Filter out children with negative age")
-# }
-
-# filterNoParent <- function(tbl) {
-#   tbl %>%
-#     dplyr::filter(!is.na(.data$parent_id)) %>%
-#     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
-#     omopgenerics::recordCohortAttrition(reason = "Filter out children with no parent")
-# }
-
 filterLiveBirth <- function(tbl) {
   tbl %>%
     dplyr::filter(.data$pregnancy_outcome == 4092289)
 }
-
-# filterMultipleParents <- function(tbl) {
-#   # Filter multiple pregnancies
-#   temp_n_parents <- tbl %>%
-#     dplyr::group_by(.data$subject_id, .data$parent_id) %>%
-#     dplyr::summarise(n_parents = dplyr::n()) %>%
-#     dplyr::filter(.data$n_parents == 1)
-#
-#   tbl %>%
-#     dplyr::inner_join(temp_n_parents, by = "subject_id") %>%
-#     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
-#     omopgenerics::recordCohortAttrition(reason = "Filter children from multiple parents")
-# }
-
-# filterPregnancyCohort <- function(tbl) {
-#   tbl %>%
-#     dplyr::filter(pregnancy_id %in% keptIds) %>%
-#     dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
-#     omopgenerics::recordCohortAttrition(reason = "Filter only children with parent in pregnancy cohort")
-# }
 
 #' createChildCohort
 #'
