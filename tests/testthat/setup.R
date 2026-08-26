@@ -19,7 +19,6 @@ cdm <- TestGenerator::patientsCDM(
 outputDir <- testthat::test_path("testthat_testOutput")
 dir.create(outputDir, recursive = FALSE)
 pregDupFile <- file.path(outputDir, "pregnancy_duplicate_map.csv")
-childCohortAttritionFile <- file.path(outputDir, "child_cohort-attrition.csv")
 
 # Create a pregnancy cohort table to test createChildCohort()
 pregnancy_cohort <- tibble::tibble( # excluded will make it more difficult with twin preg 6

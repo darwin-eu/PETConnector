@@ -18,7 +18,6 @@ testthat::test_that("input args are as expected", {
       childSchema = TRUE, # logical instead of character
       childTable = "infant",
       childConceptIds = c("40485452", "4285883"), # won't be checked, character instead of numeric
-      outputDir = NULL,
       .softValidation = NULL # NULL instead of logical
     ),
     "3 assertions failed:"
@@ -31,7 +30,6 @@ testthat::test_that("input args are as expected", {
       childSchema = "main", # provided childSchema without childTable
       childTable = NULL, # provided childTable without childSchema
       childConceptIds = c("40485452"), # won't be checked, character instead of numeric
-      outputDir = "path/to/nowhere", # won't be checked, doesn't exist
       .softValidation = FALSE
     ),
     "1 assertions failed:"
@@ -44,10 +42,9 @@ testthat::test_that("input args are as expected", {
       childSchema = NULL,
       childTable = NULL,
       childConceptIds = NULL, # NULL instead of character
-      outputDir = "path/to/nowhere", # path doesn't exist
       .softValidation = "FALSE" # won't be checked, character instead of logical
     ),
-    "4 assertions failed:"
+    "3 assertions failed:"
   )
 
   expect_no_error(
@@ -56,8 +53,7 @@ testthat::test_that("input args are as expected", {
       collapseDupRecords = FALSE,
       childSchema = "main",
       childTable = "infant",
-      childConceptIds = NULL,
-      outputDir = "path/to/nowhere", # shouldn't be checked, path doesn't exist
+      childConceptIds = NULL, # not used when creating from childTable
       .softValidation = TRUE
     )
   )
@@ -65,18 +61,7 @@ testthat::test_that("input args are as expected", {
   expect_no_error(
     createChildCohort(
       cdm = cdm,
-      collapseDupRecords = TRUE,
-      outputDir = testthat::test_path("testthat_testOutput")
-    )
-  )
-
-  expect_no_error(
-    createChildCohort(
-      cdm = cdm,
-      collapseDupRecords = TRUE,
-      childTable = "infant",
-      childSchema = "main",
-      .softValidation = TRUE
+      collapseDupRecords = TRUE
     )
   )
 })
@@ -128,12 +113,14 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
     dplyr::filter(reason_id == 1) # 1, Initial qualifying events
 
   expect_equal(
-    attrition_subset %>% dplyr::pull(excluded_records),
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
     0
   )
 
   expect_equal(
-    attrition_subset %>% dplyr::pull(excluded_subjects),
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
     0
   )
 })
@@ -305,7 +292,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
       child_cohort %>%
         dplyr::filter(pregnancy_id == 71)
     ),
-    1, # instead of being collapsed, we completely dropped preg 71/subject 17! Only preg 71/subject 18 persists
+    1 # instead of being collapsed, we completely dropped preg 71/subject 17! Only preg 71/subject 18 persists
   )
 
   expect_equal(
@@ -386,19 +373,16 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   )
 })
 
-testthat::test_that("Creating child_cohort from parentCohortTable goes as expected, collapseDupRecords = TRUE", {
+testthat::test_that("Creating child_cohort from fact_relationship (parentCohortTable) goes as expected, collapseDupRecords = TRUE", {
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
-    collapseDupRecords = TRUE,
-    outputDir = testthat::test_path("testthat_testOutput")
+    collapseDupRecords = TRUE
   )
 
-  # Check that child_cohort-attrition.csv was created ----
-  expect_true(file.exists(file.path(childCohortAttritionFile)))
+  child_cohort <- cdm[["child_cohort"]] %>%
+    dplyr::collect()
 
-  attrition_tbl <- read.csv(file.path(childCohortAttritionFile), sep = ",", header = TRUE)
-
-  child_cohort <- cdm[["child_cohort"]] %>% dplyr::collect()
+  attrition_tbl <- omopgenerics::attrition(cdm[["child_cohort"]])
 
   # Check of rows in final child_cohort ----
   expect_equal(
@@ -412,14 +396,14 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_records),
-    25 # attrition recording occurs after left_join() with observation_period with "bad" duplicate
+      dplyr::pull(excluded_records),
+    0 # number_records == 25; attrition recording occurs after left_join() with observation_period with "bad" duplicate
   )
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_subjects),
-    14 # subjects: c(1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 25)
+      dplyr::pull(excluded_subjects),
+    0 # number_subjects == 14; c(1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 25)
   )
 
   # Parent not in pregnancy_cohort ----
@@ -436,14 +420,14 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_records),
-    6
+      dplyr::pull(excluded_records),
+    19
   )
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_subjects),
-    4
+      dplyr::pull(excluded_subjects),
+    10
   )
 
   # Parent's pregnancy end year doesn't match child's birth year ----
@@ -460,14 +444,14 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_records),
-    5
+      dplyr::pull(excluded_records),
+    1
   )
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_subjects),
-    3
+      dplyr::pull(excluded_subjects),
+    1
   )
 
   # Duplicate child, records are exactly identical ----
@@ -484,14 +468,14 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_records),
-    4
+      dplyr::pull(excluded_records),
+    1
   )
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_subjects),
-    3
+      dplyr::pull(excluded_subjects),
+    0
   )
 
   # Duplicate subject_id for child, collapseDupRecords = TRUE so these records are NOT identical ----
@@ -508,14 +492,14 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_records),
+      dplyr::pull(excluded_records),
     2
   )
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_subjects),
-    2
+      dplyr::pull(excluded_subjects),
+    1
   )
 
   # Not live birth ----
@@ -532,30 +516,27 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_records),
+      dplyr::pull(excluded_records),
     1
   )
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_subjects),
+      dplyr::pull(excluded_subjects),
     1
   )
 })
 
-testthat::test_that("Creating child_cohort from parentCohortTable goes as expected, collapseDupRecords = FALSE", {
+testthat::test_that("Creating child_cohort from fact_relationship (parentCohortTable) goes as expected, collapseDupRecords = FALSE", {
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
-    collapseDupRecords = FALSE,
-    outputDir = testthat::test_path("testthat_testOutput")
+    collapseDupRecords = FALSE
   )
 
-  # Check that child_cohort-attrition.csv was created ----
-  expect_true(file.exists(file.path(childCohortAttritionFile)))
+  child_cohort <- cdm[["child_cohort"]] %>%
+    dplyr::collect()
 
-  attrition_tbl <- read.csv(file.path(childCohortAttritionFile), sep = ",", header = TRUE)
-
-  child_cohort <- cdm[["child_cohort"]] %>% dplyr::collect()
+  attrition_tbl <- omopgenerics::attrition(cdm[["child_cohort"]])
 
   # Check of rows in final child_cohort ----
   expect_equal(
@@ -569,14 +550,14 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_records),
-    25 # attrition recording occurs after left_join() with observation_period with "bad" duplicate
+      dplyr::pull(excluded_records),
+    0 # number_records == 25; attrition recording occurs after left_join() with observation_period with "bad" duplicate
   )
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_subjects),
-    14 # subjects: c(1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 25)
+      dplyr::pull(excluded_subjects),
+    0 # number_subjects == 14; c(1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 25)
   )
 
   # Parent not in pregnancy_cohort ----
@@ -593,14 +574,14 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_records),
-    6
+      dplyr::pull(excluded_records),
+    19
   )
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_subjects),
-    4
+      dplyr::pull(excluded_subjects),
+    10
   )
 
   # Parent's pregnancy end year doesn't match child's birth year ----
@@ -617,14 +598,14 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_records),
-    5
+      dplyr::pull(excluded_records),
+    1
   )
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_subjects),
-    3
+      dplyr::pull(excluded_subjects),
+    1
   )
 
   # Duplicate subject_id for child, collapseDupRecords = FALSE so these records can be duplicated ----
@@ -642,14 +623,14 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_records),
-    1
+      dplyr::pull(excluded_records),
+    4
   )
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_subjects),
-    1
+      dplyr::pull(excluded_subjects),
+    2
   )
 
   # Not live birth ----
@@ -666,13 +647,13 @@ testthat::test_that("Creating child_cohort from parentCohortTable goes as expect
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_records),
-    0
+      dplyr::pull(excluded_records),
+    1
   )
 
   expect_equal(
     attrition_subset %>%
-      dplyr::pull(number_subjects),
-    0
+      dplyr::pull(excluded_subjects),
+    1
   )
 })

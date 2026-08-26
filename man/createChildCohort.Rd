@@ -10,7 +10,6 @@ createChildCohort(
   childSchema = NULL,
   childTable = NULL,
   collapseDupRecords = TRUE,
-  outputDir = NULL,
   .softValidation = FALSE
 )
 }
@@ -24,8 +23,6 @@ createChildCohort(
 \item{childTable}{(\code{character(1)}: \code{NULL}) Name of the Child Extension Table}
 
 \item{collapseDupRecords}{(\code{logical(1)}: \code{TRUE}) When TRUE, collapses duplicated records to one record per child. In the case that a subject id is duplicated but the rest of the record isn't, all records for the subject_id will be filtered out}
-
-\item{outputDir}{(\code{path}: \code{NULL}) Path to output child_cohort-attrition.csv to if generating child_cohort from fact_relationship table}
 
 \item{.softValidation}{(\code{logical(1)}: \code{FALSE}) Should a softValidation be done? default = FALSE}
 }

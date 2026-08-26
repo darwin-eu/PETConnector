@@ -26,7 +26,8 @@ createPerinatalCohortFromTbl <- function(cdm) {
     dplyr::left_join(
       cdm[["pregnancy_duplicate_map"]] %>%
         dplyr::select("removed_pregnancy_id", "kept_pregnancy_id"),
-      by = c(pregnancy_id = "removed_pregnancy_id") # pregnancy_id is unique! Two people cannot have the same pregnancy_id, this is a safe join
+      dplyr::join_by(pregnancy_id == removed_pregnancy_id)
+      # pregnancy_id is unique! Two people cannot have the same pregnancy_id, this is a safe join
     ) %>%
     dplyr::mutate(
       pregnancy_id = dplyr::coalesce(.data$kept_pregnancy_id, .data$pregnancy_id)
@@ -42,7 +43,7 @@ createPerinatalCohortFromTbl <- function(cdm) {
     dplyr::left_join(cdm$pregnancy_cohort, by = dplyr::join_by(pregnancy_id == pregnancy_id)) %>%
     dplyr::mutate(
       cohort_definition_id = 102,
-      parent_id = subject_id
+      parent_id = .data$subject_id
     ) %>%
     dplyr::mutate(
       subject_id = .data$infant_id
@@ -64,7 +65,7 @@ createPerinatalCohortFromTbl <- function(cdm) {
   return(cdm)
 }
 
-createPerinatalCohortFromFactRel <- function(cdm, outputDir, childConceptIds, collapseDupRecords) {
+createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRecords) {
   pregnancyCols <- colnames(cdm$pregnancy_cohort)
 
   cdm$child_cohort <- cdm[["fact_relationship"]] %>%
@@ -135,7 +136,7 @@ createPerinatalCohortFromFactRel <- function(cdm, outputDir, childConceptIds, co
 
   if (isTRUE(collapseDupRecords)) {
     cdm$child_cohort <- cdm$child_cohort %>%
-      distinct() %>%
+      dplyr::distinct() %>%
       dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
 
     attrition <- dplyr::bind_rows(
@@ -181,14 +182,28 @@ createPerinatalCohortFromFactRel <- function(cdm, outputDir, childConceptIds, co
     )
 
   attrition <- attrition %>%
-    dplyr::mutate(reason_id = row_number()) %>% # add in post to account for optional filter (i.e collapseDupRecords)
-    dplyr::relocate(reason_id, .before = reason)
+    dplyr::mutate(cohort_definition_id = 102) %>%
+    dplyr::mutate(reason_id = dplyr::row_number()) %>% # add in post to account for optional filter (i.e collapseDupRecords)
+    dplyr::mutate(
+      excluded_subjects = dplyr::lag(.data$number_subjects) - .data$number_subjects,
+      excluded_records = dplyr::lag(.data$number_records) - .data$number_records,
+      excluded_subjects = tidyr::replace_na(.data$excluded_subjects, 0),
+      excluded_records = tidyr::replace_na(.data$excluded_records, 0)
+    ) %>%
+    dplyr::relocate("cohort_definition_id", "number_records", "number_subjects", "reason_id", "reason", "excluded_records", .before = "excluded_subjects")
 
-  utils::write.csv(attrition, file = file.path(outputDir, "child_cohort-attrition.csv"), row.names = FALSE)
+  cdm$child_cohort %>%
+    omopgenerics::newCohortTable(
+      cohortSetRef = data.frame(
+        cohort_definition_id = 102,
+        cohort_name = "child"
+      ),
+      cohortAttritionRef = attrition,
+      .softValidation = FALSE
+    )
 
   return(cdm)
 }
-
 
 filterDuplicateIds <- function(tbl) {
   multipleIds <- tbl %>% # based on subject_id only, filter OUT instances of duplicate children
@@ -216,7 +231,6 @@ filterLiveBirth <- function(tbl) {
 #' @param childSchema (`character(1)`: `NULL`) Name of the schema where the Child Extension Table resides
 #' @param childTable (`character(1)`: `NULL`) Name of the Child Extension Table
 #' @param childConceptIds (`numeric(n)`: `c(40485452, 4285883)`) Concepts to use to link the child to the parent. I.e. `40485452` = Child of subject
-#' @param outputDir (`path`: `NULL`) Path to output child_cohort-attrition.csv to if generating child_cohort from fact_relationship table
 #' @param .softValidation (`logical(1)`: `FALSE`) Should a softValidation be done? default = FALSE
 #'
 #' @note After collapsing duplicate records (collapseDupRecords = TRUE) or not (collapseDupRecords = FALSE), records with identical subject_ids will be completely filtered out. Every record with that subject ID will be filtered out of child_cohort.
@@ -227,7 +241,6 @@ filterLiveBirth <- function(tbl) {
 #' @import PatientProfiles
 #' @import checkmate
 #' @importFrom omopgenerics newCohortTable recordCohortAttrition
-#' @importFrom utils write.csv
 #' @export
 createChildCohort <- function(
     cdm,
@@ -235,7 +248,6 @@ createChildCohort <- function(
     childSchema = NULL,
     childTable = NULL,
     collapseDupRecords = TRUE,
-    outputDir = NULL,
     .softValidation = FALSE) {
 
   # Check inputs ----
@@ -248,13 +260,6 @@ createChildCohort <- function(
 
   if (is.null(childTable) & is.null(childSchema)) { # meaning, we create child_cohort from fact_relationship (parentCohortTable) + childConceptIds
     checkmate::assertNumeric(x = childConceptIds, null.ok = FALSE, add = assertions)
-    checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE, add = assertions) # will overwrite child_cohort-attrition.csv if one already exists there
-
-    if (is.null(outputDir)) {
-      assertions$push(
-        "When creating the child_cohort table from the fact_relationship table, an outputDir must be provided"
-      )
-    }
   }
 
   if (!is.null(childTable) & !is.null(childSchema)) {
@@ -307,7 +312,6 @@ createChildCohort <- function(
 
     cdm <- createPerinatalCohortFromFactRel(
       cdm = cdm,
-      outputDir = outputDir,
       childConceptIds = childConceptIds,
       collapseDupRecords = collapseDupRecords
     )
