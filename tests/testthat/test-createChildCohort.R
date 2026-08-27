@@ -408,7 +408,8 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
 
   # Parent not in pregnancy_cohort ----
   notInPregCohort <- child_cohort %>%
-    dplyr::filter(parent_id %in% c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15))
+    dplyr::filter(subject_id %in% c(1, 2, 3, 4, 5, 6, 7, 8, 11, 14))
+    # linked to parents c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15) who aren't in pregnancy_cohort
 
   expect_equal(
     nrow(notInPregCohort),
@@ -504,7 +505,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
 
   # Not live birth ----
   nonLiveBirth <- child_cohort %>%
-    dplyr::filter(pregnancy_id == 27 & subject_id == 25)
+    dplyr::filter(subject_id == 25) # pregnancy_id == 27
 
   expect_equal(
     nrow(nonLiveBirth),
@@ -562,7 +563,9 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
 
   # Parent not in pregnancy_cohort ----
   notInPregCohort <- child_cohort %>%
-    dplyr::filter(parent_id %in% c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15))
+    dplyr::filter(subject_id %in% c(1, 2, 3, 4, 5, 6, 7, 8, 11, 14))
+    # linked to parents c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15) who aren't in pregnancy_cohort
+
 
   expect_equal(
     nrow(notInPregCohort),
@@ -635,7 +638,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
 
   # Not live birth ----
   nonLiveBirth <- child_cohort %>%
-    dplyr::filter(pregnancy_id == 27 & subject_id == 25)
+    dplyr::filter(subject_id == 25) # pregnancy_id == 27
 
   expect_equal(
     nrow(nonLiveBirth),

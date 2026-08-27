@@ -43,10 +43,10 @@ createPerinatalCohortFromTbl <- function(cdm) {
     dplyr::left_join(cdm$pregnancy_cohort, by = dplyr::join_by(pregnancy_id == pregnancy_id)) %>%
     dplyr::mutate(
       cohort_definition_id = 102,
-      parent_id = .data$subject_id
+      parent_id = .data$subject_id # subject_id comes from pregnancy_cohort
     ) %>%
     dplyr::mutate(
-      subject_id = .data$infant_id
+      subject_id = .data$person_id # overwrites existing subject_id (from pregnancy_cohort) to person_id (childTable)
     ) %>%
     dplyr::left_join(cdm$observation_period, by = dplyr::join_by(subject_id == person_id)) %>%
     dplyr::mutate(
@@ -173,6 +173,7 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
     )
   )
   cdm$child_cohort <- cdm$child_cohort %>%
+    dplyr::select("cohort_definition_id", "subject_id", "cohort_start_date", "cohort_end_date") %>%
     omopgenerics::newCohortTable(
       cohortSetRef = data.frame(
         cohort_definition_id = 102,
@@ -282,6 +283,10 @@ createChildCohort <- function(
 
     # Check validity of child extension table
     if (isFALSE(.softValidation)) {
+
+      childColnames <- cdm[[childTable]] |>
+        colnames()
+
       keptIds <- cdm$pregnancy_cohort %>%
         dplyr::select("pregnancy_id") %>%
         dplyr::pull()
@@ -303,7 +308,9 @@ createChildCohort <- function(
         filterLiveBirth() %>% # cohort attrition recorded in function
         omopgenerics::recordCohortAttrition(reason = "Filter to live births") %>%
         dplyr::select(-c("person_id")) %>%
+        dplyr::select("cohort_definition_id", "subject_id", "cohort_start_date", "cohort_end_date", dplyr::any_of(childColnames)) %>%
         dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
+
     }
 
 
