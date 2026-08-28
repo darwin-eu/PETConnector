@@ -103,9 +103,9 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
     14
   )
 
-  expect_contains(
-    colnames(child_cohort),
-    "person_id" # should persist if .softValidation = TRUE
+  expect_disjoint(
+    "person_id",
+    colnames(child_cohort)
   )
 
   # Check attrition ----

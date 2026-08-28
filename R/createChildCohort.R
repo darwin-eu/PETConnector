@@ -278,14 +278,14 @@ createChildCohort <- function(
 
   # Create child_cohort from childTable ----
   if (!is.null(childTable) & !is.null(childSchema)) {
+    childColnames <- cdm[[childTable]] %>%
+      colnames()
+
     cdm <- initPerinatal(cdm = cdm, childSchema = childSchema, childTable = childTable)
     cdm <- createPerinatalCohortFromTbl(cdm = cdm)
 
     # Check validity of child extension table
     if (isFALSE(.softValidation)) {
-
-      childColnames <- cdm[[childTable]] |>
-        colnames()
 
       keptIds <- cdm$pregnancy_cohort %>%
         dplyr::select("pregnancy_id") %>%
@@ -306,13 +306,13 @@ createChildCohort <- function(
         filterDuplicateIds() %>%
         omopgenerics::recordCohortAttrition("Filter out infants with duplicated subject_id") %>%
         filterLiveBirth() %>% # cohort attrition recorded in function
-        omopgenerics::recordCohortAttrition(reason = "Filter to live births") %>%
-        dplyr::select(-c("person_id")) %>%
-        dplyr::select("cohort_definition_id", "subject_id", "cohort_start_date", "cohort_end_date", dplyr::any_of(childColnames)) %>%
-        dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
-
+        omopgenerics::recordCohortAttrition(reason = "Filter to live births")
     }
 
+    cdm$child_cohort <- cdm$child_cohort %>%
+      dplyr::select(-c("person_id")) %>%
+      dplyr::select("cohort_definition_id", "subject_id", "cohort_start_date", "cohort_end_date", dplyr::any_of(childColnames)) %>%
+      dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
 
   # Create child_cohort from fact_relationship table ----
   } else { # will be is.null(childTable) & is.null(childSchema), we have a checkmate catch for cases when 1/2 args provided
