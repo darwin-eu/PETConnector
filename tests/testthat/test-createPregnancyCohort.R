@@ -82,7 +82,7 @@ testthat::test_that("input args are as expected", {
   )
 })
 
-testthat::test_that("keepExtensionTable = TRUE keeps pregnancy_extension_table and that the characteristics of the table align with what is expected", {
+testthat::test_that("keepExtensionTable = TRUE keeps pregnancy_extension_table reference and that the characteristics of the table align with what is expected", {
   cdm <- createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
@@ -148,7 +148,7 @@ testthat::test_that("keepExtensionTable = TRUE keeps pregnancy_extension_table a
   )
 })
 
-testthat::test_that("keepExtensionTable = FALSE drops pregnancy_extension_table", {
+testthat::test_that("keepExtensionTable = FALSE drops reference to pregnancy_extension_table", {
   cdm <- createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
