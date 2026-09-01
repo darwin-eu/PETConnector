@@ -12,17 +12,8 @@ getNumberRecords <- function(tbl) {
     dplyr::pull(.data$n)
 }
 
-initPerinatal <- function(cdm, childSchema, childTable) {
-  cdm$peri_et <- dplyr::tbl(
-    src = attr(cdm, "dbcon"),
-    CDMConnector::inSchema(schema = childSchema, table = childTable)
-  ) %>%
-    dplyr::compute(name = "peri_et", temporary = FALSE, overwrite = TRUE)
-  return(cdm)
-}
-
 createPerinatalCohortFromTbl <- function(cdm) {
-  cdm$child_cohort <- cdm$peri_et %>%
+  cdm$child_cohort <- cdm$perinatal_extension_table %>%
     dplyr::left_join(
       cdm[["pregnancy_duplicate_map"]] %>%
         dplyr::select("removed_pregnancy_id", "kept_pregnancy_id"),
@@ -281,7 +272,13 @@ createChildCohort <- function(
     childColnames <- cdm[[childTable]] %>%
       colnames()
 
-    cdm <- initPerinatal(cdm = cdm, childSchema = childSchema, childTable = childTable)
+    cdm <- attachExtensionTable(
+      cdm = cdm,
+      table = childTable,
+      schema = childSchema,
+      name = "perinatal_extension_table"
+    )
+
     cdm <- createPerinatalCohortFromTbl(cdm = cdm)
 
     # Check validity of child extension table
