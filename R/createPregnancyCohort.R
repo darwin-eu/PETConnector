@@ -309,6 +309,7 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' @note A pregnancy of multiples will be recorded with one pregnancy record
 #' - Multiple pregnancies of the same pregnancy_id these will be collapsed to one record.
 #' - If a multiples pregnancy with different pregnancy_ids for a birthing parent is recognized, then this will be collapsed to one pregnancy record with the smallest pregnancy_id kept to represent it
+#' @note A pregnancy which appears as multiple records with differing dates (same pregnancy_id, different dates) will be dropped
 #' @returns (`cdm_reference`) Returns the CDM with the added cohort table.
 #' @import dplyr
 #' @importFrom omopgenerics newCohortTable dropSourceTable recordCohortAttrition

@@ -59,4 +59,6 @@ A pregnancy of multiples will be recorded with one pregnancy record
 \item Multiple pregnancies of the same pregnancy_id these will be collapsed to one record.
 \item If a multiples pregnancy with different pregnancy_ids for a birthing parent is recognized, then this will be collapsed to one pregnancy record with the smallest pregnancy_id kept to represent it
 }
+
+A pregnancy which appears as multiple records with differing dates (same pregnancy_id, different dates) will be dropped
 }
