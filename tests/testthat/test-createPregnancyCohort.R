@@ -220,12 +220,12 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
 
 
   # Pregnancy ends after observation end ----
-  outsideObsStart <- pregnancy_cohort %>%
+  outsideObsEnd <- pregnancy_cohort %>%
     # These pregnancies in pregnancy_extension_table end after obs end
     dplyr::filter(subject_id == 16 & pregnancy_id == 9)
 
   expect_equal(
-    nrow(outsideObsStart),
+    nrow(outsideObsEnd),
     0
   )
 
@@ -312,6 +312,34 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
     0 # should maintain subjects, just collapse to one pregnancy
   )
 
+  # Same birthing parent, same pregnancy IDs but different dates ----
+  identicalID_diffDates <- pregnancy_cohort %>%
+    dplyr::filter(
+      (subject_id == 105 & pregnancy_id == 45) # overlapping dates, 3 records
+      | (subject_id == 106 & pregnancy_id == 46) # overlapping dates, 2 records
+
+    )
+
+  expect_equal(
+    nrow(identicalID_diffDates),
+    0 # should drop all 5 records for these subject_id/pregnancy_id combos
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 8) # 8, Removed identical pregnancies with differing dates
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
+    5
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
+    2
+  )
+
   # Same birthing parent, different pregnancy IDs overlapping in time ----
   overlap_distinctID <- pregnancy_cohort %>%
     dplyr::filter(
@@ -325,7 +353,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 8) # 8, No overlapping pregnancy records
+    dplyr::filter(reason_id == 9) # 9, No overlapping pregnancy records
 
   expect_equal(
     attrition_subset %>%
@@ -512,7 +540,7 @@ testthat::test_that("Filtering on Age goes as expected", {
   # Check of attrition table ----
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 9) # 9, Age at pregnancy start date in [21, 27]
+    dplyr::filter(reason_id == 10) # 10, Age at pregnancy start date in [21, 27]
 
   expect_equal(
     attrition_subset %>%
@@ -580,7 +608,7 @@ testthat::test_that("Filtering on startDate goes as expected", {
 
   # Check of attrition table ----
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 11) # 11, Pregnancy start >= 2019-12-31 and < 2024-01-01 (end of database - 1 year
+    dplyr::filter(reason_id == 12) # 12, Pregnancy start >= 2019-12-31 and < 2024-01-01 (end of database - 1 year
 
   expect_equal(
     attrition_subset %>%
@@ -655,7 +683,7 @@ testthat::test_that("Filtering on endDate goes as expected", {
 
   # Check of attrition table ----
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 11) # 11, Pregnancy end <= 2022-01-07
+    dplyr::filter(reason_id == 12) # 12, Pregnancy end <= 2022-01-07
 
   expect_equal(
     attrition_subset %>%
@@ -732,7 +760,7 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
 
   # Check of attrition table ----
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 11 | reason_id == 12) # 11, Pregnancy start >= 2019-12-31 and < 2024-01-01 (end of database - 1 year); 12, Pregnancy end <= 2022-01-07
+    dplyr::filter(reason_id == 12 | reason_id == 13) # 12, Pregnancy start >= 2019-12-31 and < 2024-01-01 (end of database - 1 year); 13, Pregnancy end <= 2022-01-07
 
   expect_equal(
     attrition_subset %>%
@@ -777,7 +805,7 @@ testthat::test_that("Filtering on sex goes as expected", {
 
   # Check of attrition table ----
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 10) # 10 Sex: Male
+    dplyr::filter(reason_id == 11) # 11 Sex: Male
 
   # The 8 pregnancies in pregnancy_cohort on default settings are still there until filtering on sex
   expect_equal(
@@ -819,10 +847,10 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
   pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
     dplyr::collect()
 
-  # With .softValidation, we expect 18 records in pregnancy_extension table ----
+  # With .softValidation, we expect 23 records in pregnancy_extension table ----
   expect_equal(
     nrow(pregnancy_cohort),
-    18
+    23
   )
 
   # Outside of age at pregnancy start range ----
@@ -836,7 +864,7 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
 
   # Check of attrition table ----
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 2) # Age at pregnancy start date in [12, 55]
+    dplyr::filter(reason_id == 2) # 2, Age at pregnancy start date in [12, 55]
 
   expect_equal(
     attrition_subset %>%

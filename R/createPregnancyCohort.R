@@ -150,13 +150,20 @@ filterMultiplePregnancies <- function(tbl, outputDir) {
 
   tbl %>%
     dplyr::filter(.data$pregnancy_id %in% kept_ids) %>%
-    dplyr::distinct(subject_id, pregnancy_id, .keep_all = TRUE) %>%
+    dplyr::distinct() %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE, overwrite = TRUE) %>%
     omopgenerics::recordCohortAttrition(
       reason = "Removed identical pregnancy duplicates"
     )
 
-
+  tbl %>%
+    dplyr::group_by(subject_id, pregnancy_id) %>%
+    dplyr::filter(n() == 1) %>%
+    dplyr::ungroup() %>%
+    dplyr::compute(name = "pregnancy_cohort", temporary = FALSE, overwrite = TRUE) %>%
+    omopgenerics::recordCohortAttrition(
+      reason = "Removed identical pregnancies with differing dates"
+    )
 
   tbl %>%
     PatientProfiles::addCohortIntersectCount(
