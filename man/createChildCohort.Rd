@@ -6,6 +6,7 @@
 \usage{
 createChildCohort(
   cdm,
+  cohortDefinitionID = 102,
   childConceptIds = c(40485452, 4285883),
   childSchema = NULL,
   childTable = NULL,
@@ -15,6 +16,8 @@ createChildCohort(
 }
 \arguments{
 \item{cdm}{(\code{cdm_reference}) CDM reference object}
+
+\item{cohortDefinitionID}{(\code{numeric(1)}: \code{102}) Cohort definition id to assign to newly created cohort}
 
 \item{childConceptIds}{(\code{numeric(n)}: \code{c(40485452, 4285883)}) Concepts to use to link the child to the parent. I.e. \code{40485452} = Child of subject}
 
