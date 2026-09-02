@@ -361,6 +361,7 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 6,
     maxGestationalDuration = 266,
     minAge = 12, # default
@@ -459,6 +460,7 @@ testthat::test_that("Filtering on Age goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 21,
@@ -545,6 +547,7 @@ testthat::test_that("Filtering on startDate goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -613,6 +616,7 @@ testthat::test_that("Filtering on endDate goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -688,6 +692,7 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -765,6 +770,7 @@ testthat::test_that("Filtering on sex goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -815,6 +821,7 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
