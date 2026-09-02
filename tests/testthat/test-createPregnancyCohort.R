@@ -312,6 +312,33 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
     0 # should maintain subjects, just collapse to one pregnancy
   )
 
+  # Same birthing parent, different pregnancy IDs overlapping in time ----
+  overlap_distinctID <- pregnancy_cohort %>%
+    dplyr::filter(
+      (subject_id == 104 & pregnancy_id == 43)
+      | (subject_id == 104 & pregnancy_id == 44)
+    )
+
+  expect_equal(
+    nrow(overlap_distinctID),
+    0 # should drop BOTH pregnancies
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 8) # 8, No overlapping pregnancy records
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
+    2
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
+    1
+  )
+
   # Check that pregnancy_duplicate_map.csv was created ----
   expect_true(file.exists(file.path(pregDupFile)))
 })
@@ -792,10 +819,10 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
   pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
     dplyr::collect()
 
-  # With .softValidation, we expect 16 records in pregnancy_extension table ----
+  # With .softValidation, we expect 18 records in pregnancy_extension table ----
   expect_equal(
     nrow(pregnancy_cohort),
-    16
+    18
   )
 
   # Outside of age at pregnancy start range ----
