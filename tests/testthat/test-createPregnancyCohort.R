@@ -5,6 +5,7 @@ testthat::test_that("input args are as expected", {
       petTable = "pregnancy",
       petSchema = "main",
       keepExtensionTable = "no", # should be logical TRUE/FALSE
+      cohortDefinitionID = "101", # character instead of number
       minGestationalDuration = "20", # character instead of number
       maxGestationalDuration = "308", # character instead of number
       minAge = "12", # character instead of number
@@ -15,7 +16,7 @@ testthat::test_that("input args are as expected", {
       outputDir = "path/to/nowhere", # softValidation is not FALSE, no error!
       .softValidation = c(TRUE, FALSE) # length 2 instead of 1
     ),
-    "9 assertions failed:"
+    "10 assertions failed:"
   )
 
 
@@ -49,6 +50,7 @@ testthat::test_that("input args are as expected", {
       petTable = "pregnancy",
       petSchema = "main",
       keepExtensionTable = c(TRUE, FALSE), # length 2 instead of 1
+      cohortDefinitionID = c(101, 102), # length 2 instead of 1
       minGestationalDuration = NULL, # NULL instead of number
       maxGestationalDuration = Inf, # infinite
       minAge = 55, # greater than maxAge
@@ -59,7 +61,7 @@ testthat::test_that("input args are as expected", {
       outputDir = testthat::test_path("testthat_testOutput"),
       .softValidation = "FALSE" # character instead of logical
     ),
-    "7 assertions failed:"
+    "8 assertions failed:"
   )
 
   expect_error(
@@ -161,12 +163,49 @@ testthat::test_that("keepExtensionTable = FALSE drops pregnancy_extension_table"
   expect_all_false(stringr::str_detect(names(cdm), "pregnancy_extension_table"))
 })
 
+testthat::test_that("cohortDefinitionID updates to user choice", {
+
+  # cohort_definition_id with default settings should be 101 ----
+  cdm <- createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    outputDir = outputDir
+  )
+
+  pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
+    dplyr::collect()
+
+  expect_all_equal(
+    pregnancy_cohort$cohort_definition_id,
+    101
+  )
+
+  # cohort_definition_id with non-default ----
+  cdm <- createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    cohortDefinitionID = 404,
+    outputDir = outputDir
+  )
+    pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
+    dplyr::collect()
+
+  expect_all_equal(
+    pregnancy_cohort$cohort_definition_id,
+    404
+  )
+
+})
+
 testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expected & pregnancy_duplicate_map.csv output file is created", {
   cdm <- createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
