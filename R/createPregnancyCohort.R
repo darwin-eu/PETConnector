@@ -1,17 +1,3 @@
-initMotherTable <- function(cdm, petTable, petSchema) {
-  cdm$pregnancy_extension_table <- dplyr::tbl(
-    attr(cdm, "dbcon"),
-    CDMConnector::inSchema(schema = petSchema, table = petTable)
-  ) %>%
-    dplyr::compute(name = "pregnancy_extension_table", temporary = FALSE, overwrite = TRUE)
-
-  cdm$pregnancy_extension_table <- cdm$pregnancy_extension_table %>%
-    dplyr::mutate(
-      pregnancy_start_date = as.Date(.data$pregnancy_start_date),
-      pregnancy_end_date = as.Date(.data$pregnancy_end_date)
-    )
-  return(cdm)
-}
 
 initPregnancyCohort <- function(cdm, keepExtensionTable, cohortDefinitionID) {
   cdm$pregnancy_cohort <- cdm$pregnancy_extension_table %>%
@@ -25,7 +11,7 @@ initPregnancyCohort <- function(cdm, keepExtensionTable, cohortDefinitionID) {
     omopgenerics::newCohortTable(.softValidation = TRUE)
 
   if (isFALSE(keepExtensionTable)) {
-    cdm <- omopgenerics::dropSourceTable(cdm = cdm, name = "pregnancy_extension_table")
+    cdm$pregnancy_extension_table <- NULL
   }
 
   return(cdm)
@@ -357,11 +343,18 @@ createPregnancyCohort <- function(
 
 
   # pregnancy_extension_table ----
-  cdm <- initMotherTable(
+  cdm <- attachExtensionTable(
     cdm = cdm,
-    petTable = petTable,
-    petSchema = petSchema
+    table = petTable,
+    schema = petSchema,
+    name = "pregnancy_extension_table"
   )
+
+  cdm$pregnancy_extension_table <- cdm$pregnancy_extension_table %>%
+    dplyr::mutate(
+      pregnancy_start_date = as.Date(.data$pregnancy_start_date),
+      pregnancy_end_date = as.Date(.data$pregnancy_end_date)
+    )
 
   # pregnancy_cohort table ----
   cdm <- initPregnancyCohort(
