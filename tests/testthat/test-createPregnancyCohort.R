@@ -11,11 +11,12 @@ testthat::test_that("input args are as expected", {
       maxAge = c(1, 2), # two numbers provided
       startDate = "2021-08-31", # character instead of Date
       endDate = "2020-06-28", # character instead of Date
+      samePregDiffDates = "first", # not a choice, should be "earliest"
       sex = "femle", # typo
       outputDir = "path/to/nowhere", # softValidation is not FALSE, no error!
       .softValidation = c(TRUE, FALSE) # length 2 instead of 1
     ),
-    "9 assertions failed:"
+    "10 assertions failed:"
   )
 
 
@@ -25,10 +26,11 @@ testthat::test_that("input args are as expected", {
       petTable = "pregnancy",
       petSchema = "main",
       outputDir = testthat::test_path("testthat_testOutput"),
+      samePregDiffDates = c("first", "latest"), # length 2, should only be 1
       sex = c("MaLe", "FEmale"),
       .softValidation = NULL # NULL instead of logical
     ),
-    "2 assertions failed:"
+    "3 assertions failed:"
   )
 
   expect_error(
@@ -55,6 +57,7 @@ testthat::test_that("input args are as expected", {
       maxAge = 12, # less than minAge
       startDate = as.Date("2021-08-31", "%Y-%m-%d"),
       endDate = NULL,
+      samePregDiffDates = "EarLiest",
       sex = NULL, # NULL instead of "Female", "Male" or c("Female", "Male")
       outputDir = testthat::test_path("testthat_testOutput"),
       .softValidation = "FALSE" # character instead of logical
@@ -171,6 +174,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
     maxGestationalDuration = 308, # default
     minAge = 12, # default
     maxAge = 55, # default
+    samePregDiffDates = "none", # default
     startDate = NULL, # default
     endDate = NULL, # default
     sex = "Female", # default
@@ -204,7 +208,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 2) # 2, In observation at pregnancy start dat
+    dplyr::filter(reason_id == 2) # 2, In observation at pregnancy start date
 
   expect_equal(
     attrition_subset %>%
@@ -296,7 +300,6 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
     71 # lowest of the pregnancy IDs should be selected to keep
   )
 
-
   attrition_subset <- attrition_tbl %>%
     dplyr::filter(reason_id == 7) # 7, Removed identical pregnancy duplicates
 
@@ -315,14 +318,14 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   # Same birthing parent, same pregnancy IDs but different dates ----
   identicalID_diffDates <- pregnancy_cohort %>%
     dplyr::filter(
-      (subject_id == 105 & pregnancy_id == 45) # overlapping dates, 3 records
+      (subject_id == 105 & pregnancy_id == 45) # overlapping dates, 4 records
       | (subject_id == 106 & pregnancy_id == 46) # overlapping dates, 2 records
 
     )
 
   expect_equal(
     nrow(identicalID_diffDates),
-    0 # should drop all 5 records for these subject_id/pregnancy_id combos
+    0 # should drop all 6 records for these subject_id/pregnancy_id combos
   )
 
   attrition_subset <- attrition_tbl %>%
@@ -331,7 +334,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    5
+    6
   )
 
   expect_equal(
@@ -383,6 +386,7 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
     maxAge = 55, # default
     startDate = NULL, # default
     endDate = NULL, # default
+    samePregDiffDates = "none", # default
     sex = "Female", # default
     outputDir = outputDir,
     .softValidation = FALSE # default
@@ -481,6 +485,7 @@ testthat::test_that("Filtering on Age goes as expected", {
     maxAge = 27,
     startDate = NULL, # default
     endDate = NULL, # default
+    samePregDiffDates = "none", # default
     sex = "Female", # default
     outputDir = outputDir,
     .softValidation = FALSE # default
@@ -567,6 +572,7 @@ testthat::test_that("Filtering on startDate goes as expected", {
     maxAge = 55, # default
     startDate = as.Date("2019-12-31", "%Y-%m-%d"),
     endDate = NULL, # default
+    samePregDiffDates = "none", # default
     sex = "Female", # default
     outputDir = outputDir,
     .softValidation = FALSE # default
@@ -635,6 +641,7 @@ testthat::test_that("Filtering on endDate goes as expected", {
     maxAge = 55, # default
     startDate = NULL, # default
     endDate = as.Date("2022-01-07", "%Y-%m-%d"),
+    samePregDiffDates = "none", # default
     sex = "Female", # default
     outputDir = outputDir,
     .softValidation = FALSE # default
@@ -710,6 +717,7 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
     maxAge = 55, # default
     startDate = as.Date("2019-12-31", "%Y-%m-%d"),
     endDate = as.Date("2022-01-07", "%Y-%m-%d"),
+    samePregDiffDates = "none", # default
     sex = "Female", # default
     outputDir = outputDir,
     .softValidation = FALSE # default
@@ -775,6 +783,142 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
   )
 })
 
+testthat::test_that("Filtering with samePregDiffDates = 'earliest' goes as expected", {
+  cdm <- createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    keepExtensionTable = TRUE, # default
+    minGestationalDuration = 0, # default
+    maxGestationalDuration = 308, # default
+    minAge = 12, # default
+    maxAge = 55, # default
+    startDate = NULL, # default
+    endDate = NULL, # default
+    samePregDiffDates = "earliest",
+    sex = "Female", # default
+    outputDir = outputDir,
+    .softValidation = FALSE # default
+  )
+
+  attrition_tbl <- omopgenerics::attrition(cdm[["pregnancy_cohort"]])
+
+  pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
+    dplyr::collect()
+
+  # Sanity that the two records included here were NOT included with defaults ----
+  expect_equal(
+    nrow(dplyr::anti_join(pregnancy_cohort, includedWithDefaults)),
+    2
+  )
+
+  # With samePregDiffDates = 'earliest', we expect 10 pregnancies in pregnancy_extension table ----
+  expect_equal(
+    nrow(pregnancy_cohort),
+    10
+  )
+
+  # Same birthing parent, same pregnancy IDs but different dates ----
+  identicalID_diffDates <- pregnancy_cohort %>%
+    dplyr::filter(
+      (subject_id == 105 & pregnancy_id == 45) # overlapping dates, 4 records
+      | (subject_id == 106 & pregnancy_id == 46) # overlapping dates, 2 records
+    ) %>%
+    dplyr::filter(
+      (subject_id == 105 & pregnancy_id == 45 & pregnancy_start_date == "2020-01-02" & pregnancy_end_date == "2020-09-16") # same start date as another record, selecting on gest duration
+      | (subject_id == 106 & pregnancy_id == 46 & pregnancy_start_date == "2015-01-01")
+    )
+
+  expect_equal(
+    nrow(identicalID_diffDates),
+    2 # should keep just one record per, and the earliest one (with longest gest duration if >1 with same start date)
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 8) # 8, Keeping only record with earliest start date for identical pregnancies with differing dates
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
+    4
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
+    0
+  )
+
+})
+
+testthat::test_that("Filtering with samePregDiffDates = 'latest' goes as expected", {
+  cdm <- createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    keepExtensionTable = TRUE, # default
+    minGestationalDuration = 0, # default
+    maxGestationalDuration = 308, # default
+    minAge = 12, # default
+    maxAge = 55, # default
+    startDate = NULL, # default
+    endDate = NULL, # default
+    samePregDiffDates = "latest",
+    sex = "Female", # default
+    outputDir = outputDir,
+    .softValidation = FALSE # default
+  )
+
+  attrition_tbl <- omopgenerics::attrition(cdm[["pregnancy_cohort"]])
+
+  pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
+    dplyr::collect()
+
+  # Sanity that the two records included here were NOT included with defaults ----
+  expect_equal(
+    nrow(dplyr::anti_join(pregnancy_cohort, includedWithDefaults)),
+    2
+  )
+
+  # With samePregDiffDates = 'latest', we expect 10 pregnancies in pregnancy_extension table ----
+  expect_equal(
+    nrow(pregnancy_cohort),
+    10
+  )
+
+  # Same birthing parent, same pregnancy IDs but different dates ----
+  identicalID_diffDates <- pregnancy_cohort %>%
+    dplyr::filter(
+      (subject_id == 105 & pregnancy_id == 45) # overlapping dates, 4 records
+      | (subject_id == 106 & pregnancy_id == 46) # overlapping dates, 2 records
+    ) %>%
+    dplyr::filter(
+      (subject_id == 105 & pregnancy_id == 45 & pregnancy_start_date == "2020-01-15")
+      | (subject_id == 106 & pregnancy_id == 46 & pregnancy_start_date == "2020-01-02")
+    )
+
+  expect_equal(
+    nrow(identicalID_diffDates),
+    2 # should keep just one record per, and the latest one (with longest gest duration if >1 with same start date)
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 8) # 8, Keeping only record with latest start date for identical pregnancies with differing dates
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
+    4
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
+    0
+  )
+
+})
+
 testthat::test_that("Filtering on sex goes as expected", {
   cdm <- createPregnancyCohort(
     cdm = cdm,
@@ -787,6 +931,7 @@ testthat::test_that("Filtering on sex goes as expected", {
     maxAge = 55, # default
     startDate = NULL, # default
     endDate = NULL, # default
+    samePregDiffDates = "none",
     sex = "Male", # default
     outputDir = outputDir,
     .softValidation = FALSE # default
@@ -837,6 +982,7 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
     maxAge = 55, # default
     startDate = NULL, # default
     endDate = NULL, # default
+    samePregDiffDates = "latest",
     sex = "Female", # default
     outputDir = outputDir,
     .softValidation = TRUE
@@ -850,7 +996,7 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
   # With .softValidation, we expect 23 records in pregnancy_extension table ----
   expect_equal(
     nrow(pregnancy_cohort),
-    23
+    24
   )
 
   # Outside of age at pregnancy start range ----
