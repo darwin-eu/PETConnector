@@ -14,25 +14,27 @@ testthat::test_that("input args are as expected", {
   expect_error(
     createChildCohort(
       cdm = cdm,
+      cohortDefinitionID = "102", # character instead of number
       collapseDupRecords = "TRUE", # character instead of logical
       childSchema = TRUE, # logical instead of character
       childTable = "infant",
       childConceptIds = c("40485452", "4285883"), # won't be checked, character instead of numeric
       .softValidation = NULL # NULL instead of logical
     ),
-    "3 assertions failed:"
+    "4 assertions failed:"
   )
 
   expect_error(
     createChildCohort(
       cdm = cdm,
+      cohortDefinitionID = c(105, 102), # length 2 instead of 1
       collapseDupRecords = TRUE,
       childSchema = "main", # provided childSchema without childTable
       childTable = NULL, # provided childTable without childSchema
       childConceptIds = c("40485452"), # won't be checked, character instead of numeric
       .softValidation = FALSE
     ),
-    "1 assertions failed:"
+    "2 assertions failed:"
   )
 
   expect_error(
@@ -66,9 +68,70 @@ testthat::test_that("input args are as expected", {
   )
 })
 
+testthat::test_that("cohortDefinitionID updates to user choice", {
+
+  # cohort_definition_id with default settings should be 101 ----
+  cdm <- createChildCohort(
+    cdm = cdm,
+    childTable = "infant",
+    childSchema = "main",
+  )
+
+  child_cohort <- cdm[["child_cohort"]] %>%
+    dplyr::collect()
+
+  expect_all_equal(
+    child_cohort$cohort_definition_id,
+    102
+  )
+
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    collapseDupRecords = TRUE
+  )
+
+  child_cohort <- cdm[["child_cohort"]] %>%
+    dplyr::collect()
+
+  expect_all_equal(
+    child_cohort$cohort_definition_id,
+    102
+  )
+
+  # cohort_definition_id with non-default ----
+  cdm <- createChildCohort(
+    cdm = cdm,
+    childTable = "infant",
+    childSchema = "main",
+    cohortDefinitionID = 405
+  )
+  child_cohort <- cdm[["child_cohort"]] %>%
+    dplyr::collect()
+
+  expect_all_equal(
+    child_cohort$cohort_definition_id,
+    405
+  )
+
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    cohortDefinitionID = 405,
+    collapseDupRecords = TRUE
+  )
+
+  child_cohort <- cdm[["child_cohort"]] %>%
+    dplyr::collect()
+
+  expect_all_equal(
+    child_cohort$cohort_definition_id,
+    405
+  )
+})
+
 testthat::test_that("Creating child_cohort from childTable + .softValidation = TRUE goes as expected", {
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
+    cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
     .softValidation = TRUE
@@ -128,6 +191,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
 testthat::test_that("Creating child_cohort from childTable + .softValidation = FALSE + collapseDupRecords = TRUE goes as expected", {
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
+    cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
     collapseDupRecords = TRUE,
@@ -274,6 +338,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
 testthat::test_that("Creating child_cohort from childTable + .softValidation = FALSE + collapseDupRecords = FALSE goes as expected", {
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
+    cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
     collapseDupRecords = FALSE,
@@ -376,6 +441,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
 testthat::test_that("Creating child_cohort from fact_relationship (parentCohortTable) goes as expected, collapseDupRecords = TRUE", {
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
+    cohortDefinitionID = 101,
     collapseDupRecords = TRUE
   )
 
@@ -531,6 +597,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
 testthat::test_that("Creating child_cohort from fact_relationship (parentCohortTable) goes as expected, collapseDupRecords = FALSE", {
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
+    cohortDefinitionID = 101,
     collapseDupRecords = FALSE
   )
 

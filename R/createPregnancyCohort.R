@@ -1,7 +1,7 @@
-initPregnancyCohort <- function(cdm, keepExtensionTable) {
+initPregnancyCohort <- function(cdm, keepExtensionTable, cohortDefinitionID) {
   cdm$pregnancy_cohort <- cdm$pregnancy_extension_table %>%
     dplyr::mutate(
-      cohort_definition_id = 101,
+      cohort_definition_id = cohortDefinitionID,
       cohort_start_date = .data$pregnancy_start_date,
       cohort_end_date = .data$pregnancy_end_date
     ) %>%
@@ -280,7 +280,8 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' @param sex (`character(2)`: `"Female"`) Sexes to include. One of or both `c("Female", "Male")`.
 #' @param startDate (`Date(1)`: `NULL`) Earliest pregnancy start date to include, e.g. as.Date("2001-09-20", "%Y-%m-%d")
 #' @param endDate (`Date(1)`: `NULL`) Latest pregnancy end date to include, e.g as.Date("10/20/21", "%m/%d/%y")
-#' @param keepExtensionTable (`logical(1)`: `TRUE`) Keep the reference to the pregnancy extenstion table? default = TRUE
+#' @param cohortDefinitionID (`numeric(1)`: `101`) Cohort definition id to assign to newly created cohort
+#' @param keepExtensionTable (`logical(1)`: `TRUE`) Should the intermediate table between the petTable and pregnancy_cohort be kept, default = TRUE
 #' @param outputDir (`path`) Path to output pregnancy_duplicate_map.csv to
 #' @param .softValidation (`logical(1)`: `FALSE`) Should a softValidation be done? default = FALSE
 
@@ -305,6 +306,7 @@ createPregnancyCohort <- function(
     petTable,
     petSchema,
     keepExtensionTable = TRUE,
+    cohortDefinitionID = 101,
     minGestationalDuration = 0,
     maxGestationalDuration = 308,
     minAge = 12,
@@ -322,6 +324,7 @@ createPregnancyCohort <- function(
   checkmate::assertClass(x = petTable, classes = "character", add = assertions) # don't need to check against names(cdm)
   checkmate::assertClass(x = petSchema, classes = "character", add = assertions) # don't need to check against (attr(cdm, "write_schema")
   checkmate::assertLogical(x = keepExtensionTable, len = 1, add = assertions)
+  checkmate::assertNumber(x = cohortDefinitionID, add = assertions)
   checkmate::assertNumber(x = minGestationalDuration, finite = TRUE, add = assertions)
   checkmate::assertNumber(x = maxGestationalDuration, finite = TRUE, add = assertions)
   checkmate::assertNumber(x = minAge, upper = maxAge, finite = TRUE, add = assertions) # shouldn't be larger than provided max age
@@ -355,7 +358,8 @@ createPregnancyCohort <- function(
   # pregnancy_cohort table ----
   cdm <- initPregnancyCohort(
     cdm = cdm,
-    keepExtensionTable = keepExtensionTable
+    keepExtensionTable = keepExtensionTable,
+    cohortDefinitionID = cohortDefinitionID
   )
 
   cdm$pregnancy_cohort <- cdm$pregnancy_cohort %>%
