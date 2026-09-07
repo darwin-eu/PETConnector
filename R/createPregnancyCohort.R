@@ -25,7 +25,7 @@ initPregnancyCohort <- function(cdm, keepExtensionTable) {
     omopgenerics::newCohortTable(.softValidation = TRUE)
 
   if (isFALSE(keepExtensionTable)) {
-    cdm <- omopgenerics::dropSourceTable(cdm = cdm, name = "pregnancy_extension_table")
+    cdm$pregnancy_extension_table <- NULL
   }
 
   return(cdm)
@@ -295,7 +295,7 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' @param sex (`character(2)`: `"Female"`) Sexes to include. One of or both `c("Female", "Male")`.
 #' @param startDate (`Date(1)`: `NULL`) Earliest pregnancy start date to include, e.g. as.Date("2001-09-20", "%Y-%m-%d")
 #' @param endDate (`Date(1)`: `NULL`) Latest pregnancy end date to include, e.g as.Date("10/20/21", "%m/%d/%y")
-#' @param keepExtensionTable (`logical(1)`: `TRUE`) Should the intermediate table between the petTable and pregnancy_cohort be kept, default = TRUE
+#' @param keepExtensionTable (`logical(1)`: `TRUE`) Keep the reference to the pregnancy extenstion table? default = TRUE
 #' @param outputDir (`path`) Path to output pregnancy_duplicate_map.csv to
 #' @param .softValidation (`logical(1)`: `FALSE`) Should a softValidation be done? default = FALSE
 
