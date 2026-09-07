@@ -13,7 +13,7 @@ getNumberRecords <- function(tbl) {
 }
 
 createPerinatalCohortFromTbl <- function(cdm, cohortDefinitionID) {
-  cdm$child_cohort <- cdm$peri_et %>%
+  cdm$child_cohort <- cdm$perinatal_extension_table %>%
     dplyr::left_join(
       cdm[["pregnancy_duplicate_map"]] %>%
         dplyr::select("removed_pregnancy_id", "kept_pregnancy_id"),
@@ -286,8 +286,6 @@ createChildCohort <- function(
       cdm = cdm,
       cohortDefinitionID = cohortDefinitionID
     )
-    
-    cdm <- createPerinatalCohortFromTbl(cdm = cdm)
 
     # Check validity of child extension table
     if (isFALSE(.softValidation)) {

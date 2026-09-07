@@ -1,4 +1,3 @@
-
 initPregnancyCohort <- function(cdm, keepExtensionTable, cohortDefinitionID) {
   cdm$pregnancy_cohort <- cdm$pregnancy_extension_table %>%
     dplyr::mutate(
