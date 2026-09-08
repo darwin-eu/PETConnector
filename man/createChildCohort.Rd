@@ -10,6 +10,7 @@ createChildCohort(
   childConceptIds = c(40485452, 4285883),
   childSchema = NULL,
   childTable = NULL,
+  keepExtensionTable = TRUE,
   collapseDupRecords = TRUE,
   .softValidation = FALSE
 )
@@ -24,6 +25,8 @@ createChildCohort(
 \item{childSchema}{(\code{character(1)}: \code{NULL}) Name of the schema where the Child Extension Table resides}
 
 \item{childTable}{(\code{character(1)}: \code{NULL}) Name of the Child Extension Table}
+
+\item{keepExtensionTable}{(\code{logical(1)}: \code{TRUE}) Keep the reference to the perinatal extension table? default = TRUE}
 
 \item{collapseDupRecords}{(\code{logical(1)}: \code{TRUE}) When TRUE, collapses duplicated records to one record per child. In the case that a subject id is duplicated but the rest of the record isn't, all records for the subject_id will be filtered out}
 
