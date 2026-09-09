@@ -3,12 +3,11 @@ Title: Connect to perinatal extension tables complementary to a OMOP Common Data
 Version: 0.1.0
 Authors@R: c(
     person("Arianna", "Alamshahi", email = "a.alamshahi@erasmusmc.nl", role = c("aut", "cre")),
-    person("Maarten", "van Kessel", email = "m.l.vankessel@erasmusmc.nl", role = aut"),
+    person("Maarten", "van Kessel", email = "m.l.vankessel@erasmusmc.nl", role = "aut"),
     person("Ross", "Williams", email = "r.williams@erasmusmc.nl", role = "aut")
   )
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: Provides tools to create cohorts from perinatal extension tables
-of the Observational Medical Outcomes Partnership (OMOP) Common Data Model.
+Description: Provides tools to create cohorts from perinatal extension tables 
+  of the Observational Medical Outcomes Partnership (OMOP) Common Data Model.
 License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
