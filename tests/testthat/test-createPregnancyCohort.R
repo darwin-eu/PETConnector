@@ -17,7 +17,7 @@ testthat::test_that("input args are as expected", {
       outputDir = "path/to/nowhere", # softValidation is not FALSE, no error!
       .softValidation = c(TRUE, FALSE) # length 2 instead of 1
     ),
-    "10 assertions failed:"
+    "11 assertions failed:"
   )
 
 
