@@ -84,6 +84,26 @@ testthat::test_that("input args are as expected", {
   )
 })
 
+testthat::test_that("createPregnancyCohort() is not reliant on petTable being in cdm_reference, only in database", {
+  # petTable won't exist in in cdm_reference, only in db! This is why we attatchExtensionTable() and build cohort from extension
+  # Check for sneaky reliance on petTable being in cdm_reference
+  cdm$pregnancy <- NULL
+
+  cdm <- createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    keepExtensionTable = TRUE,
+    outputDir = outputDir
+  )
+
+  # Check that pregnancy_cohort exists ----
+  expect_contains(
+    names(cdm),
+    "pregnancy_cohort"
+  )
+})
+
 testthat::test_that("keepExtensionTable = TRUE keeps pregnancy_extension_table reference and that the characteristics of the table align with what is expected", {
   cdm <- createPregnancyCohort(
     cdm = cdm,

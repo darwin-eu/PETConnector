@@ -72,6 +72,27 @@ testthat::test_that("input args are as expected", {
   )
 })
 
+testthat::test_that("createChildCohort() is not reliant on childTable being in cdm_reference, only in database", {
+  # childTable won't exist in in cdm_reference, only in db! This is why we attatchExtensionTable() and build cohort from extension
+  # Check for sneaky reliance on childTable being in cdm_reference
+  cdm$infant <- NULL
+
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    cohortDefinitionID = 101,
+    childTable = "infant",
+    childSchema = "main",
+    keepExtensionTable = FALSE,
+    .softValidation = TRUE
+  )
+
+  # Check that child_cohort exists ----
+  expect_contains(
+    names(cdm),
+    "child_cohort"
+  )
+})
+
 testthat::test_that("keepExtensionTable = TRUE keeps perinatal_extension_table reference and that the characteristics of the table align with what is expected", {
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
