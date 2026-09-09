@@ -16,6 +16,7 @@ createPregnancyCohort(
   maxAge = 55,
   startDate = NULL,
   endDate = NULL,
+  samePregDiffDates = "none",
   sex = "Female",
   outputDir,
   .softValidation = FALSE
@@ -44,6 +45,8 @@ createPregnancyCohort(
 
 \item{endDate}{(\code{Date(1)}: \code{NULL}) Latest pregnancy end date to include, e.g as.Date("10/20/21", "\%m/\%d/\%y")}
 
+\item{samePregDiffDates}{(\code{character(1)}: \code{"none"}) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "none" will drop all records, "earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "earliest" or "latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.}
+
 \item{sex}{(\code{character(2)}: \code{"Female"}) Sexes to include. One of or both \code{c("Female", "Male")}.}
 
 \item{outputDir}{(\code{path}) Path to output pregnancy_duplicate_map.csv to}
@@ -62,4 +65,6 @@ A pregnancy of multiples will be recorded with one pregnancy record
 \item Multiple pregnancies of the same pregnancy_id these will be collapsed to one record.
 \item If a multiples pregnancy with different pregnancy_ids for a birthing parent is recognized, then this will be collapsed to one pregnancy record with the smallest pregnancy_id kept to represent it
 }
+
+A pregnancy which appears as multiple records with differing dates (same pregnancy_id, different dates) will be dropped
 }
