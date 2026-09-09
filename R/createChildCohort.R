@@ -12,7 +12,7 @@ getNumberRecords <- function(tbl) {
     dplyr::pull(.data$n)
 }
 
-createPerinatalCohortFromTbl <- function(cdm, cohortDefinitionID) {
+createPerinatalCohortFromTbl <- function(cdm, keepExtensionTable, cohortDefinitionID) {
   cdm$child_cohort <- cdm$perinatal_extension_table %>%
     dplyr::left_join(
       cdm[["pregnancy_duplicate_map"]] %>%
@@ -53,6 +53,9 @@ createPerinatalCohortFromTbl <- function(cdm, cohortDefinitionID) {
       .softValidation = TRUE
     )
 
+  if (isFALSE(keepExtensionTable)) {
+    cdm$perinatal_extension_table <- NULL
+  }
   return(cdm)
 }
 
@@ -220,6 +223,7 @@ filterLiveBirth <- function(tbl) {
 #'
 #' @param cdm (`cdm_reference`) CDM reference object
 #' @param cohortDefinitionID (`numeric(1)`: `102`) Cohort definition id to assign to newly created cohort
+#' @param keepExtensionTable (`logical(1)`: `TRUE`) Keep the reference to the perinatal extension table? default = TRUE
 #' @param collapseDupRecords (`logical(1)`: `TRUE`) When TRUE, collapses duplicated records to one record per child. In the case that a subject id is duplicated but the rest of the record isn't, all records for the subject_id will be filtered out
 #' @param childSchema (`character(1)`: `NULL`) Name of the schema where the Child Extension Table resides
 #' @param childTable (`character(1)`: `NULL`) Name of the Child Extension Table
@@ -241,6 +245,7 @@ createChildCohort <- function(
     childConceptIds = c(40485452, 4285883), # child -> parent ("child of subject" non-standard, "child" standard)
     childSchema = NULL,
     childTable = NULL,
+    keepExtensionTable = TRUE,
     collapseDupRecords = TRUE,
     .softValidation = FALSE) {
 
@@ -258,6 +263,7 @@ createChildCohort <- function(
   }
 
   if (!is.null(childTable) & !is.null(childSchema)) {
+    checkmate::assertLogical(x = keepExtensionTable, len = 1, add = assertions)
     checkmate::assertLogical(x = .softValidation, len = 1, add = assertions)
   }
 
@@ -284,6 +290,7 @@ createChildCohort <- function(
 
     cdm <- createPerinatalCohortFromTbl(
       cdm = cdm,
+      keepExtensionTable = keepExtensionTable,
       cohortDefinitionID = cohortDefinitionID
     )
 
