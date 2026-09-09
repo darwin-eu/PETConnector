@@ -6,9 +6,11 @@
 \usage{
 createChildCohort(
   cdm,
+  cohortDefinitionID = 102,
   childConceptIds = c(40485452, 4285883),
   childSchema = NULL,
   childTable = NULL,
+  keepExtensionTable = TRUE,
   collapseDupRecords = TRUE,
   .softValidation = FALSE
 )
@@ -16,11 +18,15 @@ createChildCohort(
 \arguments{
 \item{cdm}{(\code{cdm_reference}) CDM reference object}
 
+\item{cohortDefinitionID}{(\code{numeric(1)}: \code{102}) Cohort definition id to assign to newly created cohort}
+
 \item{childConceptIds}{(\code{numeric(n)}: \code{c(40485452, 4285883)}) Concepts to use to link the child to the parent. I.e. \code{40485452} = Child of subject}
 
 \item{childSchema}{(\code{character(1)}: \code{NULL}) Name of the schema where the Child Extension Table resides}
 
 \item{childTable}{(\code{character(1)}: \code{NULL}) Name of the Child Extension Table}
+
+\item{keepExtensionTable}{(\code{logical(1)}: \code{TRUE}) Keep the reference to the perinatal extension table? default = TRUE}
 
 \item{collapseDupRecords}{(\code{logical(1)}: \code{TRUE}) When TRUE, collapses duplicated records to one record per child. In the case that a subject id is duplicated but the rest of the record isn't, all records for the subject_id will be filtered out}
 

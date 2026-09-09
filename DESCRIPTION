@@ -1,9 +1,13 @@
 Package: PETConnector
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Title: Connect to Perinatal Extension Tables Complementary to an OMOP Common Data Model
+Version: 0.1.0
+Authors@R: c(
+    person("Arianna", "Alamshahi", email = "a.alamshahi@erasmusmc.nl", role = c("aut", "cre")),
+    person("Maarten", "van Kessel", email = "m.l.vankessel@erasmusmc.nl", role = "aut"),
+    person("Ross", "Williams", email = "r.williams@erasmusmc.nl", role = "aut")
+  )
+Description: Provides tools to create cohorts from Perinatal Extension Tables (PET)
+  of the Observational Medical Outcomes Partnership (OMOP) Common Data Model (CDM).
 License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

@@ -9,6 +9,7 @@ createPregnancyCohort(
   petTable,
   petSchema,
   keepExtensionTable = TRUE,
+  cohortDefinitionID = 101,
   minGestationalDuration = 0,
   maxGestationalDuration = 308,
   minAge = 12,
@@ -29,6 +30,8 @@ createPregnancyCohort(
 \item{petSchema}{(\code{character(1)})  Name of the schema where the Pregnancy Extension Table resides}
 
 \item{keepExtensionTable}{(\code{logical(1)}: \code{TRUE}) Should the intermediate table between the petTable and pregnancy_cohort be kept, default = TRUE}
+
+\item{cohortDefinitionID}{(\code{numeric(1)}: \code{101}) Cohort definition id to assign to newly created cohort}
 
 \item{minGestationalDuration}{(\code{numeric(1)}: \code{NULL}) Minimum gestational duration to include.}
 

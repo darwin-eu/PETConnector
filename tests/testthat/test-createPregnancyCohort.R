@@ -5,6 +5,7 @@ testthat::test_that("input args are as expected", {
       petTable = "pregnancy",
       petSchema = "main",
       keepExtensionTable = "no", # should be logical TRUE/FALSE
+      cohortDefinitionID = "101", # character instead of number
       minGestationalDuration = "20", # character instead of number
       maxGestationalDuration = "308", # character instead of number
       minAge = "12", # character instead of number
@@ -51,6 +52,7 @@ testthat::test_that("input args are as expected", {
       petTable = "pregnancy",
       petSchema = "main",
       keepExtensionTable = c(TRUE, FALSE), # length 2 instead of 1
+      cohortDefinitionID = c(101, 102), # length 2 instead of 1
       minGestationalDuration = NULL, # NULL instead of number
       maxGestationalDuration = Inf, # infinite
       minAge = 55, # greater than maxAge
@@ -62,7 +64,7 @@ testthat::test_that("input args are as expected", {
       outputDir = testthat::test_path("testthat_testOutput"),
       .softValidation = "FALSE" # character instead of logical
     ),
-    "7 assertions failed:"
+    "8 assertions failed:"
   )
 
   expect_error(
@@ -85,7 +87,27 @@ testthat::test_that("input args are as expected", {
   )
 })
 
-testthat::test_that("keepExtensionTable = TRUE keeps pregnancy_extension_table and that the characteristics of the table align with what is expected", {
+testthat::test_that("createPregnancyCohort() is not reliant on petTable being in cdm_reference, only in database", {
+  # petTable won't exist in in cdm_reference, only in db! This is why we attatchExtensionTable() and build cohort from extension
+  # Check for sneaky reliance on petTable being in cdm_reference
+  cdm$pregnancy <- NULL
+
+  cdm <- createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    keepExtensionTable = TRUE,
+    outputDir = outputDir
+  )
+
+  # Check that pregnancy_cohort exists ----
+  expect_contains(
+    names(cdm),
+    "pregnancy_cohort"
+  )
+})
+
+testthat::test_that("keepExtensionTable = TRUE keeps pregnancy_extension_table reference and that the characteristics of the table align with what is expected", {
   cdm <- createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
@@ -151,7 +173,7 @@ testthat::test_that("keepExtensionTable = TRUE keeps pregnancy_extension_table a
   )
 })
 
-testthat::test_that("keepExtensionTable = FALSE drops pregnancy_extension_table", {
+testthat::test_that("keepExtensionTable = FALSE drops reference to pregnancy_extension_table", {
   cdm <- createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
@@ -164,12 +186,49 @@ testthat::test_that("keepExtensionTable = FALSE drops pregnancy_extension_table"
   expect_all_false(stringr::str_detect(names(cdm), "pregnancy_extension_table"))
 })
 
+testthat::test_that("cohortDefinitionID updates to user choice", {
+
+  # cohort_definition_id with default settings should be 101 ----
+  cdm <- createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    outputDir = outputDir
+  )
+
+  pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
+    dplyr::collect()
+
+  expect_all_equal(
+    pregnancy_cohort$cohort_definition_id,
+    101
+  )
+
+  # cohort_definition_id with non-default ----
+  cdm <- createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    cohortDefinitionID = 404,
+    outputDir = outputDir
+  )
+    pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
+    dplyr::collect()
+
+  expect_all_equal(
+    pregnancy_cohort$cohort_definition_id,
+    404
+  )
+
+})
+
 testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expected & pregnancy_duplicate_map.csv output file is created", {
   cdm <- createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -380,6 +439,7 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 6,
     maxGestationalDuration = 266,
     minAge = 12, # default
@@ -479,6 +539,7 @@ testthat::test_that("Filtering on Age goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 21,
@@ -566,6 +627,7 @@ testthat::test_that("Filtering on startDate goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -635,6 +697,7 @@ testthat::test_that("Filtering on endDate goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -711,6 +774,7 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -925,6 +989,7 @@ testthat::test_that("Filtering on sex goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -976,6 +1041,7 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default

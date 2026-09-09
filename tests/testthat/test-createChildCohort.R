@@ -14,25 +14,29 @@ testthat::test_that("input args are as expected", {
   expect_error(
     createChildCohort(
       cdm = cdm,
+      cohortDefinitionID = "102", # character instead of number
       collapseDupRecords = "TRUE", # character instead of logical
       childSchema = TRUE, # logical instead of character
       childTable = "infant",
+      keepExtensionTable = "FALSE", # character instead of logical
       childConceptIds = c("40485452", "4285883"), # won't be checked, character instead of numeric
       .softValidation = NULL # NULL instead of logical
     ),
-    "3 assertions failed:"
+    "5 assertions failed:"
   )
 
   expect_error(
     createChildCohort(
       cdm = cdm,
+      cohortDefinitionID = c(105, 102), # length 2 instead of 1
       collapseDupRecords = TRUE,
       childSchema = "main", # provided childSchema without childTable
       childTable = NULL, # provided childTable without childSchema
+      keepExtensionTable = "FALSE", # won't be checked, didn't provide both childTable and childSchema
       childConceptIds = c("40485452"), # won't be checked, character instead of numeric
       .softValidation = FALSE
     ),
-    "1 assertions failed:"
+    "2 assertions failed:"
   )
 
   expect_error(
@@ -41,6 +45,7 @@ testthat::test_that("input args are as expected", {
       collapseDupRecords = 123, # numeric instead of logical,
       childSchema = NULL,
       childTable = NULL,
+      keepExtensionTable = "TRUE", # won't be checked, didn't provide childTable and childSchema
       childConceptIds = NULL, # NULL instead of character
       .softValidation = "FALSE" # won't be checked, character instead of logical
     ),
@@ -53,6 +58,7 @@ testthat::test_that("input args are as expected", {
       collapseDupRecords = FALSE,
       childSchema = "main",
       childTable = "infant",
+      keepExtensionTable = TRUE,
       childConceptIds = NULL, # not used when creating from childTable
       .softValidation = TRUE
     )
@@ -66,11 +72,157 @@ testthat::test_that("input args are as expected", {
   )
 })
 
-testthat::test_that("Creating child_cohort from childTable + .softValidation = TRUE goes as expected", {
+testthat::test_that("createChildCohort() is not reliant on childTable being in cdm_reference, only in database", {
+  # childTable won't exist in in cdm_reference, only in db! This is why we attatchExtensionTable() and build cohort from extension
+  # Check for sneaky reliance on childTable being in cdm_reference
+  cdm$infant <- NULL
+
   cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    cohortDefinitionID = 101,
+    childTable = "infant",
+    childSchema = "main",
+    keepExtensionTable = FALSE,
+    .softValidation = TRUE
+  )
+
+  # Check that child_cohort exists ----
+  expect_contains(
+    names(cdm),
+    "child_cohort"
+  )
+})
+
+testthat::test_that("keepExtensionTable = TRUE keeps perinatal_extension_table reference and that the characteristics of the table align with what is expected", {
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    cohortDefinitionID = 101,
+    childTable = "infant",
+    childSchema = "main",
+    keepExtensionTable = TRUE,
+    .softValidation = TRUE
+  )
+
+  # Check that perinatal_extension_table exists ----
+  expect_contains(
+    names(cdm),
+    "perinatal_extension_table"
+  )
+
+  infant <- cdm[["infant"]] %>%
+    dplyr::collect()
+
+  perinatal_extension_table <- cdm[["perinatal_extension_table"]] %>%
+    dplyr::collect()
+
+  # Check that we have the same number of rows and columns in 'infant' and 'perinatal_extension_table' ----
+  expect_identical(
+    nrow(infant),
+    nrow(perinatal_extension_table)
+  )
+
+  expect_identical(
+    ncol(infant),
+    ncol(perinatal_extension_table)
+  )
+
+  # Check that we have the same number NAs in 'infant' and 'perinatal_extension_table' ----
+  expect_identical(
+    sum(is.na(infant)),
+    sum(is.na(perinatal_extension_table))
+  )
+
+  # Check that we have the same colnames 'infant' and 'perinatal_extension_table' ----
+  expect_identical(
+    colnames(infant),
+    colnames(perinatal_extension_table)
+  ) # an extra layer check since colnames were not changed in the function and we already checked ncols
+
+})
+
+testthat::test_that("keepExtensionTable = FALSE drops reference to perinatal_extension_table", {
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    cohortDefinitionID = 101,
+    childTable = "infant",
+    childSchema = "main",
+    keepExtensionTable = FALSE,
+    .softValidation = TRUE
+  )
+
+  # Check that perinatal_extension_table does not exist ----
+  expect_all_false(stringr::str_detect(names(cdm), "perinatal_extension_table"))
+})
+
+testthat::test_that("cohortDefinitionID updates to user choice", {
+
+  # cohort_definition_id with default settings should be 101 ----
+  cdm <- createChildCohort(
     cdm = cdm,
     childTable = "infant",
     childSchema = "main",
+    keepExtensionTable = TRUE
+  )
+
+  child_cohort <- cdm[["child_cohort"]] %>%
+    dplyr::collect()
+
+  expect_all_equal(
+    child_cohort$cohort_definition_id,
+    102
+  )
+
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    collapseDupRecords = TRUE
+  )
+
+  child_cohort <- cdm[["child_cohort"]] %>%
+    dplyr::collect()
+
+  expect_all_equal(
+    child_cohort$cohort_definition_id,
+    102
+  )
+
+  # cohort_definition_id with non-default ----
+  cdm <- createChildCohort(
+    cdm = cdm,
+    childTable = "infant",
+    childSchema = "main",
+    keepExtensionTable = TRUE,
+    cohortDefinitionID = 405
+  )
+  child_cohort <- cdm[["child_cohort"]] %>%
+    dplyr::collect()
+
+  expect_all_equal(
+    child_cohort$cohort_definition_id,
+    405
+  )
+
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    cohortDefinitionID = 405,
+    collapseDupRecords = TRUE
+  )
+
+  child_cohort <- cdm[["child_cohort"]] %>%
+    dplyr::collect()
+
+  expect_all_equal(
+    child_cohort$cohort_definition_id,
+    405
+  )
+})
+
+testthat::test_that("Creating child_cohort from childTable + .softValidation = TRUE goes as expected", {
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    cohortDefinitionID = 101,
+    childTable = "infant",
+    childSchema = "main",
+    keepExtensionTable = TRUE,
     .softValidation = TRUE
   )
 
@@ -128,8 +280,10 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
 testthat::test_that("Creating child_cohort from childTable + .softValidation = FALSE + collapseDupRecords = TRUE goes as expected", {
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
+    cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
+    keepExtensionTable = TRUE,
     collapseDupRecords = TRUE,
     .softValidation = FALSE
   )
@@ -274,8 +428,10 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
 testthat::test_that("Creating child_cohort from childTable + .softValidation = FALSE + collapseDupRecords = FALSE goes as expected", {
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
+    cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
+    keepExtensionTable = TRUE,
     collapseDupRecords = FALSE,
     .softValidation = FALSE
   )
@@ -376,6 +532,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
 testthat::test_that("Creating child_cohort from fact_relationship (parentCohortTable) goes as expected, collapseDupRecords = TRUE", {
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
+    cohortDefinitionID = 101,
     collapseDupRecords = TRUE
   )
 
@@ -531,6 +688,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
 testthat::test_that("Creating child_cohort from fact_relationship (parentCohortTable) goes as expected, collapseDupRecords = FALSE", {
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
+    cohortDefinitionID = 101,
     collapseDupRecords = FALSE
   )
 

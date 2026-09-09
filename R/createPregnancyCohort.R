@@ -1,22 +1,7 @@
-initMotherTable <- function(cdm, petTable, petSchema) {
-  cdm$pregnancy_extension_table <- dplyr::tbl(
-    attr(cdm, "dbcon"),
-    CDMConnector::inSchema(schema = petSchema, table = petTable)
-  ) %>%
-    dplyr::compute(name = "pregnancy_extension_table", temporary = FALSE, overwrite = TRUE)
-
-  cdm$pregnancy_extension_table <- cdm$pregnancy_extension_table %>%
-    dplyr::mutate(
-      pregnancy_start_date = as.Date(.data$pregnancy_start_date),
-      pregnancy_end_date = as.Date(.data$pregnancy_end_date)
-    )
-  return(cdm)
-}
-
-initPregnancyCohort <- function(cdm, keepExtensionTable) {
+initPregnancyCohort <- function(cdm, keepExtensionTable, cohortDefinitionID) {
   cdm$pregnancy_cohort <- cdm$pregnancy_extension_table %>%
     dplyr::mutate(
-      cohort_definition_id = 101,
+      cohort_definition_id = cohortDefinitionID,
       cohort_start_date = .data$pregnancy_start_date,
       cohort_end_date = .data$pregnancy_end_date
     ) %>%
@@ -25,7 +10,7 @@ initPregnancyCohort <- function(cdm, keepExtensionTable) {
     omopgenerics::newCohortTable(.softValidation = TRUE)
 
   if (isFALSE(keepExtensionTable)) {
-    cdm <- omopgenerics::dropSourceTable(cdm = cdm, name = "pregnancy_extension_table")
+    cdm$pregnancy_extension_table <- NULL
   }
 
   return(cdm)
@@ -318,6 +303,7 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' @param endDate (`Date(1)`: `NULL`) Latest pregnancy end date to include, e.g as.Date("10/20/21", "%m/%d/%y")
 #' @param samePregDiffDates (`character(1)`: `"none"`) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "none" will drop all records, "earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "earliest" or "latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.
 #' @param sex (`character(2)`: `"Female"`) Sexes to include. One of or both `c("Female", "Male")`.
+#' @param cohortDefinitionID (`numeric(1)`: `101`) Cohort definition id to assign to newly created cohort
 #' @param outputDir (`path`) Path to output pregnancy_duplicate_map.csv to
 #' @param .softValidation (`logical(1)`: `FALSE`) Should a softValidation be done? default = FALSE
 
@@ -343,6 +329,7 @@ createPregnancyCohort <- function(
     petTable,
     petSchema,
     keepExtensionTable = TRUE,
+    cohortDefinitionID = 101,
     minGestationalDuration = 0,
     maxGestationalDuration = 308,
     minAge = 12,
@@ -361,6 +348,7 @@ createPregnancyCohort <- function(
   checkmate::assertClass(x = petTable, classes = "character", add = assertions) # don't need to check against names(cdm)
   checkmate::assertClass(x = petSchema, classes = "character", add = assertions) # don't need to check against (attr(cdm, "write_schema")
   checkmate::assertLogical(x = keepExtensionTable, len = 1, add = assertions)
+  checkmate::assertNumber(x = cohortDefinitionID, add = assertions)
   checkmate::assertNumber(x = minGestationalDuration, finite = TRUE, add = assertions)
   checkmate::assertNumber(x = maxGestationalDuration, finite = TRUE, add = assertions)
   checkmate::assertNumber(x = minAge, upper = maxAge, finite = TRUE, add = assertions) # shouldn't be larger than provided max age
@@ -379,16 +367,24 @@ createPregnancyCohort <- function(
 
 
   # pregnancy_extension_table ----
-  cdm <- initMotherTable(
+  cdm <- attachExtensionTable(
     cdm = cdm,
-    petTable = petTable,
-    petSchema = petSchema
+    table = petTable,
+    schema = petSchema,
+    name = "pregnancy_extension_table"
   )
+
+  cdm$pregnancy_extension_table <- cdm$pregnancy_extension_table %>%
+    dplyr::mutate(
+      pregnancy_start_date = as.Date(.data$pregnancy_start_date),
+      pregnancy_end_date = as.Date(.data$pregnancy_end_date)
+    )
 
   # pregnancy_cohort table ----
   cdm <- initPregnancyCohort(
     cdm = cdm,
-    keepExtensionTable = keepExtensionTable
+    keepExtensionTable = keepExtensionTable,
+    cohortDefinitionID = cohortDefinitionID
   )
 
   cdm$pregnancy_cohort <- cdm$pregnancy_cohort %>%
