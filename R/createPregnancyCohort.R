@@ -156,8 +156,8 @@ filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates) {
 
   if (samePregDiffDates == "none") {
     tbl %>%
-      dplyr::group_by(subject_id, pregnancy_id) %>%
-      dplyr::filter(n() == 1) %>%
+      dplyr::group_by(.data$subject_id, .data$pregnancy_id) %>%
+      dplyr::filter(dplyr::n() == 1) %>%
       dplyr::ungroup() %>%
       dplyr::compute(name = "pregnancy_cohort", temporary = FALSE, overwrite = TRUE) %>%
       omopgenerics::recordCohortAttrition(
@@ -171,8 +171,8 @@ filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates) {
     }
 
     tbl %>%
-      dplyr::group_by(subject_id, pregnancy_id) %>%
-      sliceRecord(pregnancy_start_date, n = 1,  with_ties = TRUE) %>% # keep ties if same start date
+      dplyr::group_by(.data$subject_id, .data$pregnancy_id) %>%
+      sliceRecord(.data$pregnancy_start_date, n = 1,  with_ties = TRUE) %>% # keep ties if same start date
       dplyr::slice_max(!!CDMConnector::datediff("pregnancy_start_date", "pregnancy_end_date", interval = "day"), n = 1, with_ties = FALSE) %>% # use gest_length as tiebreaker
       dplyr::ungroup() %>%
       dplyr::compute(name = "pregnancy_cohort", temporary = FALSE, overwrite = TRUE) %>%
