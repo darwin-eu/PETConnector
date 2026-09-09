@@ -278,8 +278,6 @@ createChildCohort <- function(
 
   # Create child_cohort from childTable ----
   if (!is.null(childTable) & !is.null(childSchema)) {
-    childColnames <- cdm[[childTable]] %>%
-      colnames()
 
     cdm <- attachExtensionTable(
       cdm = cdm,
@@ -287,6 +285,9 @@ createChildCohort <- function(
       schema = childSchema,
       name = "perinatal_extension_table"
     )
+
+    childColnames <- cdm$perinatal_extension_table %>%
+      colnames()
 
     cdm <- createPerinatalCohortFromTbl(
       cdm = cdm,
