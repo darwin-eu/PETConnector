@@ -1,6 +1,6 @@
 testthat::test_that("input args are as expected", {
   expect_error(
-    attachExtensionTable(
+    PETConnector::attachExtensionTable(
       cdm = "hello",
       table = 123,
       schema = FALSE,
@@ -10,7 +10,7 @@ testthat::test_that("input args are as expected", {
   )
 
   expect_no_error(
-    attachExtensionTable(
+    PETConnector::attachExtensionTable(
       cdm = cdm,
       table = "pregnancy",
       schema = "main",
@@ -20,7 +20,7 @@ testthat::test_that("input args are as expected", {
 })
 
 testthat::test_that("pregnancy_extension_table is created and attached to cdm", {
-  cdm <- attachExtensionTable(
+  cdm <- PETConnector::attachExtensionTable(
     cdm = cdm,
     table = "pregnancy",
     schema = "main",
@@ -50,5 +50,4 @@ testthat::test_that("pregnancy_extension_table is created and attached to cdm", 
         dplyr::collect()
     )
   )
-
 })

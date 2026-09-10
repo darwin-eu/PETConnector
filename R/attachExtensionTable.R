@@ -44,4 +44,3 @@ attachExtensionTable <- function(
 
   return(cdm)
 }
-
