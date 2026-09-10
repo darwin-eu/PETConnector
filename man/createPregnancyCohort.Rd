@@ -9,6 +9,7 @@ createPregnancyCohort(
   petTable,
   petSchema,
   keepExtensionTable = TRUE,
+  samePregDiffDates = "None",
   cohortDefinitionID = 101,
   minGestationalDuration = 0,
   maxGestationalDuration = 308,
@@ -16,7 +17,6 @@ createPregnancyCohort(
   maxAge = 55,
   startDate = NULL,
   endDate = NULL,
-  samePregDiffDates = "none",
   sex = "Female",
   outputDir,
   .softValidation = FALSE
@@ -29,7 +29,9 @@ createPregnancyCohort(
 
 \item{petSchema}{(\code{character(1)})  Name of the schema where the Pregnancy Extension Table resides}
 
-\item{keepExtensionTable}{(\code{logical(1)}: \code{TRUE}) Should the intermediate table between the petTable and pregnancy_cohort be kept, default = TRUE}
+\item{keepExtensionTable}{(\code{logical(1)}: \code{TRUE}) Keep the reference to the pregnancy extension table? default = TRUE}
+
+\item{samePregDiffDates}{(\code{character(1)}: \code{"none"}) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "None" will drop all records, "Earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "Earliest" or "Latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.}
 
 \item{cohortDefinitionID}{(\code{numeric(1)}: \code{101}) Cohort definition id to assign to newly created cohort}
 
@@ -44,8 +46,6 @@ createPregnancyCohort(
 \item{startDate}{(\code{Date(1)}: \code{NULL}) Earliest pregnancy start date to include, e.g. as.Date("2001-09-20", "\%Y-\%m-\%d")}
 
 \item{endDate}{(\code{Date(1)}: \code{NULL}) Latest pregnancy end date to include, e.g as.Date("10/20/21", "\%m/\%d/\%y")}
-
-\item{samePregDiffDates}{(\code{character(1)}: \code{"none"}) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "none" will drop all records, "earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "earliest" or "latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.}
 
 \item{sex}{(\code{character(2)}: \code{"Female"}) Sexes to include. One of or both \code{c("Female", "Male")}.}
 

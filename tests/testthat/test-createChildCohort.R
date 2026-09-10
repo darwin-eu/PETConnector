@@ -12,7 +12,7 @@ cdm <- omopgenerics::insertTable(
 
 testthat::test_that("input args are as expected", {
   expect_error(
-    createChildCohort(
+    PETConnector::createChildCohort(
       cdm = cdm,
       cohortDefinitionID = "102", # character instead of number
       collapseDupRecords = "TRUE", # character instead of logical
@@ -26,7 +26,7 @@ testthat::test_that("input args are as expected", {
   )
 
   expect_error(
-    createChildCohort(
+    PETConnector::createChildCohort(
       cdm = cdm,
       cohortDefinitionID = c(105, 102), # length 2 instead of 1
       collapseDupRecords = TRUE,
@@ -40,7 +40,7 @@ testthat::test_that("input args are as expected", {
   )
 
   expect_error(
-    createChildCohort(
+    PETConnector::createChildCohort(
       cdm = "hello", # character instead of cdm_reference
       collapseDupRecords = 123, # numeric instead of logical,
       childSchema = NULL,
@@ -53,7 +53,7 @@ testthat::test_that("input args are as expected", {
   )
 
   expect_no_error(
-    createChildCohort(
+    PETConnector::createChildCohort(
       cdm = cdm,
       collapseDupRecords = FALSE,
       childSchema = "main",
@@ -65,7 +65,7 @@ testthat::test_that("input args are as expected", {
   )
 
   expect_no_error(
-    createChildCohort(
+    PETConnector::createChildCohort(
       cdm = cdm,
       collapseDupRecords = TRUE
     )
@@ -109,6 +109,7 @@ testthat::test_that("keepExtensionTable = TRUE keeps perinatal_extension_table r
     "perinatal_extension_table"
   )
 
+  # Collect tables to compare ----
   infant <- cdm[["infant"]] %>%
     dplyr::collect()
 
@@ -137,7 +138,6 @@ testthat::test_that("keepExtensionTable = TRUE keeps perinatal_extension_table r
     colnames(infant),
     colnames(perinatal_extension_table)
   ) # an extra layer check since colnames were not changed in the function and we already checked ncols
-
 })
 
 testthat::test_that("keepExtensionTable = FALSE drops reference to perinatal_extension_table", {
@@ -155,9 +155,8 @@ testthat::test_that("keepExtensionTable = FALSE drops reference to perinatal_ext
 })
 
 testthat::test_that("cohortDefinitionID updates to user choice", {
-
   # cohort_definition_id with default settings should be 101 ----
-  cdm <- createChildCohort(
+  cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     childTable = "infant",
     childSchema = "main",
@@ -186,7 +185,7 @@ testthat::test_that("cohortDefinitionID updates to user choice", {
   )
 
   # cohort_definition_id with non-default ----
-  cdm <- createChildCohort(
+  cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     childTable = "infant",
     childSchema = "main",
@@ -566,7 +565,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   # Parent not in pregnancy_cohort ----
   notInPregCohort <- child_cohort %>%
     dplyr::filter(subject_id %in% c(1, 2, 3, 4, 5, 6, 7, 8, 11, 14))
-    # linked to parents c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15) who aren't in pregnancy_cohort
+  # linked to parents c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15) who aren't in pregnancy_cohort
 
   expect_equal(
     nrow(notInPregCohort),
@@ -722,7 +721,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   # Parent not in pregnancy_cohort ----
   notInPregCohort <- child_cohort %>%
     dplyr::filter(subject_id %in% c(1, 2, 3, 4, 5, 6, 7, 8, 11, 14))
-    # linked to parents c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15) who aren't in pregnancy_cohort
+  # linked to parents c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15) who aren't in pregnancy_cohort
 
 
   expect_equal(
