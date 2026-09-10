@@ -222,11 +222,11 @@ filterLiveBirth <- function(tbl) {
 #' Creates the child cohort from a specified child extension table or the fact_relationship table if no child extension table and schema are provided
 #'
 #' @param cdm (`cdm_reference`) CDM reference object
-#' @param cohortDefinitionID (`numeric(1)`: `102`) Cohort definition id to assign to newly created cohort
+#' @param childTable (`character(1)`: `NULL`) Name of the Child Extension Table
+#' @param childSchema (`character(1)`: `NULL`) Name of the schema where the Child Extension Table resides
 #' @param keepExtensionTable (`logical(1)`: `TRUE`) Keep the reference to the perinatal extension table? default = TRUE
 #' @param collapseDupRecords (`logical(1)`: `TRUE`) When TRUE, collapses duplicated records to one record per child. In the case that a subject id is duplicated but the rest of the record isn't, all records for the subject_id will be filtered out
-#' @param childSchema (`character(1)`: `NULL`) Name of the schema where the Child Extension Table resides
-#' @param childTable (`character(1)`: `NULL`) Name of the Child Extension Table
+#' @param cohortDefinitionID (`numeric(1)`: `102`) Cohort definition id to assign to newly created cohort
 #' @param childConceptIds (`numeric(n)`: `c(40485452, 4285883)`) Concepts to use to link the child to the parent. I.e. `40485452` = Child of subject
 #' @param .softValidation (`logical(1)`: `FALSE`) Should a softValidation be done? default = FALSE
 #'
@@ -240,14 +240,14 @@ filterLiveBirth <- function(tbl) {
 #' @importFrom omopgenerics newCohortTable recordCohortAttrition
 #' @export
 createChildCohort <- function(
-    cdm,
-    cohortDefinitionID = 102,
-    childConceptIds = c(40485452, 4285883), # child -> parent ("child of subject" non-standard, "child" standard)
-    childSchema = NULL,
-    childTable = NULL,
-    keepExtensionTable = TRUE,
-    collapseDupRecords = TRUE,
-    .softValidation = FALSE) {
+  cdm,
+  childTable = NULL,
+  childSchema = NULL,
+  keepExtensionTable = TRUE,
+  collapseDupRecords = TRUE,
+  cohortDefinitionID = 102,
+  childConceptIds = c(40485452, 4285883), # child -> parent ("child of subject" non-standard, "child" standard)
+  .softValidation = FALSE) {
 
   # Check inputs ----
   assertions <- checkmate::makeAssertCollection()
@@ -268,7 +268,7 @@ createChildCohort <- function(
   }
 
   if ((!is.null(childTable) & is.null(childSchema)) |
-    (is.null(childTable) & !is.null(childSchema))) {
+       (is.null(childTable) & !is.null(childSchema))) {
     assertions$push(
       "Double check that you have provided both a childTable and childSchema if you want to create the child_cohort from the childTable."
     )
@@ -307,7 +307,7 @@ createChildCohort <- function(
         dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
         omopgenerics::recordCohortAttrition(reason = "Filter only children with parent in pregnancy cohort")
 
-      if(isTRUE(collapseDupRecords)) {
+      if (isTRUE(collapseDupRecords)) {
         cdm$child_cohort <- cdm$child_cohort %>%
           dplyr::distinct() %>%
           omopgenerics::recordCohortAttrition("Filter duplicate infants to keep only one record")

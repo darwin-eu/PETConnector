@@ -19,7 +19,7 @@ initPregnancyCohort <- function(cdm, keepExtensionTable, cohortDefinitionID) {
 inclusionAge <- function(tbl, minAge, maxAge) {
   tbl %>%
     PatientProfiles::addAge() %>%
-    dplyr::filter(age >= minAge & age <= maxAge) %>%
+    dplyr::filter(.data$age >= minAge & .data$age <= maxAge) %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(
       reason = sprintf("Age at pregnancy start date in [%s, %s]", minAge, maxAge)
@@ -37,7 +37,7 @@ inclusionSex <- function(tbl, sex) {
 filterInObservationStart <- function(tbl) {
   tbl %>%
     PatientProfiles::addInObservation() %>%
-    dplyr::filter(in_observation == 1) %>%
+    dplyr::filter(.data$in_observation == 1) %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = "In observation at pregnancy start date")
 }
@@ -45,7 +45,7 @@ filterInObservationStart <- function(tbl) {
 filterInObservationEnd <- function(tbl) {
   tbl %>%
     PatientProfiles::addInObservation(indexDate = "cohort_end_date") %>%
-    dplyr::filter(in_observation == 1) %>%
+    dplyr::filter(.data$in_observation == 1) %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = "In observation at pregnancy end date")
 }
@@ -93,10 +93,10 @@ filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates) {
 
   all_ids_local <- tbl %>%
     dplyr::select(
-      subject_id,
-      pregnancy_start_date,
-      pregnancy_end_date,
-      pregnancy_id
+      "subject_id",
+      "pregnancy_start_date",
+      "pregnancy_end_date",
+      "pregnancy_id"
     ) %>%
     collect()
 
@@ -109,9 +109,9 @@ filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates) {
     ) %>%
     dplyr::mutate(
       all_ids = list(all_ids_local$pregnancy_id[
-        all_ids_local$subject_id == subject_id &
-          all_ids_local$pregnancy_start_date == pregnancy_start_date &
-          all_ids_local$pregnancy_end_date == pregnancy_end_date
+        all_ids_local$subject_id == .data$subject_id &
+          all_ids_local$pregnancy_start_date == .data$pregnancy_start_date &
+          all_ids_local$pregnancy_end_date == .data$pregnancy_end_date
       ])
     ) %>%
     dplyr::ungroup()
@@ -139,7 +139,7 @@ filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates) {
       reason = "Removed identical pregnancy duplicates"
     )
 
-  if (samePregDiffDates == "none") {
+  if (samePregDiffDates == "None") {
     tbl %>%
       dplyr::group_by(.data$subject_id, .data$pregnancy_id) %>%
       dplyr::filter(dplyr::n() == 1) %>%
@@ -148,10 +148,10 @@ filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates) {
       omopgenerics::recordCohortAttrition(
         reason = "Removed identical pregnancies with differing dates"
       )
-  } else if (samePregDiffDates == "earliest" | samePregDiffDates == "latest") {
-    if (samePregDiffDates == "earliest") {
+  } else if (samePregDiffDates == "Earliest" | samePregDiffDates == "Latest") {
+    if (samePregDiffDates == "Earliest") {
       sliceRecord <- dplyr::slice_min
-    } else if (samePregDiffDates == "latest") {
+    } else if (samePregDiffDates == "Latest") {
       sliceRecord <- dplyr::slice_max
     }
 
@@ -200,8 +200,6 @@ filterStudyPeriod <- function(tbl, startDate, endDate) {
   maxStartDate <- as.Date(snap$latest_observation_period_end_date) - 365
 
   if (is.null(startDate) & is.null(endDate)) {
-    # tbl <- tbl %>%
-
     tbl %>%
       omopgenerics::recordCohortAttrition(reason = "Restrictions on pregnancy start and/or end date: NONE")
   }
@@ -262,7 +260,7 @@ filterPregnancyTable <- function(tbl, minGestationalDuration, maxGestationalDura
 intersectCohorts <- function(tbl1, tbl2) {
   tbl1 %>%
     dplyr::inner_join(tbl2, dplyr::join_by(subject_id == subject_id), suffix = c("", "_y")) %>%
-    dplyr::select(-"cohort_definition_id_y", -"cohort_start_date_y", -"cohort_end_date_y")
+    dplyr::select(-c("cohort_definition_id_y", "cohort_start_date_y", "cohort_end_date_y"))
 }
 
 
@@ -294,16 +292,16 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' @param cdm (`cdm_reference`) Created with i.e. `CDMConnector::cdmFromCon`.
 #' @param petTable (`character(1)`) Name of the Pregnancy Extension Table.
 #' @param petSchema (`character(1)`)  Name of the schema where the Pregnancy Extension Table resides
-#' @param keepExtensionTable (`logical(1)`: `TRUE`) Should the intermediate table between the petTable and pregnancy_cohort be kept, default = TRUE
+#' @param keepExtensionTable (`logical(1)`: `TRUE`) Keep the reference to the pregnancy extension table? default = TRUE
+#' @param samePregDiffDates (`character(1)`: `"none"`) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "None" will drop all records, "Earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "Earliest" or "Latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.
+#' @param cohortDefinitionID (`numeric(1)`: `101`) Cohort definition id to assign to newly created cohort
 #' @param minGestationalDuration (`numeric(1)`: `NULL`) Minimum gestational duration to include.
 #' @param maxGestationalDuration (`numeric(1)`: `308`) Maximum gestational duration to include.
 #' @param minAge (`numeric(1)`: `12`) Minimum age to include.
 #' @param maxAge (`numeric(1)`: `55`) Maximum age to include.
 #' @param startDate (`Date(1)`: `NULL`) Earliest pregnancy start date to include, e.g. as.Date("2001-09-20", "%Y-%m-%d")
 #' @param endDate (`Date(1)`: `NULL`) Latest pregnancy end date to include, e.g as.Date("10/20/21", "%m/%d/%y")
-#' @param samePregDiffDates (`character(1)`: `"none"`) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "none" will drop all records, "earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "earliest" or "latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.
 #' @param sex (`character(2)`: `"Female"`) Sexes to include. One of or both `c("Female", "Male")`.
-#' @param cohortDefinitionID (`numeric(1)`: `101`) Cohort definition id to assign to newly created cohort
 #' @param outputDir (`path`) Path to output pregnancy_duplicate_map.csv to
 #' @param .softValidation (`logical(1)`: `FALSE`) Should a softValidation be done? default = FALSE
 
@@ -325,21 +323,21 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' @importFrom tibble tibble
 #' @export
 createPregnancyCohort <- function(
-    cdm,
-    petTable,
-    petSchema,
-    keepExtensionTable = TRUE,
-    cohortDefinitionID = 101,
-    minGestationalDuration = 0,
-    maxGestationalDuration = 308,
-    minAge = 12,
-    maxAge = 55,
-    startDate = NULL,
-    endDate = NULL,
-    samePregDiffDates = "none",
-    sex = "Female",
-    outputDir,
-    .softValidation = FALSE) {
+  cdm,
+  petTable,
+  petSchema,
+  keepExtensionTable = TRUE,
+  samePregDiffDates = "None",
+  cohortDefinitionID = 101,
+  minGestationalDuration = 0,
+  maxGestationalDuration = 308,
+  minAge = 12,
+  maxAge = 55,
+  startDate = NULL,
+  endDate = NULL,
+  sex = "Female",
+  outputDir,
+  .softValidation = FALSE) {
 
   # Check inputs ----
   assertions <- checkmate::makeAssertCollection()
@@ -355,7 +353,7 @@ createPregnancyCohort <- function(
   checkmate::assertNumber(x = maxAge, lower = minAge, finite = TRUE, add = assertions) # shouldn't be smaller than provided min age
   checkmate::assertDate(x = startDate, len = 1, null.ok = TRUE, add = assertions)
   checkmate::assertDate(x = endDate, len = 1, null.ok = TRUE, add = assertions)
-  checkmate::assertChoice(x = tolower(samePregDiffDates), choices = c("none", "earliest", "latest"), null.ok = FALSE, add = assertions)
+  checkmate::assertChoice(x = stringr::str_to_sentence(samePregDiffDates), choices = c("None", "Earliest", "Latest"), null.ok = FALSE, add = assertions)
   checkmate::assertSubset(x = stringr::str_to_sentence(sex), choices = c("Female", "Male"), empty.ok = FALSE, add = assertions) # throw error for null unlike assertChoice
   checkmate::assertLogical(x = .softValidation, len = 1, add = assertions)
 

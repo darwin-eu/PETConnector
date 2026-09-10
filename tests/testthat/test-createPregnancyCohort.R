@@ -1,6 +1,6 @@
 testthat::test_that("input args are as expected", {
   expect_error(
-    createPregnancyCohort(
+    PETConnector::createPregnancyCohort(
       cdm = cdm,
       petTable = "pregnancy",
       petSchema = "main",
@@ -22,12 +22,12 @@ testthat::test_that("input args are as expected", {
 
 
   expect_error(
-    createPregnancyCohort(
+    PETConnector::createPregnancyCohort(
       cdm = "hello", # of class "character" instead of "cdm_reference"
       petTable = "pregnancy",
       petSchema = "main",
       outputDir = testthat::test_path("testthat_testOutput"),
-      samePregDiffDates = c("first", "latest"), # length 2, should only be 1
+      samePregDiffDates = c("first", "Latest"), # length 2, should only be 1
       sex = c("MaLe", "FEmale"),
       .softValidation = NULL # NULL instead of logical
     ),
@@ -35,7 +35,7 @@ testthat::test_that("input args are as expected", {
   )
 
   expect_error(
-    createPregnancyCohort(
+    PETConnector::createPregnancyCohort(
       cdm = cdm,
       petTable = "pregnancy",
       petSchema = "main",
@@ -47,7 +47,7 @@ testthat::test_that("input args are as expected", {
   )
 
   expect_error(
-    createPregnancyCohort(
+    PETConnector::createPregnancyCohort(
       cdm = cdm,
       petTable = "pregnancy",
       petSchema = "main",
@@ -59,7 +59,7 @@ testthat::test_that("input args are as expected", {
       maxAge = 12, # less than minAge
       startDate = as.Date("2021-08-31", "%Y-%m-%d"),
       endDate = NULL,
-      samePregDiffDates = "EarLiest",
+      samePregDiffDates = "earLiest",
       sex = NULL, # NULL instead of "Female", "Male" or c("Female", "Male")
       outputDir = testthat::test_path("testthat_testOutput"),
       .softValidation = "FALSE" # character instead of logical
@@ -68,7 +68,7 @@ testthat::test_that("input args are as expected", {
   )
 
   expect_error(
-    createPregnancyCohort(
+    PETConnector::createPregnancyCohort(
       cdm = cdm,
       petTable = "pregnancy",
       petSchema = "main"
@@ -78,7 +78,7 @@ testthat::test_that("input args are as expected", {
   )
 
   expect_no_error(
-    createPregnancyCohort(
+    PETConnector::createPregnancyCohort(
       cdm = cdm,
       petTable = "pregnancy",
       petSchema = "main",
@@ -92,7 +92,7 @@ testthat::test_that("createPregnancyCohort() is not reliant on petTable being in
   # Check for sneaky reliance on petTable being in cdm_reference
   cdm$pregnancy <- NULL
 
-  cdm <- createPregnancyCohort(
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
@@ -108,7 +108,7 @@ testthat::test_that("createPregnancyCohort() is not reliant on petTable being in
 })
 
 testthat::test_that("keepExtensionTable = TRUE keeps pregnancy_extension_table reference and that the characteristics of the table align with what is expected", {
-  cdm <- createPregnancyCohort(
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
@@ -122,59 +122,64 @@ testthat::test_that("keepExtensionTable = TRUE keeps pregnancy_extension_table r
     "pregnancy_extension_table"
   )
 
+  # Collect tables to compare ----
+  pregnancy <- cdm[["pregnancy"]] %>%
+    dplyr::collect()
+
+  pregnancy_extension_table <- cdm[["pregnancy_extension_table"]] %>%
+    dplyr::collect()
+
   # Check that we have the same number of rows and columns in 'pregnancy' and 'pregnancy_extension_table' ----
   expect_identical(
-    nrow(cdm[["pregnancy"]]),
-    nrow(cdm[["pregnancy_extension_table"]])
+    nrow(pregnancy),
+    nrow(pregnancy_extension_table)
   )
 
   expect_identical(
-    ncol(cdm[["pregnancy"]]),
-    ncol(cdm[["pregnancy_extension_table"]])
+    ncol(pregnancy),
+    ncol(pregnancy_extension_table)
   )
 
   # Check that we have the same number NAs in 'pregnancy' and 'pregnancy_extension_table' ----
   expect_identical(
-    sum(is.na(cdm[["pregnancy"]] %>%
-      dplyr::collect())),
-    sum(is.na(cdm[["pregnancy_extension_table"]] %>%
-      dplyr::collect()))
+    sum(is.na(pregnancy)),
+    sum(is.na(pregnancy_extension_table))
   )
 
   # Check that we have the same colnames 'pregnancy' and 'pregnancy_extension_table' ----
   expect_identical(
-    colnames(cdm[["pregnancy"]]),
-    colnames(cdm[["pregnancy_extension_table"]])
+    colnames(pregnancy),
+    colnames(pregnancy_extension_table)
   ) # an extra layer check since colnames were not changed in the function and we already checked ncols
 
   # Check that start and end dates are of "Date" class in pregnancy_extension_table ----
   expect_type(
-    cdm[["pregnancy"]] %>%
+    pregnancy %>%
       dplyr::pull(pregnancy_start_date),
     "character"
   ) # sanity check of original
 
   expect_s3_class(
-    cdm[["pregnancy_extension_table"]] %>%
+    pregnancy_extension_table %>%
       dplyr::pull(pregnancy_start_date),
     "Date"
   )
 
   expect_type(
-    cdm[["pregnancy"]] %>%
+    pregnancy %>%
       dplyr::pull(pregnancy_end_date),
     "character"
   )
 
   expect_s3_class(
-    cdm[["pregnancy_extension_table"]] %>%
+    pregnancy_extension_table %>%
       dplyr::pull(pregnancy_end_date),
     "Date"
   )
 })
 
 testthat::test_that("keepExtensionTable = FALSE drops reference to pregnancy_extension_table", {
-  cdm <- createPregnancyCohort(
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
@@ -189,7 +194,7 @@ testthat::test_that("keepExtensionTable = FALSE drops reference to pregnancy_ext
 testthat::test_that("cohortDefinitionID updates to user choice", {
 
   # cohort_definition_id with default settings should be 101 ----
-  cdm <- createPregnancyCohort(
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
@@ -205,15 +210,15 @@ testthat::test_that("cohortDefinitionID updates to user choice", {
   )
 
   # cohort_definition_id with non-default ----
-  cdm <- createPregnancyCohort(
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
     cohortDefinitionID = 404,
     outputDir = outputDir
   )
-    pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
-    dplyr::collect()
+  pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
+  dplyr::collect()
 
   expect_all_equal(
     pregnancy_cohort$cohort_definition_id,
@@ -223,7 +228,7 @@ testthat::test_that("cohortDefinitionID updates to user choice", {
 })
 
 testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expected & pregnancy_duplicate_map.csv output file is created", {
-  cdm <- createPregnancyCohort(
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
@@ -233,7 +238,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
     maxGestationalDuration = 308, # default
     minAge = 12, # default
     maxAge = 55, # default
-    samePregDiffDates = "none", # default
+    samePregDiffDates = "None", # default
     startDate = NULL, # default
     endDate = NULL, # default
     sex = "Female", # default
@@ -434,7 +439,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
 })
 
 testthat::test_that("Filtering on GestationalDuration goes as expected", {
-  cdm <- createPregnancyCohort(
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
@@ -446,7 +451,7 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
     maxAge = 55, # default
     startDate = NULL, # default
     endDate = NULL, # default
-    samePregDiffDates = "none", # default
+    samePregDiffDates = "None", # default
     sex = "Female", # default
     outputDir = outputDir,
     .softValidation = FALSE # default
@@ -534,7 +539,7 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
 })
 
 testthat::test_that("Filtering on Age goes as expected", {
-  cdm <- createPregnancyCohort(
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
@@ -546,7 +551,7 @@ testthat::test_that("Filtering on Age goes as expected", {
     maxAge = 27,
     startDate = NULL, # default
     endDate = NULL, # default
-    samePregDiffDates = "none", # default
+    samePregDiffDates = "None", # default
     sex = "Female", # default
     outputDir = outputDir,
     .softValidation = FALSE # default
@@ -622,7 +627,7 @@ testthat::test_that("Filtering on Age goes as expected", {
 })
 
 testthat::test_that("Filtering on startDate goes as expected", {
-  cdm <- createPregnancyCohort(
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
@@ -634,7 +639,7 @@ testthat::test_that("Filtering on startDate goes as expected", {
     maxAge = 55, # default
     startDate = as.Date("2019-12-31", "%Y-%m-%d"),
     endDate = NULL, # default
-    samePregDiffDates = "none", # default
+    samePregDiffDates = "None", # default
     sex = "Female", # default
     outputDir = outputDir,
     .softValidation = FALSE # default
@@ -692,7 +697,7 @@ testthat::test_that("Filtering on startDate goes as expected", {
 })
 
 testthat::test_that("Filtering on endDate goes as expected", {
-  cdm <- createPregnancyCohort(
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
@@ -704,7 +709,7 @@ testthat::test_that("Filtering on endDate goes as expected", {
     maxAge = 55, # default
     startDate = NULL, # default
     endDate = as.Date("2022-01-07", "%Y-%m-%d"),
-    samePregDiffDates = "none", # default
+    samePregDiffDates = "None", # default
     sex = "Female", # default
     outputDir = outputDir,
     .softValidation = FALSE # default
@@ -769,7 +774,7 @@ testthat::test_that("Filtering on endDate goes as expected", {
 })
 
 testthat::test_that("Filtering on startDate AND endDate goes as expected", {
-  cdm <- createPregnancyCohort(
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
@@ -781,7 +786,7 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
     maxAge = 55, # default
     startDate = as.Date("2019-12-31", "%Y-%m-%d"),
     endDate = as.Date("2022-01-07", "%Y-%m-%d"),
-    samePregDiffDates = "none", # default
+    samePregDiffDates = "None", # default
     sex = "Female", # default
     outputDir = outputDir,
     .softValidation = FALSE # default
@@ -847,8 +852,8 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
   )
 })
 
-testthat::test_that("Filtering with samePregDiffDates = 'earliest' goes as expected", {
-  cdm <- createPregnancyCohort(
+testthat::test_that("Filtering with samePregDiffDates = 'Earliest' goes as expected", {
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
@@ -859,7 +864,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'earliest' goes as expec
     maxAge = 55, # default
     startDate = NULL, # default
     endDate = NULL, # default
-    samePregDiffDates = "earliest",
+    samePregDiffDates = "Earliest",
     sex = "Female", # default
     outputDir = outputDir,
     .softValidation = FALSE # default
@@ -876,7 +881,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'earliest' goes as expec
     2
   )
 
-  # With samePregDiffDates = 'earliest', we expect 10 pregnancies in pregnancy_extension table ----
+  # With samePregDiffDates = 'Earliest', we expect 10 pregnancies in pregnancy_extension table ----
   expect_equal(
     nrow(pregnancy_cohort),
     10
@@ -915,8 +920,8 @@ testthat::test_that("Filtering with samePregDiffDates = 'earliest' goes as expec
 
 })
 
-testthat::test_that("Filtering with samePregDiffDates = 'latest' goes as expected", {
-  cdm <- createPregnancyCohort(
+testthat::test_that("Filtering with samePregDiffDates = 'Latest' goes as expected", {
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
@@ -927,7 +932,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'latest' goes as expecte
     maxAge = 55, # default
     startDate = NULL, # default
     endDate = NULL, # default
-    samePregDiffDates = "latest",
+    samePregDiffDates = "Latest",
     sex = "Female", # default
     outputDir = outputDir,
     .softValidation = FALSE # default
@@ -944,7 +949,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'latest' goes as expecte
     2
   )
 
-  # With samePregDiffDates = 'latest', we expect 10 pregnancies in pregnancy_extension table ----
+  # With samePregDiffDates = 'Latest', we expect 10 pregnancies in pregnancy_extension table ----
   expect_equal(
     nrow(pregnancy_cohort),
     10
@@ -984,7 +989,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'latest' goes as expecte
 })
 
 testthat::test_that("Filtering on sex goes as expected", {
-  cdm <- createPregnancyCohort(
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
@@ -996,7 +1001,7 @@ testthat::test_that("Filtering on sex goes as expected", {
     maxAge = 55, # default
     startDate = NULL, # default
     endDate = NULL, # default
-    samePregDiffDates = "none",
+    samePregDiffDates = "None",
     sex = "Male", # default
     outputDir = outputDir,
     .softValidation = FALSE # default
@@ -1036,7 +1041,7 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
     file.remove(pregDupFile) # remove versions of this file from previous tests
   }
 
-  cdm <- createPregnancyCohort(
+  cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
@@ -1048,7 +1053,7 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
     maxAge = 55, # default
     startDate = NULL, # default
     endDate = NULL, # default
-    samePregDiffDates = "latest",
+    samePregDiffDates = "Latest",
     sex = "Female", # default
     outputDir = outputDir,
     .softValidation = TRUE
