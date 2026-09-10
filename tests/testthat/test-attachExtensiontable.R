@@ -50,5 +50,4 @@ testthat::test_that("pregnancy_extension_table is created and attached to cdm", 
         dplyr::collect()
     )
   )
-
 })

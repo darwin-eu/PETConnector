@@ -240,14 +240,14 @@ filterLiveBirth <- function(tbl) {
 #' @importFrom omopgenerics newCohortTable recordCohortAttrition
 #' @export
 createChildCohort <- function(
-  cdm,
-  childTable = NULL,
-  childSchema = NULL,
-  keepExtensionTable = TRUE,
-  collapseDupRecords = TRUE,
-  cohortDefinitionID = 102,
-  childConceptIds = c(40485452, 4285883), # child -> parent ("child of subject" non-standard, "child" standard)
-  .softValidation = FALSE) {
+    cdm,
+    childTable = NULL,
+    childSchema = NULL,
+    keepExtensionTable = TRUE,
+    collapseDupRecords = TRUE,
+    cohortDefinitionID = 102,
+    childConceptIds = c(40485452, 4285883), # child -> parent ("child of subject" non-standard, "child" standard)
+    .softValidation = FALSE) {
 
   # Check inputs ----
   assertions <- checkmate::makeAssertCollection()
@@ -268,7 +268,7 @@ createChildCohort <- function(
   }
 
   if ((!is.null(childTable) & is.null(childSchema)) |
-       (is.null(childTable) & !is.null(childSchema))) {
+    (is.null(childTable) & !is.null(childSchema))) {
     assertions$push(
       "Double check that you have provided both a childTable and childSchema if you want to create the child_cohort from the childTable."
     )
@@ -278,7 +278,6 @@ createChildCohort <- function(
 
   # Create child_cohort from childTable ----
   if (!is.null(childTable) & !is.null(childSchema)) {
-
     cdm <- attachExtensionTable(
       cdm = cdm,
       table = childTable,
@@ -297,7 +296,6 @@ createChildCohort <- function(
 
     # Check validity of child extension table
     if (isFALSE(.softValidation)) {
-
       keptIds <- cdm$pregnancy_cohort %>%
         dplyr::select("pregnancy_id") %>%
         dplyr::pull()
@@ -325,7 +323,7 @@ createChildCohort <- function(
       dplyr::select("cohort_definition_id", "subject_id", "cohort_start_date", "cohort_end_date", dplyr::any_of(childColnames)) %>%
       dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
 
-  # Create child_cohort from fact_relationship table ----
+    # Create child_cohort from fact_relationship table ----
   } else { # will be is.null(childTable) & is.null(childSchema), we have a checkmate catch for cases when 1/2 args provided
 
     cdm <- createPerinatalCohortFromFactRel(

@@ -192,7 +192,6 @@ testthat::test_that("keepExtensionTable = FALSE drops reference to pregnancy_ext
 })
 
 testthat::test_that("cohortDefinitionID updates to user choice", {
-
   # cohort_definition_id with default settings should be 101 ----
   cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
@@ -218,13 +217,12 @@ testthat::test_that("cohortDefinitionID updates to user choice", {
     outputDir = outputDir
   )
   pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
-  dplyr::collect()
+    dplyr::collect()
 
   expect_all_equal(
     pregnancy_cohort$cohort_definition_id,
     404
   )
-
 })
 
 testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expected & pregnancy_duplicate_map.csv output file is created", {
@@ -384,7 +382,6 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
     dplyr::filter(
       (subject_id == 105 & pregnancy_id == 45) # overlapping dates, 4 records
       | (subject_id == 106 & pregnancy_id == 46) # overlapping dates, 2 records
-
     )
 
   expect_equal(
@@ -917,7 +914,6 @@ testthat::test_that("Filtering with samePregDiffDates = 'Earliest' goes as expec
       dplyr::pull(excluded_subjects),
     0
   )
-
 })
 
 testthat::test_that("Filtering with samePregDiffDates = 'Latest' goes as expected", {
@@ -962,8 +958,8 @@ testthat::test_that("Filtering with samePregDiffDates = 'Latest' goes as expecte
       | (subject_id == 106 & pregnancy_id == 46) # overlapping dates, 2 records
     ) %>%
     dplyr::filter(
-      (subject_id == 105 & pregnancy_id == 45 & pregnancy_start_date == "2020-01-15")
-      | (subject_id == 106 & pregnancy_id == 46 & pregnancy_start_date == "2020-01-02")
+      (subject_id == 105 & pregnancy_id == 45 & pregnancy_start_date == "2020-01-15") |
+        (subject_id == 106 & pregnancy_id == 46 & pregnancy_start_date == "2020-01-02")
     )
 
   expect_equal(
@@ -985,7 +981,6 @@ testthat::test_that("Filtering with samePregDiffDates = 'Latest' goes as expecte
       dplyr::pull(excluded_subjects),
     0
   )
-
 })
 
 testthat::test_that("Filtering on sex goes as expected", {

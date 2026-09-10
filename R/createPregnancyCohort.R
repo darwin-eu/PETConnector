@@ -157,7 +157,7 @@ filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates) {
 
     tbl %>%
       dplyr::group_by(.data$subject_id, .data$pregnancy_id) %>%
-      sliceRecord(.data$pregnancy_start_date, n = 1,  with_ties = TRUE) %>% # keep ties if same start date
+      sliceRecord(.data$pregnancy_start_date, n = 1, with_ties = TRUE) %>% # keep ties if same start date
       dplyr::slice_max(!!CDMConnector::datediff("pregnancy_start_date", "pregnancy_end_date", interval = "day"), n = 1, with_ties = FALSE) %>% # use gest_length as tiebreaker
       dplyr::ungroup() %>%
       dplyr::compute(name = "pregnancy_cohort", temporary = FALSE, overwrite = TRUE) %>%
@@ -323,21 +323,21 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' @importFrom tibble tibble
 #' @export
 createPregnancyCohort <- function(
-  cdm,
-  petTable,
-  petSchema,
-  keepExtensionTable = TRUE,
-  samePregDiffDates = "None",
-  cohortDefinitionID = 101,
-  minGestationalDuration = 0,
-  maxGestationalDuration = 308,
-  minAge = 12,
-  maxAge = 55,
-  startDate = NULL,
-  endDate = NULL,
-  sex = "Female",
-  outputDir,
-  .softValidation = FALSE) {
+    cdm,
+    petTable,
+    petSchema,
+    keepExtensionTable = TRUE,
+    samePregDiffDates = "None",
+    cohortDefinitionID = 101,
+    minGestationalDuration = 0,
+    maxGestationalDuration = 308,
+    minAge = 12,
+    maxAge = 55,
+    startDate = NULL,
+    endDate = NULL,
+    sex = "Female",
+    outputDir,
+    .softValidation = FALSE) {
 
   # Check inputs ----
   assertions <- checkmate::makeAssertCollection()

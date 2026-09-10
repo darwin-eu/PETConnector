@@ -16,10 +16,10 @@
 #'
 #' @export
 attachExtensionTable <- function(
-  cdm,
-  table,
-  schema,
-  name) {
+    cdm,
+    table,
+    schema,
+    name) {
 
   # Check inputs ----
   assertions <- checkmate::makeAssertCollection()

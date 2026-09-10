@@ -138,7 +138,6 @@ testthat::test_that("keepExtensionTable = TRUE keeps perinatal_extension_table r
     colnames(infant),
     colnames(perinatal_extension_table)
   ) # an extra layer check since colnames were not changed in the function and we already checked ncols
-
 })
 
 testthat::test_that("keepExtensionTable = FALSE drops reference to perinatal_extension_table", {
@@ -156,7 +155,6 @@ testthat::test_that("keepExtensionTable = FALSE drops reference to perinatal_ext
 })
 
 testthat::test_that("cohortDefinitionID updates to user choice", {
-
   # cohort_definition_id with default settings should be 101 ----
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
@@ -567,7 +565,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   # Parent not in pregnancy_cohort ----
   notInPregCohort <- child_cohort %>%
     dplyr::filter(subject_id %in% c(1, 2, 3, 4, 5, 6, 7, 8, 11, 14))
-    # linked to parents c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15) who aren't in pregnancy_cohort
+  # linked to parents c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15) who aren't in pregnancy_cohort
 
   expect_equal(
     nrow(notInPregCohort),
@@ -723,7 +721,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   # Parent not in pregnancy_cohort ----
   notInPregCohort <- child_cohort %>%
     dplyr::filter(subject_id %in% c(1, 2, 3, 4, 5, 6, 7, 8, 11, 14))
-    # linked to parents c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15) who aren't in pregnancy_cohort
+  # linked to parents c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15) who aren't in pregnancy_cohort
 
 
   expect_equal(
