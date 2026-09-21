@@ -257,6 +257,11 @@ filterPregnancyTable <- function(tbl, minGestationalDuration, maxGestationalDura
   } # don't use omopgenerics .softvalidation either!
 }
 
+filterPregnancyOutcome <- function(tbl, outcomeIds) {
+  tbl %>%
+    dplyr::filter(.data$pregnancy_outcome %in% outcomeIds)
+}
+
 intersectCohorts <- function(tbl1, tbl2) {
   tbl1 %>%
     dplyr::inner_join(tbl2, dplyr::join_by(subject_id == subject_id), suffix = c("", "_y")) %>%
