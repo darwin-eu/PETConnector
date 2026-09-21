@@ -18,6 +18,7 @@ createPregnancyCohort(
   startDate = NULL,
   endDate = NULL,
   sex = "Female",
+  outcomeIds = NULL,
   outputDir,
   .softValidation = FALSE
 )
@@ -48,6 +49,8 @@ createPregnancyCohort(
 \item{endDate}{(\code{Date(1)}: \code{NULL}) Latest pregnancy end date to include, e.g as.Date("10/20/21", "\%m/\%d/\%y")}
 
 \item{sex}{(\code{character(2)}: \code{"Female"}) Sexes to include. One of or both \code{c("Female", "Male")}.}
+
+\item{outcomeIds}{(\code{numeric(n)}: \code{NULL}) Vector of IDs to filter pregnancy outcomes}
 
 \item{outputDir}{(\code{path}) Path to output pregnancy_duplicate_map.csv to}
 

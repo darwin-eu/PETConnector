@@ -235,11 +235,12 @@ filterStudyPeriod <- function(tbl, startDate, endDate) {
   # 4. non-Null start + non-Null end, works (setting of tbl <- tbl is necessary here to apply then endDate filtering on the already startDate filtered tbl)
 }
 
-inclusionCriteria <- function(tbl, minAge, maxAge, sex, startDate, endDate) {
+inclusionCriteria <- function(tbl, minAge, maxAge, sex, startDate, endDate, outcomeIds) {
   tbl %>%
     inclusionAge(minAge, maxAge) %>%
     inclusionSex(sex) %>%
-    filterStudyPeriod(startDate, endDate)
+    filterStudyPeriod(startDate, endDate) %>%
+    filterPregnancyOutcome(outcomeIds)
 }
 
 
@@ -258,8 +259,15 @@ filterPregnancyTable <- function(tbl, minGestationalDuration, maxGestationalDura
 }
 
 filterPregnancyOutcome <- function(tbl, outcomeIds) {
-  tbl %>%
-    dplyr::filter(.data$pregnancy_outcome %in% outcomeIds)
+  if (!is.null(outcomeIds)) {
+    outcomeIdsStr <- paste0(outcomeIds, collapse = ",")
+    tbl %>%
+      dplyr::filter(.data$pregnancy_outcome %in% outcomeIds) %>%
+      dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
+      omopgenerics::recordCohortAttrition(reason = sprintf("Filter pregnancies by outcomeIds %s", outcomeIdsStr))
+  } else {
+    return(tbl)
+  }
 }
 
 intersectCohorts <- function(tbl1, tbl2) {
@@ -307,6 +315,7 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' @param startDate (`Date(1)`: `NULL`) Earliest pregnancy start date to include, e.g. as.Date("2001-09-20", "%Y-%m-%d")
 #' @param endDate (`Date(1)`: `NULL`) Latest pregnancy end date to include, e.g as.Date("10/20/21", "%m/%d/%y")
 #' @param sex (`character(2)`: `"Female"`) Sexes to include. One of or both `c("Female", "Male")`.
+#' @param outcomeIds  (`numeric(n)`: `NULL`) Vector of IDs to filter pregnancy outcomes
 #' @param outputDir (`path`) Path to output pregnancy_duplicate_map.csv to
 #' @param .softValidation (`logical(1)`: `FALSE`) Should a softValidation be done? default = FALSE
 
@@ -341,6 +350,7 @@ createPregnancyCohort <- function(
     startDate = NULL,
     endDate = NULL,
     sex = "Female",
+    outcomeIds = NULL,
     outputDir,
     .softValidation = FALSE) {
 
@@ -360,6 +370,7 @@ createPregnancyCohort <- function(
   checkmate::assertDate(x = endDate, len = 1, null.ok = TRUE, add = assertions)
   checkmate::assertChoice(x = stringr::str_to_sentence(samePregDiffDates), choices = c("None", "Earliest", "Latest"), null.ok = FALSE, add = assertions)
   checkmate::assertSubset(x = stringr::str_to_sentence(sex), choices = c("Female", "Male"), empty.ok = FALSE, add = assertions) # throw error for null unlike assertChoice
+  checkmate::assertVector(x = outcomeIds, null.ok = TRUE, add = assertions)
   checkmate::assertLogical(x = .softValidation, len = 1, add = assertions)
 
   if (isFALSE(.softValidation)) {
@@ -403,7 +414,8 @@ createPregnancyCohort <- function(
       maxAge = maxAge,
       sex = stringr::str_to_sentence(sex),
       startDate = startDate,
-      endDate = endDate
+      endDate = endDate,
+      outcomeIds = outcomeIds
     )
 
   if (isFALSE(.softValidation)) { # only if .softValidation is FALSE will filterMultiplePregnancies() be run and pregnancy_duplicate_map.csv produced
