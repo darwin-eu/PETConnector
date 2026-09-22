@@ -38,6 +38,7 @@ filterInObservationStart <- function(tbl) {
   tbl %>%
     PatientProfiles::addInObservation() %>%
     dplyr::filter(.data$in_observation == 1) %>%
+    dplyr::select(-"in_observation") %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = "In observation at pregnancy start date")
 }
@@ -46,6 +47,7 @@ filterInObservationEnd <- function(tbl) {
   tbl %>%
     PatientProfiles::addInObservation(indexDate = "cohort_end_date") %>%
     dplyr::filter(.data$in_observation == 1) %>%
+    dplyr::select(-"in_observation") %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = "In observation at pregnancy end date")
 }
@@ -128,11 +130,13 @@ filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates) {
     dplyr::compute()
 
   utils::write.csv(removed_mapping, file.path(outputDir, "pregnancy_duplicate_map.csv"), row.names = FALSE)
-  # 3 — Keep only the canonical pregnancy IDs
-  kept_ids <- grouped %>% pull(kept_pregnancy_id)
+  # 3 — Keep only the canonical pregnancy IDs without collecting them into R.
+  kept_ids <- grouped_base %>%
+    dplyr::mutate(pregnancy_id = .data$kept_pregnancy_id) %>%
+    dplyr::select("pregnancy_id")
 
-  tbl %>%
-    dplyr::filter(.data$pregnancy_id %in% kept_ids) %>%
+  tbl <- tbl %>%
+    dplyr::semi_join(kept_ids, by = dplyr::join_by(pregnancy_id)) %>%
     dplyr::distinct() %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE, overwrite = TRUE) %>%
     omopgenerics::recordCohortAttrition(
