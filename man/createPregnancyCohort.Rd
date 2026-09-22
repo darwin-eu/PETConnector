@@ -19,6 +19,7 @@ createPregnancyCohort(
   endDate = NULL,
   sex = "Female",
   outputDir,
+  tableName = "pregnancy_cohort",
   .softValidation = FALSE
 )
 }
@@ -50,6 +51,8 @@ createPregnancyCohort(
 \item{sex}{(\code{character(2)}: \code{"Female"}) Sexes to include. One of or both \code{c("Female", "Male")}.}
 
 \item{outputDir}{(\code{path}) Path to output pregnancy_duplicate_map.csv to}
+
+\item{tableName}{(\code{character(1)}: \code{"pregnancy_cohort"}) Cohort table name}
 
 \item{.softValidation}{(\code{logical(1)}: \code{FALSE}) Should a softValidation be done? default = FALSE}
 }
