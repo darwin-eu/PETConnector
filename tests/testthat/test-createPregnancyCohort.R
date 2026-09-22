@@ -1093,3 +1093,27 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
   # Check that pregnancy_duplicate_map.csv was not created
   expect_false(file.exists(file.path(pregDupFile)))
 })
+
+testthat::test_that("Output dir is created when it doesn't exist yet", {
+  newOutputDir <- file.path(outputDir, "new")
+  cdm <- PETConnector::createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
+    minGestationalDuration = 0, # default
+    maxGestationalDuration = 308, # default
+    minAge = 12, # default
+    maxAge = 55, # default
+    startDate = NULL, # default
+    endDate = NULL, # default
+    samePregDiffDates = "Latest",
+    sex = "Female", # default
+    outputDir = newOutputDir,
+    .softValidation = TRUE
+  )
+
+  # Check that newOutputDir is created
+  expect_false(dir.exists(newOutputDir))
+})
