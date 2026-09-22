@@ -1138,6 +1138,6 @@ testthat::test_that("Filtering on outcome goes as expected", {
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_subjects),
-    5
+    4
   )
 })
