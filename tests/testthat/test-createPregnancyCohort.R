@@ -1096,6 +1096,11 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
 
 testthat::test_that("Output dir is created when it doesn't exist yet", {
   newOutputDir <- file.path(outputDir, "tmpDir")
+  # make sure it doesn't exist
+  if (dir.exists(newOutputDir)) {
+    unlink(newOutputDir, recursive = TRUE)
+  }
+
   cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
