@@ -1093,3 +1093,51 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
   # Check that pregnancy_duplicate_map.csv was not created
   expect_false(file.exists(file.path(pregDupFile)))
 })
+
+testthat::test_that("Filtering on outcome goes as expected", {
+  cdm <- PETConnector::createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
+    minGestationalDuration = 0, # default
+    maxGestationalDuration = 308, # default
+    minAge = 12, # default
+    maxAge = 55, # default
+    startDate = NULL, # default
+    endDate = NULL, # default
+    samePregDiffDates = "None",
+    sex = "Female", # default
+    outcomeIds = c(443213),
+    outputDir = outputDir,
+    .softValidation = FALSE # default
+  )
+
+  attrition_tbl <- omopgenerics::attrition(cdm[["pregnancy_cohort"]])
+
+  pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
+    dplyr::collect()
+
+  # 3 pregnancies with given outcome
+  expect_equal(
+    nrow(pregnancy_cohort),
+    3
+  )
+
+  # Check of attrition table ----
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 13)
+
+  # 5 pregnancies have another outcome
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
+    5
+  )
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
+    5
+  )
+})
