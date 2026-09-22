@@ -370,7 +370,7 @@ createPregnancyCohort <- function(
   checkmate::assertDate(x = endDate, len = 1, null.ok = TRUE, add = assertions)
   checkmate::assertChoice(x = stringr::str_to_sentence(samePregDiffDates), choices = c("None", "Earliest", "Latest"), null.ok = FALSE, add = assertions)
   checkmate::assertSubset(x = stringr::str_to_sentence(sex), choices = c("Female", "Male"), empty.ok = FALSE, add = assertions) # throw error for null unlike assertChoice
-  checkmate::assertVector(x = outcomeIds, null.ok = TRUE, add = assertions)
+  checkmate::assertNumeric(x = outcomeIds, null.ok = TRUE, add = assertions)
   checkmate::assertLogical(x = .softValidation, len = 1, add = assertions)
 
   if (isFALSE(.softValidation)) {
