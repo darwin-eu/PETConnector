@@ -1115,5 +1115,5 @@ testthat::test_that("Output dir is created when it doesn't exist yet", {
   )
 
   # Check that newOutputDir is created
-  expect_false(dir.exists(newOutputDir))
+  expect_true(dir.exists(newOutputDir))
 })
