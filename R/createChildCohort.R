@@ -12,7 +12,7 @@ getNumberRecords <- function(tbl) {
     dplyr::pull(.data$n)
 }
 
-createPerinatalCohortFromTbl <- function(cdm, keepExtensionTable, cohortDefinitionID, childCohortTableName) {
+createPerinatalCohortFromTbl <- function(cdm, keepExtensionTable, cohortDefinitionID, childCohortTableName, pregnancyCohortTableName) {
   cdm[[childCohortTableName]] <- cdm$perinatal_extension_table %>%
     dplyr::left_join(
       cdm[["pregnancy_duplicate_map"]] %>%
@@ -31,7 +31,7 @@ createPerinatalCohortFromTbl <- function(cdm, keepExtensionTable, cohortDefiniti
     )
 
   cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
-    dplyr::left_join(cdm$pregnancy_cohort, by = dplyr::join_by(pregnancy_id == pregnancy_id)) %>%
+    dplyr::left_join(cdm[[pregnancyCohortTableName]], by = dplyr::join_by(pregnancy_id == pregnancy_id)) %>%
     dplyr::mutate(
       cohort_definition_id = cohortDefinitionID,
       parent_id = .data$subject_id # subject_id comes from pregnancy_cohort
@@ -59,8 +59,8 @@ createPerinatalCohortFromTbl <- function(cdm, keepExtensionTable, cohortDefiniti
   return(cdm)
 }
 
-createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRecords, cohortDefinitionID, childCohortTableName) {
-  pregnancyCols <- colnames(cdm$pregnancy_cohort)
+createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRecords, cohortDefinitionID, childCohortTableName, pregnancyCohortTableName) {
+  pregnancyCols <- colnames(cdm[[pregnancyCohortTableName]])
 
   cdm[[childCohortTableName]] <- cdm[["fact_relationship"]] %>%
     dplyr::filter(.data$relationship_concept_id %in% childConceptIds) %>%
@@ -90,7 +90,7 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
   )
 
   cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
-    dplyr::left_join(cdm$pregnancy_cohort, by = dplyr::join_by(parent_id == subject_id)) %>%
+    dplyr::left_join(cdm[[pregnancyCohortTableName]], by = dplyr::join_by(parent_id == subject_id)) %>%
     dplyr::select(
       "parent_id",
       cohort_definition_id = "cohort_definition_id.x",
@@ -227,7 +227,8 @@ filterLiveBirth <- function(tbl) {
 #' @param childTable (`character(1)`: `NULL`) Name of the Child Extension Table
 #' @param childSchema (`character(1)`: `NULL`) Name of the schema where the Child Extension Table resides
 #' @param keepExtensionTable (`logical(1)`: `TRUE`) Keep the reference to the perinatal extension table? default = TRUE
-#' @param childCohortTableName (`character(1)`: `"child_cohort"`) Child cohort table name
+#' @param childCohortTableName (`character(1)`: `"child_cohort"`) Name to assign to to child cohort table
+#' @param pregnancyCohortTableName (`character(1)`: `"pregnancy_cohort"`) Pregnancy cohort table name
 #' @param collapseDupRecords (`logical(1)`: `TRUE`) When TRUE, collapses duplicated records to one record per child. In the case that a subject id is duplicated but the rest of the record isn't, all records for the subject_id will be filtered out
 #' @param cohortDefinitionID (`numeric(1)`: `102`) Cohort definition id to assign to newly created cohort
 #' @param childConceptIds (`numeric(n)`: `c(40485452, 4285883)`) Concepts to use to link the child to the parent. I.e. `40485452` = Child of subject
@@ -248,6 +249,7 @@ createChildCohort <- function(
     childSchema = NULL,
     keepExtensionTable = TRUE,
     childCohortTableName = "child_cohort",
+    pregnancyCohortTableName = "pregnancy_cohort",
     collapseDupRecords = TRUE,
     cohortDefinitionID = 102,
     childConceptIds = c(40485452, 4285883), # child -> parent ("child of subject" non-standard, "child" standard)
@@ -261,6 +263,7 @@ createChildCohort <- function(
   checkmate::assertClass(x = childSchema, classes = "character", null.ok = TRUE, add = assertions) # don't need to check against (attr(cdm, "write_schema")
   checkmate::assertClass(x = childTable, classes = "character", null.ok = TRUE, add = assertions) # don't need to check against names(cdm)
   checkmate::assertClass(x = childCohortTableName, classes = "character", add = assertions)
+  checkmate::assertClass(x = pregnancyCohortTableName, classes = "character", add = assertions)
   checkmate::assertLogical(x = collapseDupRecords, len = 1, add = assertions)
 
   if (is.null(childTable) & is.null(childSchema)) { # meaning, we create child_cohort from fact_relationship (parentCohortTable) + childConceptIds
@@ -297,12 +300,13 @@ createChildCohort <- function(
       cdm = cdm,
       keepExtensionTable = keepExtensionTable,
       cohortDefinitionID = cohortDefinitionID,
-      childCohortTableName = childCohortTableName
+      childCohortTableName = childCohortTableName,
+      pregnancyCohortTableName = pregnancyCohortTableName
     )
 
     # Check validity of child extension table
     if (isFALSE(.softValidation)) {
-      keptIds <- cdm$pregnancy_cohort %>%
+      keptIds <- cdm[[pregnancyCohortTableName]] %>%
         dplyr::select("pregnancy_id") %>%
         dplyr::pull()
 
@@ -337,7 +341,8 @@ createChildCohort <- function(
       childConceptIds = childConceptIds,
       collapseDupRecords = collapseDupRecords,
       cohortDefinitionID = cohortDefinitionID,
-      childCohortTableName = childCohortTableName
+      childCohortTableName = childCohortTableName,
+      pregnancyCohortTableName = pregnancyCohortTableName
     )
 
     cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
