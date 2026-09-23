@@ -9,10 +9,10 @@ createChildCohort(
   childTable = NULL,
   childSchema = NULL,
   keepExtensionTable = TRUE,
+  childCohortTableName = "child_cohort",
   collapseDupRecords = TRUE,
   cohortDefinitionID = 102,
   childConceptIds = c(40485452, 4285883),
-  tableName = "pregnancy_cohort",
   .softValidation = FALSE
 )
 }
@@ -25,13 +25,13 @@ createChildCohort(
 
 \item{keepExtensionTable}{(\code{logical(1)}: \code{TRUE}) Keep the reference to the perinatal extension table? default = TRUE}
 
+\item{childCohortTableName}{(\code{character(1)}: \code{"child_cohort"}) Child cohort table name}
+
 \item{collapseDupRecords}{(\code{logical(1)}: \code{TRUE}) When TRUE, collapses duplicated records to one record per child. In the case that a subject id is duplicated but the rest of the record isn't, all records for the subject_id will be filtered out}
 
 \item{cohortDefinitionID}{(\code{numeric(1)}: \code{102}) Cohort definition id to assign to newly created cohort}
 
 \item{childConceptIds}{(\code{numeric(n)}: \code{c(40485452, 4285883)}) Concepts to use to link the child to the parent. I.e. \code{40485452} = Child of subject}
-
-\item{tableName}{(\code{character(1)}: \code{"pregnancy_cohort"}) Table name of pregnancy cohort}
 
 \item{.softValidation}{(\code{logical(1)}: \code{FALSE}) Should a softValidation be done? default = FALSE}
 }

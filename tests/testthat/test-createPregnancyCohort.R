@@ -5,7 +5,7 @@ testthat::test_that("input args are as expected", {
       petTable = "pregnancy",
       petSchema = "main",
       keepExtensionTable = "no", # should be logical TRUE/FALSE
-      tableName = 123, # numeric instead of character
+      pregnancyCohortTableName = 123, # numeric instead of character
       cohortDefinitionID = "101", # character instead of number
       minGestationalDuration = "20", # character instead of number
       maxGestationalDuration = "308", # character instead of number
@@ -53,7 +53,7 @@ testthat::test_that("input args are as expected", {
       petTable = "pregnancy",
       petSchema = "main",
       keepExtensionTable = c(TRUE, FALSE), # length 2 instead of 1
-      tableName = "preg_cohort", # no error, character
+      pregnancyCohortTableName = "preg_cohort", # no error, character
       cohortDefinitionID = c(101, 102), # length 2 instead of 1
       minGestationalDuration = NULL, # NULL instead of number
       maxGestationalDuration = Inf, # infinite
@@ -241,12 +241,12 @@ testthat::test_that("Pregnancy cohort table name reflects user choice", {
     "pregnancy_cohort"
   )
 
-  # Check that tableName is being used to name pregnancy cohort table ----
+  # Check that pregnancyCohortTableName is being used to name pregnancy cohort table ----
   cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    tableName = "another_pregnancy_cohort",
+    pregnancyCohortTableName = "another_pregnancy_cohort",
     outputDir = outputDir
   )
 
@@ -271,7 +271,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
-    tableName = "pregnancy_cohort", # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -482,7 +482,7 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
-    tableName = "pregnancy_cohort", # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 6,
     maxGestationalDuration = 266,
@@ -583,7 +583,7 @@ testthat::test_that("Filtering on Age goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
-    tableName = "pregnancy_cohort", # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -672,7 +672,7 @@ testthat::test_that("Filtering on startDate goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
-    tableName = "pregnancy_cohort", # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -743,7 +743,7 @@ testthat::test_that("Filtering on endDate goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
-    tableName = "pregnancy_cohort", # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -821,7 +821,7 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
-    tableName = "pregnancy_cohort", # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -901,7 +901,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'Earliest' goes as expec
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
-    tableName = "pregnancy_cohort", # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -969,7 +969,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'Latest' goes as expecte
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
-    tableName = "pregnancy_cohort", # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -1037,7 +1037,7 @@ testthat::test_that("Filtering on sex goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
-    tableName = "pregnancy_cohort", # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -1090,7 +1090,7 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
-    tableName = "pregnancy_cohort", # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default

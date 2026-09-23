@@ -9,7 +9,7 @@ createPregnancyCohort(
   petTable,
   petSchema,
   keepExtensionTable = TRUE,
-  tableName = "pregnancy_cohort",
+  pregnancyCohortTableName = "pregnancy_cohort",
   samePregDiffDates = "None",
   cohortDefinitionID = 101,
   minGestationalDuration = 0,
@@ -32,7 +32,7 @@ createPregnancyCohort(
 
 \item{keepExtensionTable}{(\code{logical(1)}: \code{TRUE}) Keep the reference to the pregnancy extension table? default = TRUE}
 
-\item{tableName}{(\code{character(1)}: \code{"pregnancy_cohort"}) Pregnancy cohort table name}
+\item{pregnancyCohortTableName}{(\code{character(1)}: \code{"pregnancy_cohort"}) Pregnancy cohort table name}
 
 \item{samePregDiffDates}{(\code{character(1)}: \code{"none"}) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "None" will drop all records, "Earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "Earliest" or "Latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.}
 

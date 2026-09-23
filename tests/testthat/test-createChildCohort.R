@@ -19,10 +19,11 @@ testthat::test_that("input args are as expected", {
       childSchema = TRUE, # logical instead of character
       childTable = "infant",
       keepExtensionTable = "FALSE", # character instead of logical
+      childCohortTableName = FALSE, # logical instead of character
       childConceptIds = c("40485452", "4285883"), # won't be checked, character instead of numeric
       .softValidation = NULL # NULL instead of logical
     ),
-    "5 assertions failed:"
+    "6 assertions failed:"
   )
 
   expect_error(
@@ -59,6 +60,7 @@ testthat::test_that("input args are as expected", {
       childSchema = "main",
       childTable = "infant",
       keepExtensionTable = TRUE,
+      childCohortTableName = "cohort_child", # character, no error
       childConceptIds = NULL, # not used when creating from childTable
       .softValidation = TRUE
     )
@@ -215,6 +217,79 @@ testthat::test_that("cohortDefinitionID updates to user choice", {
   )
 })
 
+testthat::test_that("Child cohort table name reflects user choice when creating child_cohort from childTable", {
+  # Sanity check that child_cohort exists as default  ----
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    childTable = "infant",
+    childSchema = "main",
+    keepExtensionTable = TRUE
+  )
+
+  expect_contains(
+    names(cdm),
+    "child_cohort"
+  )
+
+  # Check that childCohortTableName is being used to name child cohort table ----
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    childTable = "infant",
+    childSchema = "main",
+    keepExtensionTable = TRUE,
+    childCohortTableName = "another_child_cohort"
+  )
+
+  expect_contains(
+    names(cdm),
+    c("child_cohort", "another_child_cohort")
+  )
+
+  # Sanity check of same content
+  expect_true(
+    setequal(cdm$child_cohort %>%
+               dplyr::collect(),
+             cdm$another_child_cohort %>%
+               dplyr::collect()
+    )
+  )
+
+})
+
+testthat::test_that("Child cohort table name reflects user choice when creating child_cohort from fact_relationship (parentCohortTable)", {
+  # Sanity check that child_cohort exists as default  ----
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    collapseDupRecords = TRUE
+  )
+
+  expect_contains(
+    names(cdm),
+    "child_cohort"
+  )
+
+  # Check that childCohortTableName is being used to name child cohort table ----
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    collapseDupRecords = TRUE,
+    childCohortTableName = "another_child_cohort"
+  )
+
+  expect_contains(
+    names(cdm),
+    c("child_cohort", "another_child_cohort")
+  )
+
+  # Sanity check of same content
+  expect_true(
+    setequal(cdm$child_cohort %>%
+               dplyr::collect(),
+             cdm$another_child_cohort %>%
+               dplyr::collect()
+    )
+  )
+})
+
 testthat::test_that("Creating child_cohort from childTable + .softValidation = TRUE goes as expected", {
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
@@ -222,6 +297,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
     childTable = "infant",
     childSchema = "main",
     keepExtensionTable = TRUE,
+    childCohortTableName = "child_cohort", # default
     .softValidation = TRUE
   )
 
@@ -283,6 +359,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     childTable = "infant",
     childSchema = "main",
     keepExtensionTable = TRUE,
+    childCohortTableName = "child_cohort", # default
     collapseDupRecords = TRUE,
     .softValidation = FALSE
   )
@@ -431,6 +508,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     childTable = "infant",
     childSchema = "main",
     keepExtensionTable = TRUE,
+    childCohortTableName = "child_cohort", # default
     collapseDupRecords = FALSE,
     .softValidation = FALSE
   )
@@ -532,6 +610,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     cohortDefinitionID = 101,
+    childCohortTableName = "child_cohort", # default
     collapseDupRecords = TRUE
   )
 
@@ -688,6 +767,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     cohortDefinitionID = 101,
+    childCohortTableName = "child_cohort", # default
     collapseDupRecords = FALSE
   )
 
