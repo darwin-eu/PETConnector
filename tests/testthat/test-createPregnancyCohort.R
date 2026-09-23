@@ -263,6 +263,44 @@ testthat::test_that("Pregnancy cohort table name reflects user choice", {
                dplyr::collect()
              )
   )
+testthat::test_that("outputDir is created if it doesn't already exist when .softValidation = FALSE", {
+  newOutputDir <- file.path(outputDir, "tmpDir")
+  # make sure it doesn't exist
+  if (dir.exists(newOutputDir)) {
+    unlink(newOutputDir, recursive = TRUE)
+  }
+
+  PETConnector::createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    .softValidation = FALSE,
+    outputDir = newOutputDir
+  )
+
+  # Check that newOutputDir is created
+  expect_true(dir.exists(newOutputDir))
+  # cleanup
+  unlink(newOutputDir, recursive = TRUE)
+})
+
+testthat::test_that("outputDir is NOT created if it doesn't already exist when .softValidation = TRUE", {
+  newOutputDir <- file.path(outputDir, "tmpDir")
+  # make sure it doesn't exist
+  if (dir.exists(newOutputDir)) {
+    unlink(newOutputDir, recursive = TRUE)
+  }
+
+  PETConnector::createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    .softValidation = TRUE,
+    outputDir = newOutputDir # doesn't make a difference if provided or not, won't be used
+  )
+
+  # Check that newOutputDir has NOT been created
+  expect_false(dir.exists(newOutputDir))
 })
 
 testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expected & pregnancy_duplicate_map.csv output file is created", {
