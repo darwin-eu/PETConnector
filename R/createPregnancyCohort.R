@@ -38,7 +38,7 @@ filterInObservationStart <- function(tbl) {
   tbl %>%
     PatientProfiles::addInObservation() %>%
     dplyr::filter(.data$in_observation == 1) %>%
-    dplyr::select(-"in_observation") %>%
+    dplyr::select(-c("in_observation")) %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = "In observation at pregnancy start date")
 }
@@ -47,7 +47,7 @@ filterInObservationEnd <- function(tbl) {
   tbl %>%
     PatientProfiles::addInObservation(indexDate = "cohort_end_date") %>%
     dplyr::filter(.data$in_observation == 1) %>%
-    dplyr::select(-"in_observation") %>%
+    dplyr::select(-c("in_observation")) %>%
     dplyr::compute(name = "pregnancy_cohort", temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = "In observation at pregnancy end date")
 }
