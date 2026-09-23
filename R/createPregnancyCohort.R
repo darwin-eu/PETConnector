@@ -328,7 +328,6 @@ intersectCohorts <- function(tbl1, tbl2) {
 #' @import CDMConnector
 #' @importFrom tidyr unnest_longer
 #' @importFrom stringr str_to_sentence
-#' @importFrom utils write.csv
 #' @importFrom purrr map2
 #' @importFrom readr read_csv
 #' @importFrom tibble tibble
