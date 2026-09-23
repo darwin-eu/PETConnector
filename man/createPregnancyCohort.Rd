@@ -9,6 +9,7 @@ createPregnancyCohort(
   petTable,
   petSchema,
   keepExtensionTable = TRUE,
+  pregnancyCohortTableName = "pregnancy_cohort",
   samePregDiffDates = "None",
   cohortDefinitionID = 101,
   minGestationalDuration = 0,
@@ -18,6 +19,7 @@ createPregnancyCohort(
   startDate = NULL,
   endDate = NULL,
   sex = "Female",
+  outcomeIds = NULL,
   outputDir,
   .softValidation = FALSE
 )
@@ -30,6 +32,8 @@ createPregnancyCohort(
 \item{petSchema}{(\code{character(1)})  Name of the schema where the Pregnancy Extension Table resides}
 
 \item{keepExtensionTable}{(\code{logical(1)}: \code{TRUE}) Keep the reference to the pregnancy extension table? default = TRUE}
+
+\item{pregnancyCohortTableName}{(\code{character(1)}: \code{"pregnancy_cohort"}) Name to assign to to pregnancy cohort table}
 
 \item{samePregDiffDates}{(\code{character(1)}: \code{"none"}) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "None" will drop all records, "Earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "Earliest" or "Latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.}
 
@@ -48,6 +52,8 @@ createPregnancyCohort(
 \item{endDate}{(\code{Date(1)}: \code{NULL}) Latest pregnancy end date to include, e.g as.Date("10/20/21", "\%m/\%d/\%y")}
 
 \item{sex}{(\code{character(2)}: \code{"Female"}) Sexes to include. One of or both \code{c("Female", "Male")}.}
+
+\item{outcomeIds}{(\code{numeric(n)}: \code{NULL}) Vector of IDs to filter pregnancy outcomes}
 
 \item{outputDir}{(\code{path}) Path to output pregnancy_duplicate_map.csv to}
 

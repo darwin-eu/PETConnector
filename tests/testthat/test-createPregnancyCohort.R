@@ -5,6 +5,7 @@ testthat::test_that("input args are as expected", {
       petTable = "pregnancy",
       petSchema = "main",
       keepExtensionTable = "no", # should be logical TRUE/FALSE
+      pregnancyCohortTableName = 123, # numeric instead of character
       cohortDefinitionID = "101", # character instead of number
       minGestationalDuration = "20", # character instead of number
       maxGestationalDuration = "308", # character instead of number
@@ -14,10 +15,11 @@ testthat::test_that("input args are as expected", {
       endDate = "2020-06-28", # character instead of Date
       samePregDiffDates = "first", # not a choice, should be "earliest"
       sex = "femle", # typo
+      outcomeIds = c("test1", "test2", "test3"), # character vec instead of numeric
       outputDir = "path/to/nowhere", # softValidation is not FALSE, no error!
       .softValidation = c(TRUE, FALSE) # length 2 instead of 1
     ),
-    "11 assertions failed:"
+    "13 assertions failed:"
   )
 
 
@@ -52,6 +54,7 @@ testthat::test_that("input args are as expected", {
       petTable = "pregnancy",
       petSchema = "main",
       keepExtensionTable = c(TRUE, FALSE), # length 2 instead of 1
+      pregnancyCohortTableName = "preg_cohort", # no error, character
       cohortDefinitionID = c(101, 102), # length 2 instead of 1
       minGestationalDuration = NULL, # NULL instead of number
       maxGestationalDuration = Inf, # infinite
@@ -225,12 +228,91 @@ testthat::test_that("cohortDefinitionID updates to user choice", {
   )
 })
 
+testthat::test_that("Pregnancy cohort table name reflects user choice", {
+  # Sanity check that pregnancy_cohort exists as default  ----
+  cdm <- PETConnector::createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    outputDir = outputDir
+  )
+
+  expect_contains(
+    names(cdm),
+    "pregnancy_cohort"
+  )
+
+  # Check that pregnancyCohortTableName is being used to name pregnancy cohort table ----
+  cdm <- PETConnector::createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    pregnancyCohortTableName = "another_pregnancy_cohort",
+    outputDir = outputDir
+  )
+
+  expect_contains(
+    names(cdm),
+    c("pregnancy_cohort", "another_pregnancy_cohort")
+  )
+
+  # Sanity check of same content
+  expect_true(
+    setequal(cdm$pregnancy_cohort %>%
+               dplyr::collect(),
+             cdm$another_pregnancy_cohort %>%
+               dplyr::collect()
+             )
+  )
+})
+
+testthat::test_that("outputDir is created if it doesn't already exist when .softValidation = FALSE", {
+  newOutputDir <- file.path(outputDir, "tmpDir")
+  # make sure it doesn't exist
+  if (dir.exists(newOutputDir)) {
+    unlink(newOutputDir, recursive = TRUE)
+  }
+
+  PETConnector::createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    .softValidation = FALSE,
+    outputDir = newOutputDir
+  )
+
+  # Check that newOutputDir is created
+  expect_true(dir.exists(newOutputDir))
+  # cleanup
+  unlink(newOutputDir, recursive = TRUE)
+})
+
+testthat::test_that("outputDir is NOT created if it doesn't already exist when .softValidation = TRUE", {
+  newOutputDir <- file.path(outputDir, "tmpDir")
+  # make sure it doesn't exist
+  if (dir.exists(newOutputDir)) {
+    unlink(newOutputDir, recursive = TRUE)
+  }
+
+  PETConnector::createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    .softValidation = TRUE,
+    outputDir = newOutputDir # doesn't make a difference if provided or not, won't be used
+  )
+
+  # Check that newOutputDir has NOT been created
+  expect_false(dir.exists(newOutputDir))
+})
+
 testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expected & pregnancy_duplicate_map.csv output file is created", {
   cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -240,6 +322,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
     startDate = NULL, # default
     endDate = NULL, # default
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -441,6 +524,7 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 6,
     maxGestationalDuration = 266,
@@ -450,6 +534,7 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
     endDate = NULL, # default
     samePregDiffDates = "None", # default
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -541,6 +626,7 @@ testthat::test_that("Filtering on Age goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -550,6 +636,7 @@ testthat::test_that("Filtering on Age goes as expected", {
     endDate = NULL, # default
     samePregDiffDates = "None", # default
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -629,6 +716,7 @@ testthat::test_that("Filtering on startDate goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -638,6 +726,7 @@ testthat::test_that("Filtering on startDate goes as expected", {
     endDate = NULL, # default
     samePregDiffDates = "None", # default
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -699,6 +788,7 @@ testthat::test_that("Filtering on endDate goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -708,6 +798,7 @@ testthat::test_that("Filtering on endDate goes as expected", {
     endDate = as.Date("2022-01-07", "%Y-%m-%d"),
     samePregDiffDates = "None", # default
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -776,6 +867,7 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -785,6 +877,7 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
     endDate = as.Date("2022-01-07", "%Y-%m-%d"),
     samePregDiffDates = "None", # default
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -855,6 +948,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'Earliest' goes as expec
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -863,6 +957,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'Earliest' goes as expec
     endDate = NULL, # default
     samePregDiffDates = "Earliest",
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -922,6 +1017,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'Latest' goes as expecte
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -930,6 +1026,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'Latest' goes as expecte
     endDate = NULL, # default
     samePregDiffDates = "Latest",
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -989,6 +1086,7 @@ testthat::test_that("Filtering on sex goes as expected", {
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -998,6 +1096,7 @@ testthat::test_that("Filtering on sex goes as expected", {
     endDate = NULL, # default
     samePregDiffDates = "None",
     sex = "Male", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -1041,6 +1140,7 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
     petTable = "pregnancy",
     petSchema = "main",
     keepExtensionTable = TRUE, # default
+    pregnancyCohortTableName = "pregnancy_cohort", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -1050,6 +1150,7 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
     endDate = NULL, # default
     samePregDiffDates = "Latest",
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = TRUE
   )
@@ -1092,4 +1193,52 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
 
   # Check that pregnancy_duplicate_map.csv was not created
   expect_false(file.exists(file.path(pregDupFile)))
+})
+
+testthat::test_that("Filtering on outcome goes as expected", {
+  cdm <- PETConnector::createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    keepExtensionTable = TRUE, # default
+    cohortDefinitionID = 101, # default
+    minGestationalDuration = 0, # default
+    maxGestationalDuration = 308, # default
+    minAge = 12, # default
+    maxAge = 55, # default
+    startDate = NULL, # default
+    endDate = NULL, # default
+    samePregDiffDates = "None",
+    sex = "Female", # default
+    outcomeIds = c(443213),
+    outputDir = outputDir,
+    .softValidation = FALSE # default
+  )
+
+  attrition_tbl <- omopgenerics::attrition(cdm[["pregnancy_cohort"]])
+
+  pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
+    dplyr::collect()
+
+  # 3 pregnancies with given outcome
+  expect_equal(
+    nrow(pregnancy_cohort),
+    3
+  )
+
+  # Check of attrition table ----
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 13) # Filter pregnancies by outcomeIds 443213 (comma sep if more Ids)
+
+  # 5 pregnancies have another outcome
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
+    5
+  )
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
+    4
+  )
 })
