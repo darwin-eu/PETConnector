@@ -14,10 +14,11 @@ testthat::test_that("input args are as expected", {
       endDate = "2020-06-28", # character instead of Date
       samePregDiffDates = "first", # not a choice, should be "earliest"
       sex = "femle", # typo
+      outcomeIds = c("test1", "test2", "test3"), # character vec instead of numeric
       outputDir = "path/to/nowhere", # softValidation is not FALSE, no error!
       .softValidation = c(TRUE, FALSE) # length 2 instead of 1
     ),
-    "11 assertions failed:"
+    "12 assertions failed:"
   )
 
 
@@ -240,6 +241,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
     startDate = NULL, # default
     endDate = NULL, # default
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -450,6 +452,7 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
     endDate = NULL, # default
     samePregDiffDates = "None", # default
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -550,6 +553,7 @@ testthat::test_that("Filtering on Age goes as expected", {
     endDate = NULL, # default
     samePregDiffDates = "None", # default
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -638,6 +642,7 @@ testthat::test_that("Filtering on startDate goes as expected", {
     endDate = NULL, # default
     samePregDiffDates = "None", # default
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -708,6 +713,7 @@ testthat::test_that("Filtering on endDate goes as expected", {
     endDate = as.Date("2022-01-07", "%Y-%m-%d"),
     samePregDiffDates = "None", # default
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -785,6 +791,7 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
     endDate = as.Date("2022-01-07", "%Y-%m-%d"),
     samePregDiffDates = "None", # default
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -863,6 +870,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'Earliest' goes as expec
     endDate = NULL, # default
     samePregDiffDates = "Earliest",
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -930,6 +938,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'Latest' goes as expecte
     endDate = NULL, # default
     samePregDiffDates = "Latest",
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -998,6 +1007,7 @@ testthat::test_that("Filtering on sex goes as expected", {
     endDate = NULL, # default
     samePregDiffDates = "None",
     sex = "Male", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = FALSE # default
   )
@@ -1050,6 +1060,7 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
     endDate = NULL, # default
     samePregDiffDates = "Latest",
     sex = "Female", # default
+    outcomeIds = NULL, # default
     outputDir = outputDir,
     .softValidation = TRUE
   )
@@ -1127,7 +1138,7 @@ testthat::test_that("Filtering on outcome goes as expected", {
 
   # Check of attrition table ----
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 13)
+    dplyr::filter(reason_id == 13) # Filter pregnancies by outcomeIds 443213 (comma sep if more Ids)
 
   # 5 pregnancies have another outcome
   expect_equal(
