@@ -359,12 +359,16 @@ createPregnancyCohort <- function(
 
   if (isFALSE(.softValidation)) {
     checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE, add = assertions) # will overwrite pregnancy_duplicate_map.csv if one already exists there
-  }
-  checkmate::reportAssertions(assertions)
 
-  if (!dir.exists(outputDir)) {
-    dir.create(outputDir, recursive = TRUE)
+    # Needs to be AFTER checkmate! Else a potentially "bad" dir that the checkmate would've caught will be created
+    # The checkmate is handy for an output dir which already exists
+
+    if (!dir.exists(outputDir)) {
+      dir.create(outputDir, recursive = TRUE)
+    }
   }
+
+  checkmate::reportAssertions(assertions)
 
   # pregnancy_extension_table ----
   cdm <- attachExtensionTable(
