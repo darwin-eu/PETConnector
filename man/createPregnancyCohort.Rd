@@ -20,7 +20,6 @@ createPregnancyCohort(
   endDate = NULL,
   sex = "Female",
   outcomeIds = NULL,
-  outputDir,
   .softValidation = FALSE
 )
 }
@@ -54,8 +53,6 @@ createPregnancyCohort(
 \item{sex}{(\code{character(2)}: \code{"Female"}) Sexes to include. One of or both \code{c("Female", "Male")}.}
 
 \item{outcomeIds}{(\code{numeric(n)}: \code{NULL}) Vector of IDs to filter pregnancy outcomes}
-
-\item{outputDir}{(\code{path}) Path to output pregnancy_duplicate_map.csv to}
 
 \item{.softValidation}{(\code{logical(1)}: \code{FALSE}) Should a softValidation be done? default = FALSE}
 }

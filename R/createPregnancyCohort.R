@@ -75,8 +75,10 @@ filterGestationalLength <- function(tbl, nDays_min, nDays_max, pregnancyCohortTa
     omopgenerics::recordCohortAttrition(reason = sprintf("Gestational length >= %s days ", nDays_min))
 }
 
-filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates, pregnancyCohortTableName) {
-  cdm <- attr(tbl, "cdm_reference")
+filterMultiplePregnancies <- function(cdm, samePregDiffDates, pregnancyCohortTableName) {
+
+  tbl <- cdm[[pregnancyCohortTableName]]
+
   # 1 — DB‑safe grouping (no list column)
   grouped_base <- tbl %>%
     dplyr::group_by(
@@ -118,8 +120,7 @@ filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates, pregnan
     ) %>%
     dplyr::ungroup()
 
-
-  # 2 — Extract removed IDs
+  # 2 — Extract removed IDs & insert pregnancy_duplicate_map into CDM
   removed_mapping <- grouped %>%
     dplyr::mutate(
       removed_ids = purrr::map2(all_ids, kept_pregnancy_id, ~ setdiff(.x, .y))
@@ -129,7 +130,12 @@ filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates, pregnan
     dplyr::select(!all_ids) %>%
     dplyr::compute()
 
-  utils::write.csv(removed_mapping, file.path(outputDir, "pregnancy_duplicate_map.csv"), row.names = FALSE)
+  cdm <- omopgenerics::insertTable(
+    cdm = cdm,
+    name = "pregnancy_duplicate_map",
+    table = removed_mapping
+  )
+
   # 3 — Keep only the canonical pregnancy IDs without collecting them into R.
   kept_ids <- grouped_base %>%
     dplyr::mutate(pregnancy_id = .data$kept_pregnancy_id) %>%
@@ -159,7 +165,7 @@ filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates, pregnan
       sliceRecord <- dplyr::slice_max
     }
 
-    tbl %>%
+    tbl %>% # tbl <- tbl?
       dplyr::group_by(.data$subject_id, .data$pregnancy_id) %>%
       sliceRecord(.data$pregnancy_start_date, n = 1, with_ties = TRUE) %>% # keep ties if same start date
       dplyr::slice_max(!!CDMConnector::datediff("pregnancy_start_date", "pregnancy_end_date", interval = "day"), n = 1, with_ties = FALSE) %>% # use gest_length as tiebreaker
@@ -196,6 +202,8 @@ filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates, pregnan
     dplyr::select(!c("observation_period_start_date", "observation_period_end_date")) %>%
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = "No overlapping pregnancy records")
+
+  return(cdm)
 }
 
 filterStudyPeriod <- function(tbl, startDate, endDate, pregnancyCohortTableName) {
@@ -247,19 +255,25 @@ inclusionCriteria <- function(tbl, minAge, maxAge, sex, startDate, endDate, outc
     filterPregnancyOutcome(outcomeIds, pregnancyCohortTableName)
 }
 
-filterPregnancyTable <- function(tbl, minGestationalDuration, maxGestationalDuration, samePregDiffDates,
-                                 outputDir, pregnancyCohortTableName, .softValidation = FALSE) {
+filterPregnancyTable <- function(cdm, minGestationalDuration, maxGestationalDuration, samePregDiffDates,
+                                 pregnancyCohortTableName, .softValidation = FALSE) {
   if (isFALSE(.softValidation)) {
-    tbl %>%
+    cdm[[pregnancyCohortTableName]] <- cdm[[pregnancyCohortTableName]] %>%
       filterInObservation(pregnancyCohortTableName) %>%
       filterStartEndDate(pregnancyCohortTableName) %>%
-      filterGestationalLength(nDays_min = minGestationalDuration, nDays_max = maxGestationalDuration, pregnancyCohortTableName = pregnancyCohortTableName) %>%
-      filterMultiplePregnancies(outputDir, samePregDiffDates, pregnancyCohortTableName) %>%
-      omopgenerics::newCohortTable()
+      filterGestationalLength(nDays_min = minGestationalDuration, nDays_max = maxGestationalDuration, pregnancyCohortTableName = pregnancyCohortTableName)
+
+    cdm <- filterMultiplePregnancies(cdm, samePregDiffDates, pregnancyCohortTableName)
+
+    cdm[[pregnancyCohortTableName]] <- omopgenerics::newCohortTable(cdm[[pregnancyCohortTableName]])
+
   } else {
-    tbl %>%
-      omopgenerics::newCohortTable(.softValidation = TRUE)
-  } # don't use omopgenerics .softvalidation either!
+
+    cdm[[pregnancyCohortTableName]] <- omopgenerics::newCohortTable(cdm[[pregnancyCohortTableName]],
+                                                                    .softValidation = TRUE) # don't use omopgenerics .softvalidation either!
+  }
+
+  return(cdm)
 }
 
 filterPregnancyOutcome <- function(tbl, outcomeIds, pregnancyCohortTableName) {
@@ -281,27 +295,6 @@ intersectCohorts <- function(tbl1, tbl2) {
 }
 
 
-loadPregnancyDuplicateMap <- function(cdm, csv_path) {
-  map_df <- readr::read_csv(csv_path, show_col_types = FALSE)
-  if (nrow(map_df) == 0) {
-    map_df <- tibble::tibble(
-      subject_id            = integer(),
-      pregnancy_start_date  = as.Date(character()),
-      pregnancy_end_date    = as.Date(character()),
-      kept_pregnancy_id     = integer(),
-      removed_pregnancy_id  = integer()
-    )
-  }
-  cdm <- CDMConnector::insertTable(
-    cdm = cdm,
-    name = "pregnancy_duplicate_map",
-    table = map_df,
-    overwrite = TRUE,
-    temporary = FALSE
-  )
-  return(cdm)
-}
-
 #' createPregnancyCohort
 #'
 #' Creates the pregnancy cohort from a specified pregnancy extension table (PET) in a specified schema
@@ -321,7 +314,6 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' @param endDate (`Date(1)`: `NULL`) Latest pregnancy end date to include, e.g as.Date("10/20/21", "%m/%d/%y")
 #' @param sex (`character(2)`: `"Female"`) Sexes to include. One of or both `c("Female", "Male")`.
 #' @param outcomeIds  (`numeric(n)`: `NULL`) Vector of IDs to filter pregnancy outcomes
-#' @param outputDir (`path`) Path to output pregnancy_duplicate_map.csv to
 #' @param .softValidation (`logical(1)`: `FALSE`) Should a softValidation be done? default = FALSE
 
 #' @note A pregnancy of multiples will be recorded with one pregnancy record
@@ -357,7 +349,6 @@ createPregnancyCohort <- function(
     endDate = NULL,
     sex = "Female",
     outcomeIds = NULL,
-    outputDir,
     .softValidation = FALSE) {
 
   # Check inputs ----
@@ -379,17 +370,6 @@ createPregnancyCohort <- function(
   checkmate::assertSubset(x = stringr::str_to_sentence(sex), choices = c("Female", "Male"), empty.ok = FALSE, add = assertions) # throw error for null unlike assertChoice
   checkmate::assertNumeric(x = outcomeIds, null.ok = TRUE, add = assertions)
   checkmate::assertLogical(x = .softValidation, len = 1, add = assertions)
-
-  if (isFALSE(.softValidation)) {
-    checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE, add = assertions) # will overwrite pregnancy_duplicate_map.csv if one already exists there
-
-    # Needs to be AFTER checkmate! Else a potentially "bad" dir that the checkmate would've caught will be created
-    # The checkmate is handy for an output dir which already exists
-
-    if (!dir.exists(outputDir)) {
-      dir.create(outputDir, recursive = TRUE)
-    }
-  }
 
   checkmate::reportAssertions(assertions)
 
@@ -415,15 +395,16 @@ createPregnancyCohort <- function(
     pregnancyCohortTableName = pregnancyCohortTableName
   )
 
-  cdm[[pregnancyCohortTableName]] <- cdm[[pregnancyCohortTableName]] %>%
-    filterPregnancyTable(
+  cdm <- filterPregnancyTable(
+      cdm = cdm,
       minGestationalDuration = minGestationalDuration,
       maxGestationalDuration = maxGestationalDuration,
       samePregDiffDates = samePregDiffDates,
-      outputDir = outputDir,
       pregnancyCohortTableName = pregnancyCohortTableName,
-      .softValidation = .softValidation
-    ) %>% # alt to isTRUE(.softValidation) (connection to .softValidation as arg, arg FALSE returns FALSE, arg TRUE returns TRUE)
+      .softValidation = .softValidation # alt to isTRUE(.softValidation) (connection to .softValidation as arg, arg FALSE returns FALSE, arg TRUE returns TRUE)
+    )
+
+  cdm[[pregnancyCohortTableName]] <- cdm[[pregnancyCohortTableName]] %>%
     inclusionCriteria(
       minAge = minAge,
       maxAge = maxAge,
@@ -434,12 +415,6 @@ createPregnancyCohort <- function(
       pregnancyCohortTableName = pregnancyCohortTableName
     )
 
-  if (isFALSE(.softValidation)) { # only if .softValidation is FALSE will filterMultiplePregnancies() be run and pregnancy_duplicate_map.csv produced
-    cdm <- loadPregnancyDuplicateMap(
-      cdm,
-      file.path(outputDir, "pregnancy_duplicate_map.csv")
-    )
-  }
 
   return(cdm)
 }
