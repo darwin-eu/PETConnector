@@ -294,6 +294,7 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' @param petTable (`character(1)`) Name of the Pregnancy Extension Table.
 #' @param petSchema (`character(1)`)  Name of the schema where the Pregnancy Extension Table resides
 #' @param keepExtensionTable (`logical(1)`: `TRUE`) Keep the reference to the pregnancy extension table? default = TRUE
+#' @param tableName (`character(1)`: `"pregnancy_cohort"`) Pregnancy cohort table name
 #' @param samePregDiffDates (`character(1)`: `"none"`) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "None" will drop all records, "Earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "Earliest" or "Latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.
 #' @param cohortDefinitionID (`numeric(1)`: `101`) Cohort definition id to assign to newly created cohort
 #' @param minGestationalDuration (`numeric(1)`: `NULL`) Minimum gestational duration to include.
@@ -304,7 +305,6 @@ loadPregnancyDuplicateMap <- function(cdm, csv_path) {
 #' @param endDate (`Date(1)`: `NULL`) Latest pregnancy end date to include, e.g as.Date("10/20/21", "%m/%d/%y")
 #' @param sex (`character(2)`: `"Female"`) Sexes to include. One of or both `c("Female", "Male")`.
 #' @param outputDir (`path`) Path to output pregnancy_duplicate_map.csv to
-#' @param tableName (`character(1)`: `"pregnancy_cohort"`) Cohort table name
 #' @param .softValidation (`logical(1)`: `FALSE`) Should a softValidation be done? default = FALSE
 
 #' @note A pregnancy of multiples will be recorded with one pregnancy record
@@ -329,6 +329,7 @@ createPregnancyCohort <- function(
     petTable,
     petSchema,
     keepExtensionTable = TRUE,
+    tableName = "pregnancy_cohort",
     samePregDiffDates = "None",
     cohortDefinitionID = 101,
     minGestationalDuration = 0,
@@ -339,7 +340,6 @@ createPregnancyCohort <- function(
     endDate = NULL,
     sex = "Female",
     outputDir,
-    tableName = "pregnancy_cohort",
     .softValidation = FALSE) {
 
   # Check inputs ----
@@ -349,6 +349,7 @@ createPregnancyCohort <- function(
   checkmate::assertClass(x = petTable, classes = "character", add = assertions) # don't need to check against names(cdm)
   checkmate::assertClass(x = petSchema, classes = "character", add = assertions) # don't need to check against (attr(cdm, "write_schema")
   checkmate::assertLogical(x = keepExtensionTable, len = 1, add = assertions)
+  checkmate::assertClass(x = tableName, classes = "character", add = assertions)
   checkmate::assertNumber(x = cohortDefinitionID, add = assertions)
   checkmate::assertNumber(x = minGestationalDuration, finite = TRUE, add = assertions)
   checkmate::assertNumber(x = maxGestationalDuration, finite = TRUE, add = assertions)
@@ -359,7 +360,6 @@ createPregnancyCohort <- function(
   checkmate::assertChoice(x = stringr::str_to_sentence(samePregDiffDates), choices = c("None", "Earliest", "Latest"), null.ok = FALSE, add = assertions)
   checkmate::assertSubset(x = stringr::str_to_sentence(sex), choices = c("Female", "Male"), empty.ok = FALSE, add = assertions) # throw error for null unlike assertChoice
   checkmate::assertLogical(x = .softValidation, len = 1, add = assertions)
-  checkmate::assertClass(x = tableName, classes = "character", add = assertions)
 
   if (isFALSE(.softValidation)) {
     checkmate::assertPathForOutput(x = outputDir, overwrite = TRUE, add = assertions) # will overwrite pregnancy_duplicate_map.csv if one already exists there
