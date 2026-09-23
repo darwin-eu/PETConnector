@@ -38,6 +38,7 @@ filterInObservationStart <- function(tbl, pregnancyCohortTableName) {
   tbl %>%
     PatientProfiles::addInObservation() %>%
     dplyr::filter(.data$in_observation == 1) %>%
+    dplyr::select(-c("in_observation")) %>%
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = "In observation at pregnancy start date")
 }
@@ -46,6 +47,7 @@ filterInObservationEnd <- function(tbl, pregnancyCohortTableName) {
   tbl %>%
     PatientProfiles::addInObservation(indexDate = "cohort_end_date") %>%
     dplyr::filter(.data$in_observation == 1) %>%
+    dplyr::select(-c("in_observation")) %>%
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = "In observation at pregnancy end date")
 }
@@ -128,11 +130,13 @@ filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates, pregnan
     dplyr::compute()
 
   utils::write.csv(removed_mapping, file.path(outputDir, "pregnancy_duplicate_map.csv"), row.names = FALSE)
-  # 3 — Keep only the canonical pregnancy IDs
-  kept_ids <- grouped %>% pull(kept_pregnancy_id)
+  # 3 — Keep only the canonical pregnancy IDs without collecting them into R.
+  kept_ids <- grouped_base %>%
+    dplyr::mutate(pregnancy_id = .data$kept_pregnancy_id) %>%
+    dplyr::select("pregnancy_id")
 
-  tbl %>%
-    dplyr::filter(.data$pregnancy_id %in% kept_ids) %>%
+  tbl <- tbl %>%
+    dplyr::semi_join(kept_ids, by = dplyr::join_by(pregnancy_id)) %>%
     dplyr::distinct() %>%
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE, overwrite = TRUE) %>%
     omopgenerics::recordCohortAttrition(
@@ -179,7 +183,7 @@ filterMultiplePregnancies <- function(tbl, outputDir, samePregDiffDates, pregnan
       cdm$observation_period %>%
         dplyr::select(
           subject_id = "person_id", "observation_period_start_date", "observation_period_end_date"
-        )
+        ), by = dplyr::join_by(subject_id)
     ) %>%
     dplyr::filter(
       .data$cohort_start_date >= .data$observation_period_start_date &
