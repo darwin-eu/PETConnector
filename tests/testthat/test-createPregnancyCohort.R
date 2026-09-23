@@ -263,6 +263,8 @@ testthat::test_that("Pregnancy cohort table name reflects user choice", {
                dplyr::collect()
              )
   )
+})
+
 testthat::test_that("outputDir is created if it doesn't already exist when .softValidation = FALSE", {
   newOutputDir <- file.path(outputDir, "tmpDir")
   # make sure it doesn't exist
