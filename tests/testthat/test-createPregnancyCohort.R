@@ -16,7 +16,6 @@ testthat::test_that("input args are as expected", {
       samePregDiffDates = "first", # not a choice, should be "earliest"
       sex = "femle", # typo
       outcomeIds = c("test1", "test2", "test3"), # character vec instead of numeric
-      outputDir = "path/to/nowhere", # softValidation is not FALSE, no error!
       .softValidation = c(TRUE, FALSE) # length 2 instead of 1
     ),
     "13 assertions failed:"
@@ -28,24 +27,11 @@ testthat::test_that("input args are as expected", {
       cdm = "hello", # of class "character" instead of "cdm_reference"
       petTable = "pregnancy",
       petSchema = "main",
-      outputDir = testthat::test_path("testthat_testOutput"),
       samePregDiffDates = c("first", "Latest"), # length 2, should only be 1
       sex = c("MaLe", "FEmale"),
       .softValidation = NULL # NULL instead of logical
     ),
     "3 assertions failed:"
-  )
-
-  expect_error(
-    PETConnector::createPregnancyCohort(
-      cdm = cdm,
-      petTable = "pregnancy",
-      petSchema = "main",
-      outputDir = "path/to/nowhere", # bad path when .softValidation = FALSE
-      sex = "Female",
-      .softValidation = FALSE
-    ),
-    "1 assertions failed:"
   )
 
   expect_error(
@@ -64,28 +50,16 @@ testthat::test_that("input args are as expected", {
       endDate = NULL,
       samePregDiffDates = "earLiest",
       sex = NULL, # NULL instead of "Female", "Male" or c("Female", "Male")
-      outputDir = testthat::test_path("testthat_testOutput"),
       .softValidation = "FALSE" # character instead of logical
     ),
     "8 assertions failed:"
-  )
-
-  expect_error(
-    PETConnector::createPregnancyCohort(
-      cdm = cdm,
-      petTable = "pregnancy",
-      petSchema = "main"
-      # outputDir = "testthat/testthat_testOutput"
-    ),
-    'argument "outputDir" is missing, with no default'
   )
 
   expect_no_error(
     PETConnector::createPregnancyCohort(
       cdm = cdm,
       petTable = "pregnancy",
-      petSchema = "main",
-      outputDir = outputDir # defined in setup.R
+      petSchema = "main"
     )
   )
 })
@@ -99,8 +73,7 @@ testthat::test_that("createPregnancyCohort() is not reliant on petTable being in
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE,
-    outputDir = outputDir
+    keepExtensionTable = TRUE
   )
 
   # Check that pregnancy_cohort exists ----
@@ -115,8 +88,7 @@ testthat::test_that("keepExtensionTable = TRUE keeps pregnancy_extension_table r
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE,
-    outputDir = outputDir
+    keepExtensionTable = TRUE
   )
 
   # Check that pregnancy_extension_table exists ----
@@ -186,8 +158,7 @@ testthat::test_that("keepExtensionTable = FALSE drops reference to pregnancy_ext
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = FALSE,
-    outputDir = outputDir
+    keepExtensionTable = FALSE
   )
 
   # Check that pregnancy_extension_table does not exist ----
@@ -199,8 +170,7 @@ testthat::test_that("cohortDefinitionID updates to user choice", {
   cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
-    petSchema = "main",
-    outputDir = outputDir
+    petSchema = "main"
   )
 
   pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
@@ -216,8 +186,7 @@ testthat::test_that("cohortDefinitionID updates to user choice", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    cohortDefinitionID = 404,
-    outputDir = outputDir
+    cohortDefinitionID = 404
   )
   pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
     dplyr::collect()
@@ -233,8 +202,7 @@ testthat::test_that("Pregnancy cohort table name reflects user choice", {
   cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
-    petSchema = "main",
-    outputDir = outputDir
+    petSchema = "main"
   )
 
   expect_contains(
@@ -247,8 +215,7 @@ testthat::test_that("Pregnancy cohort table name reflects user choice", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    pregnancyCohortTableName = "another_pregnancy_cohort",
-    outputDir = outputDir
+    pregnancyCohortTableName = "another_pregnancy_cohort"
   )
 
   expect_contains(
@@ -266,47 +233,7 @@ testthat::test_that("Pregnancy cohort table name reflects user choice", {
   )
 })
 
-testthat::test_that("outputDir is created if it doesn't already exist when .softValidation = FALSE", {
-  newOutputDir <- file.path(outputDir, "tmpDir")
-  # make sure it doesn't exist
-  if (dir.exists(newOutputDir)) {
-    unlink(newOutputDir, recursive = TRUE)
-  }
-
-  PETConnector::createPregnancyCohort(
-    cdm = cdm,
-    petTable = "pregnancy",
-    petSchema = "main",
-    .softValidation = FALSE,
-    outputDir = newOutputDir
-  )
-
-  # Check that newOutputDir is created
-  expect_true(dir.exists(newOutputDir))
-  # cleanup
-  unlink(newOutputDir, recursive = TRUE)
-})
-
-testthat::test_that("outputDir is NOT created if it doesn't already exist when .softValidation = TRUE", {
-  newOutputDir <- file.path(outputDir, "tmpDir")
-  # make sure it doesn't exist
-  if (dir.exists(newOutputDir)) {
-    unlink(newOutputDir, recursive = TRUE)
-  }
-
-  PETConnector::createPregnancyCohort(
-    cdm = cdm,
-    petTable = "pregnancy",
-    petSchema = "main",
-    .softValidation = TRUE,
-    outputDir = newOutputDir # doesn't make a difference if provided or not, won't be used
-  )
-
-  # Check that newOutputDir has NOT been created
-  expect_false(dir.exists(newOutputDir))
-})
-
-testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expected & pregnancy_duplicate_map.csv output file is created", {
+testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expected", {
   cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
@@ -323,7 +250,6 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
     endDate = NULL, # default
     sex = "Female", # default
     outcomeIds = NULL, # default
-    outputDir = outputDir,
     .softValidation = FALSE # default
   )
 
@@ -513,9 +439,6 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
       dplyr::pull(excluded_subjects),
     1
   )
-
-  # Check that pregnancy_duplicate_map.csv was created ----
-  expect_true(file.exists(file.path(pregDupFile)))
 })
 
 testthat::test_that("Filtering on GestationalDuration goes as expected", {
@@ -535,7 +458,6 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
     samePregDiffDates = "None", # default
     sex = "Female", # default
     outcomeIds = NULL, # default
-    outputDir = outputDir,
     .softValidation = FALSE # default
   )
 
@@ -637,7 +559,6 @@ testthat::test_that("Filtering on Age goes as expected", {
     samePregDiffDates = "None", # default
     sex = "Female", # default
     outcomeIds = NULL, # default
-    outputDir = outputDir,
     .softValidation = FALSE # default
   )
 
@@ -727,7 +648,6 @@ testthat::test_that("Filtering on startDate goes as expected", {
     samePregDiffDates = "None", # default
     sex = "Female", # default
     outcomeIds = NULL, # default
-    outputDir = outputDir,
     .softValidation = FALSE # default
   )
 
@@ -799,7 +719,6 @@ testthat::test_that("Filtering on endDate goes as expected", {
     samePregDiffDates = "None", # default
     sex = "Female", # default
     outcomeIds = NULL, # default
-    outputDir = outputDir,
     .softValidation = FALSE # default
   )
 
@@ -878,7 +797,6 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
     samePregDiffDates = "None", # default
     sex = "Female", # default
     outcomeIds = NULL, # default
-    outputDir = outputDir,
     .softValidation = FALSE # default
   )
 
@@ -958,7 +876,6 @@ testthat::test_that("Filtering with samePregDiffDates = 'Earliest' goes as expec
     samePregDiffDates = "Earliest",
     sex = "Female", # default
     outcomeIds = NULL, # default
-    outputDir = outputDir,
     .softValidation = FALSE # default
   )
 
@@ -1027,7 +944,6 @@ testthat::test_that("Filtering with samePregDiffDates = 'Latest' goes as expecte
     samePregDiffDates = "Latest",
     sex = "Female", # default
     outcomeIds = NULL, # default
-    outputDir = outputDir,
     .softValidation = FALSE # default
   )
 
@@ -1097,7 +1013,6 @@ testthat::test_that("Filtering on sex goes as expected", {
     samePregDiffDates = "None",
     sex = "Male", # default
     outcomeIds = NULL, # default
-    outputDir = outputDir,
     .softValidation = FALSE # default
   )
 
@@ -1130,11 +1045,7 @@ testthat::test_that("Filtering on sex goes as expected", {
   ) # other subject 9 has two pregnancies
 })
 
-testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pregnancy_duplicate_map.csv output file is not created", {
-  if (file.exists(pregDupFile)) {
-    file.remove(pregDupFile) # remove versions of this file from previous tests
-  }
-
+testthat::test_that("Filtering when .softValidation = TRUE goes as expected", {
   cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
@@ -1151,7 +1062,6 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
     samePregDiffDates = "Latest",
     sex = "Female", # default
     outcomeIds = NULL, # default
-    outputDir = outputDir,
     .softValidation = TRUE
   )
 
@@ -1190,9 +1100,6 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected & pr
       dplyr::pull(excluded_subjects),
     1
   )
-
-  # Check that pregnancy_duplicate_map.csv was not created
-  expect_false(file.exists(file.path(pregDupFile)))
 })
 
 testthat::test_that("Filtering on outcome goes as expected", {
@@ -1211,7 +1118,6 @@ testthat::test_that("Filtering on outcome goes as expected", {
     samePregDiffDates = "None",
     sex = "Female", # default
     outcomeIds = c(443213),
-    outputDir = outputDir,
     .softValidation = FALSE # default
   )
 
