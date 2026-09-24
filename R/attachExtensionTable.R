@@ -16,6 +16,7 @@
 #'
 #' @export
 #' @examples
+#' if (interactive()) {
 #' # Example CDM with a pregnancy extension table
 #' path <- system.file("exampleData", package = "PETConnector")
 #'
@@ -32,6 +33,7 @@
 #'  schema = "main",
 #'  name = "pregnancy_extension_table"
 #')
+#'}
 attachExtensionTable <- function(
     cdm,
     table,

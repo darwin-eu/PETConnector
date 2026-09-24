@@ -334,6 +334,7 @@ intersectCohorts <- function(tbl1, tbl2) {
 #' @export
 #'
 #' @examples
+#' if (interactive()) {
 #' # Example CDM with a pregnancy extension table
 #' path <- system.file("exampleData", package = "PETConnector")
 #'
@@ -349,6 +350,7 @@ intersectCohorts <- function(tbl1, tbl2) {
 #'  petTable = "pregnancy",
 #'  petSchema = "main"
 #')
+#'}
 createPregnancyCohort <- function(
     cdm,
     petTable,

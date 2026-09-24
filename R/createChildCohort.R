@@ -244,6 +244,7 @@ filterLiveBirth <- function(tbl) {
 #' @importFrom omopgenerics newCohortTable recordCohortAttrition
 #' @export
 #' @examples
+#' if (interactive()) {
 #' # Example CDM with a pregnancy extension table
 #' path <- system.file("exampleData", package = "PETConnector")
 #'
@@ -276,6 +277,7 @@ filterLiveBirth <- function(tbl) {
 #'  childCohortTableName = "child_cohort2",
 #'  pregnancyCohortTableName = "pregnancy_cohort"
 #')
+#'}
 createChildCohort <- function(
     cdm,
     childTable = NULL,

@@ -22,6 +22,7 @@ attachExtensionTable(cdm, table, schema, name)
 Copies an extra CDM table as an extension table in a specified schema
 }
 \examples{
+if (interactive()) {
 # Example CDM with a pregnancy extension table
 path <- system.file("exampleData", package = "PETConnector")
 
@@ -38,4 +39,5 @@ cdm <- attachExtensionTable(
  schema = "main",
  name = "pregnancy_extension_table"
 )
+}
 }
