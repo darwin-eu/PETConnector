@@ -47,3 +47,37 @@ Creates the child cohort from a specified child extension table or the fact_rela
 \note{
 After collapsing duplicate records (collapseDupRecords = TRUE) or not (collapseDupRecords = FALSE), records with identical subject_ids will be completely filtered out. Every record with that subject ID will be filtered out of child_cohort.
 }
+\examples{
+# Example CDM with a pregnancy extension table
+path <- system.file("exampleData", package = "PETConnector")
+
+cdm <- TestGenerator::patientsCDM(
+ pathJson = path,
+ testName = "example_patients",
+ cdmVersion = "5.4"
+)
+
+# Create a pregnancy cohort
+cdm <- PETConnector::createPregnancyCohort(
+ cdm = cdm,
+ petTable = "pregnancy",
+ petSchema = "main",
+ pregnancyCohortTableName = "pregnancy_cohort"
+)
+
+# Create a child cohort table using a child extension table
+cdm <- PETConnector::createChildCohort(
+ cdm = cdm,
+ childTable = "infant",
+ childSchema = "main",
+ childCohortTableName = "child_cohort1",
+ pregnancyCohortTableName = "pregnancy_cohort"
+)
+
+# Create a child cohort table using the fact_relationship table
+cdm <- PETConnector::createChildCohort(
+ cdm = cdm,
+ childCohortTableName = "child_cohort2",
+ pregnancyCohortTableName = "pregnancy_cohort"
+)
+}

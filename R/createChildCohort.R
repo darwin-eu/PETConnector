@@ -243,6 +243,39 @@ filterLiveBirth <- function(tbl) {
 #' @import checkmate
 #' @importFrom omopgenerics newCohortTable recordCohortAttrition
 #' @export
+#' @examples
+#' # Example CDM with a pregnancy extension table
+#' path <- system.file("exampleData", package = "PETConnector")
+#'
+#'cdm <- TestGenerator::patientsCDM(
+#'  pathJson = path,
+#'  testName = "example_patients",
+#'  cdmVersion = "5.4"
+#')
+#'
+#' # Create a pregnancy cohort
+#'cdm <- PETConnector::createPregnancyCohort(
+#'  cdm = cdm,
+#'  petTable = "pregnancy",
+#'  petSchema = "main",
+#'  pregnancyCohortTableName = "pregnancy_cohort"
+#')
+#'
+#' # Create a child cohort table using a child extension table
+#'cdm <- PETConnector::createChildCohort(
+#'  cdm = cdm,
+#'  childTable = "infant",
+#'  childSchema = "main",
+#'  childCohortTableName = "child_cohort1",
+#'  pregnancyCohortTableName = "pregnancy_cohort"
+#')
+#'
+#' # Create a child cohort table using the fact_relationship table
+#'cdm <- PETConnector::createChildCohort(
+#'  cdm = cdm,
+#'  childCohortTableName = "child_cohort2",
+#'  pregnancyCohortTableName = "pregnancy_cohort"
+#')
 createChildCohort <- function(
     cdm,
     childTable = NULL,
