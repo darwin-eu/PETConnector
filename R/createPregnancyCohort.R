@@ -248,7 +248,7 @@ inclusionCriteria <- function(tbl, minAge, maxAge, sex, startDate, endDate, outc
 }
 
 filterPregnancyTable <- function(tbl, minGestationalDuration, maxGestationalDuration, samePregDiffDates,
-                                 outputDir, pregnancyCohortTableName, .softValidation = FALSE) {
+                                 outputDir, pregnancyCohortTableName, .softValidation) {
   if (isFALSE(.softValidation)) {
     tbl %>%
       filterInObservation(pregnancyCohortTableName) %>%
