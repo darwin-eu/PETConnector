@@ -321,16 +321,7 @@ intersectCohorts <- function(tbl1, tbl2) {
 #' - If a multiples pregnancy with different pregnancy_ids for a birthing parent is recognized, then this will be collapsed to one pregnancy record with the smallest pregnancy_id kept to represent it
 #' @note A pregnancy which appears as multiple records with differing dates (same pregnancy_id, different dates) will be dropped
 #' @returns (`cdm_reference`) Returns the CDM with the added cohort table.
-#' @import dplyr
-#' @importFrom omopgenerics newCohortTable dropSourceTable recordCohortAttrition
-#' @import checkmate
-#' @import PatientProfiles
-#' @import CDMConnector
-#' @importFrom tidyr unnest_longer
-#' @importFrom stringr str_to_sentence
-#' @importFrom purrr map2
-#' @importFrom readr read_csv
-#' @importFrom tibble tibble
+#'
 #' @export
 createPregnancyCohort <- function(
     cdm,

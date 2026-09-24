@@ -237,11 +237,7 @@ filterLiveBirth <- function(tbl) {
 #' @note After collapsing duplicate records (collapseDupRecords = TRUE) or not (collapseDupRecords = FALSE), records with identical subject_ids will be completely filtered out. Every record with that subject ID will be filtered out of child_cohort.
 #'
 #' @returns `cdm_reference`
-#' @import dplyr
-#' @import CDMConnector
-#' @import PatientProfiles
-#' @import checkmate
-#' @importFrom omopgenerics newCohortTable recordCohortAttrition
+#'
 #' @export
 createChildCohort <- function(
     cdm,
