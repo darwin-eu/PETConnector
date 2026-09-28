@@ -332,6 +332,25 @@ intersectCohorts <- function(tbl1, tbl2) {
 #' @importFrom readr read_csv
 #' @importFrom tibble tibble
 #' @export
+#'
+#' @examples
+#' if (interactive()) {
+#' # Example CDM with a pregnancy extension table
+#' path <- system.file("exampleData", package = "PETConnector")
+#'
+#'cdm <- TestGenerator::patientsCDM(
+#'  pathJson = path,
+#'  testName = "example_patients",
+#'  cdmVersion = "5.4"
+#')
+#'
+#' # Create a pregnancy cohort on default parameters
+#'PETConnector::createPregnancyCohort(
+#'  cdm = cdm,
+#'  petTable = "pregnancy",
+#'  petSchema = "main"
+#')
+#'}
 createPregnancyCohort <- function(
     cdm,
     petTable,

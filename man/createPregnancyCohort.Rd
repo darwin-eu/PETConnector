@@ -71,3 +71,22 @@ A pregnancy of multiples will be recorded with one pregnancy record
 
 A pregnancy which appears as multiple records with differing dates (same pregnancy_id, different dates) will be dropped
 }
+\examples{
+if (interactive()) {
+# Example CDM with a pregnancy extension table
+path <- system.file("exampleData", package = "PETConnector")
+
+cdm <- TestGenerator::patientsCDM(
+ pathJson = path,
+ testName = "example_patients",
+ cdmVersion = "5.4"
+)
+
+# Create a pregnancy cohort on default parameters
+PETConnector::createPregnancyCohort(
+ cdm = cdm,
+ petTable = "pregnancy",
+ petSchema = "main"
+)
+}
+}

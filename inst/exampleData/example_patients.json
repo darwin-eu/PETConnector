@@ -1,0 +1,450 @@
+{
+  "person": [
+    {
+      "person_id": 1,
+      "gender_concept_id": 8532,
+      "day_of_birth": 1,
+      "month_of_birth": 6,
+      "year_of_birth": 1990,
+      "race_concept_id": 0,
+      "ethnicity_concept_id": 0
+    },
+    {
+      "person_id": 11,
+      "gender_concept_id": 8532,
+      "day_of_birth": 1,
+      "month_of_birth": 6,
+      "year_of_birth": 2000,
+      "race_concept_id": 0,
+      "ethnicity_concept_id": 0
+    },
+    {
+      "person_id": 14,
+      "gender_concept_id": 8532,
+      "day_of_birth": 1,
+      "month_of_birth": 6,
+      "year_of_birth": 1992,
+      "race_concept_id": 0,
+      "ethnicity_concept_id": 0
+    },
+    {
+      "person_id": 102,
+      "gender_concept_id": 8532,
+      "day_of_birth": 1,
+      "month_of_birth": 6,
+      "year_of_birth": 2000,
+      "race_concept_id": 0,
+      "ethnicity_concept_id": 0
+    }
+  ],
+  "pregnancy": [
+    {
+      "person_id": 11,
+      "pregnancy_id": 6,
+      "pregnancy_start_date": "2021-04-10",
+      "pregnancy_end_date": "2022-01-07",
+      "gestational_length_in_day": 270,
+      "pregnancy_outcome": 4092289,
+      "pregnancy_mode_delivery": 4015701,
+      "pregnancy_single": 4188540,
+      "pre_pregnancy_smoking": 4188539
+    },
+    {
+      "person_id": 11,
+      "pregnancy_id": 6,
+      "pregnancy_start_date": "2021-04-10",
+      "pregnancy_end_date": "2022-01-07",
+      "gestational_length_in_day": 270,
+      "pregnancy_outcome": 4092289,
+      "pregnancy_mode_delivery": 4015701,
+      "pregnancy_single": 4188540,
+      "pre_pregnancy_smoking": 4188539
+    },
+    {
+      "person_id": 1,
+      "pregnancy_id": 3,
+      "pregnancy_start_date": "2019-09-27",
+      "pregnancy_end_date": "2020-06-20",
+      "gestational_length_in_day": 280,
+      "pregnancy_outcome": 4092289,
+      "pregnancy_mode_delivery": 4125611,
+      "pregnancy_single": 4188539,
+      "pre_pregnancy_smoking": 4188539
+    },
+    {
+      "person_id": 14,
+      "pregnancy_id": 7,
+      "pregnancy_start_date": "2022-04-09",
+      "pregnancy_end_date": "2022-01-06",
+      "gestational_length_in_day": 270,
+      "pregnancy_outcome": 4092289,
+      "pregnancy_mode_delivery": 4125611,
+      "pregnancy_single": 4188539,
+      "pre_pregnancy_smoking": 4188539
+    },
+    {
+      "person_id": 14,
+      "pregnancy_id": 8,
+      "pregnancy_start_date": "2019-12-31",
+      "pregnancy_end_date": "2020-01-06",
+      "gestational_length_in_day": 154,
+      "pregnancy_outcome": 443213,
+      "pregnancy_mode_delivery": 4125611,
+      "pregnancy_single": 4188539,
+      "pre_pregnancy_smoking": 4188539
+    },
+    {
+      "person_id": 102,
+      "pregnancy_id": 71,
+      "pregnancy_start_date": "2021-04-10",
+      "pregnancy_end_date": "2022-01-07",
+      "gestational_length_in_day": 270,
+      "pregnancy_outcome": 4092289,
+      "pregnancy_mode_delivery": 4015701,
+      "pregnancy_single": 4188540,
+      "pre_pregnancy_smoking": 4188539
+    },
+    {
+      "person_id": 102,
+      "pregnancy_id": 72,
+      "pregnancy_start_date": "2021-04-10",
+      "pregnancy_end_date": "2022-01-07",
+      "gestational_length_in_day": 270,
+      "pregnancy_outcome": 4092289,
+      "pregnancy_mode_delivery": 4015701,
+      "pregnancy_single": 4188540,
+      "pre_pregnancy_smoking": 4188539
+    }
+  ],
+  "observation_period": [
+    {
+      "observation_period_id": 1,
+      "person_id": 1,
+      "observation_period_start_date": "2025-01-01",
+      "observation_period_end_date": "2024-12-31",
+      "period_type_concept_id": 32880
+    },
+    {
+      "observation_period_id": 11,
+      "person_id": 11,
+      "observation_period_start_date": "2006-01-01",
+      "observation_period_end_date": "2024-12-31",
+      "period_type_concept_id": 32880
+    },
+    {
+      "observation_period_id": 14,
+      "person_id": 14,
+      "observation_period_start_date": "2006-01-01",
+      "observation_period_end_date": "2024-12-31",
+      "period_type_concept_id": 32880
+    },
+    {
+      "observation_period_id": 102,
+      "person_id": 102,
+      "observation_period_start_date": "2006-01-01",
+      "observation_period_end_date": "2024-12-31",
+      "period_type_concept_id": 32880
+    }
+  ],
+  "condition_occurrence": [
+    {
+      "condition_occurrence_id": 7,
+      "person_id": 11,
+      "condition_concept_id": 4145947,
+      "condition_start_date": "2022-07-01",
+      "condition_end_date": "2022-07-01",
+      "condition_type_concept_id": 32820
+    },
+    {
+      "condition_occurrence_id": 8,
+      "person_id": 11,
+      "condition_concept_id": 4145947,
+      "condition_start_date": "2022-07-02",
+      "condition_end_date": "2022-09-02",
+      "condition_type_concept_id": 32821
+    },
+    {
+      "condition_occurrence_id": 9,
+      "person_id": 14,
+      "condition_concept_id": 4145947,
+      "condition_start_date": "2022-07-01",
+      "condition_end_date": "2022-07-01",
+      "condition_type_concept_id": 32822
+    },
+    {
+      "condition_occurrence_id": 10,
+      "person_id": 14,
+      "condition_concept_id": 4145947,
+      "condition_start_date": "2022-07-02",
+      "condition_end_date": "2022-07-02",
+      "condition_type_concept_id": 32823
+    },
+    {
+      "condition_occurrence_id": 11,
+      "person_id": 14,
+      "condition_concept_id": 4145947,
+      "condition_start_date": "2020-02-01",
+      "condition_end_date": "2020-02-01",
+      "condition_type_concept_id": 32824
+    },
+    {
+      "condition_occurrence_id": 18,
+      "person_id": 102,
+      "condition_concept_id": 4145947,
+      "condition_start_date": "2022-07-01",
+      "condition_end_date": "2022-07-01",
+      "condition_type_concept_id": 32820
+    }
+  ],
+  "fact_relationship": [
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 1,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 3,
+      "relationship_concept_id": 40485452
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 1,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 4,
+      "relationship_concept_id": 40485452
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 1,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 5,
+      "relationship_concept_id": 4285883
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 3,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 1,
+      "relationship_concept_id": 40485452
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 4,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 1,
+      "relationship_concept_id": 40485452
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 5,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 1,
+      "relationship_concept_id": 40485452
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 11,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 12,
+      "relationship_concept_id": 40485452
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 11,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 13,
+      "relationship_concept_id": 40485452
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 12,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 11,
+      "relationship_concept_id": 40485452
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 12,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 11,
+      "relationship_concept_id": 40485452
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 13,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 11,
+      "relationship_concept_id": 40485452
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 14,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 15,
+      "relationship_concept_id": 40485452
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 15,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 14,
+      "relationship_concept_id": 4285883
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 1,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 3,
+      "relationship_concept_id": 4326600
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 1,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 4,
+      "relationship_concept_id": 4326600
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 1,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 5,
+      "relationship_concept_id": 4326600
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 3,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 1,
+      "relationship_concept_id": 4326600
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 4,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 1,
+      "relationship_concept_id": 4326600
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 5,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 1,
+      "relationship_concept_id": 4326600
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 11,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 12,
+      "relationship_concept_id": 4326600
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 11,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 13,
+      "relationship_concept_id": 4326600
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 12,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 11,
+      "relationship_concept_id": 4326600
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 13,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 11,
+      "relationship_concept_id": 4326600
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 14,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 15,
+      "relationship_concept_id": 4326600
+    },
+    {
+      "domain_concept_id_1": 1147314,
+      "fact_id_1": 15,
+      "domain_concept_id_2": 1147314,
+      "fact_id_2": 14,
+      "relationship_concept_id": 4326600
+    }
+  ],
+  "infant": [
+    {
+      "pregnancy_id": 3,
+      "infant_id": 5,
+      "person_id": 5,
+      "birth_outcome": 4092289,
+      "birth_weight": 0,
+      "birth_con_malformation": 4188540,
+      "birth_sga": 4188540,
+      "birth_apgar": 6
+    },
+    {
+      "pregnancy_id": 6,
+      "infant_id": 12,
+      "person_id": 12,
+      "birth_outcome": 4092289,
+      "birth_weight": 9999,
+      "birth_con_malformation": 4188540,
+      "birth_sga": 4188540,
+      "birth_apgar": 101
+    },
+    {
+      "pregnancy_id": 6,
+      "infant_id": 13,
+      "person_id": 13,
+      "birth_outcome": 4092289,
+      "birth_weight": 9999,
+      "birth_con_malformation": 4188539,
+      "birth_sga": 4188539,
+      "birth_apgar": 101
+    },
+    {
+      "pregnancy_id": 8,
+      "infant_id": 111,
+      "person_id": 111,
+      "birth_outcome": 443213
+    },
+    {
+      "pregnancy_id": 8,
+      "infant_id": 111,
+      "person_id": 111,
+      "birth_outcome": 443213
+    },
+    {
+      "pregnancy_id": 72,
+      "infant_id": 17,
+      "person_id": 17,
+      "birth_outcome": 4092289,
+      "birth_weight": 4000,
+      "birth_con_malformation": 4188540,
+      "birth_sga": 4188540,
+      "birth_apgar": 10
+    },
+    {
+      "pregnancy_id": 71,
+      "infant_id": 17,
+      "person_id": 17,
+      "birth_outcome": 4092289,
+      "birth_weight": 4000,
+      "birth_con_malformation": 4188540,
+      "birth_sga": 4188540,
+      "birth_apgar": 10
+    },
+    {
+      "pregnancy_id": 71,
+      "infant_id": 18,
+      "person_id": 18,
+      "birth_outcome": 4092289,
+      "birth_weight": 4000,
+      "birth_con_malformation": 4188540,
+      "birth_sga": 4188540,
+      "birth_apgar": 10
+    }
+  ]
+}
