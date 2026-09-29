@@ -9,11 +9,6 @@
 #'
 #' @returns (`cdm_reference`) Returns the CDM with attached extension table
 #'
-#' @import checkmate
-#' @import dplyr
-#' @importFrom DBI Id
-#'
-#'
 #' @export
 #' @examples
 #' if (interactive()) {
