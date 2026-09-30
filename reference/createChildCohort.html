@@ -42,6 +42,8 @@
 <span>  childTable <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  childSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  keepExtensionTable <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  childCohortTableName <span class="op">=</span> <span class="st">"child_cohort"</span>,</span>
+<span>  pregnancyCohortTableName <span class="op">=</span> <span class="st">"pregnancy_cohort"</span>,</span>
 <span>  collapseDupRecords <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  cohortDefinitionID <span class="op">=</span> <span class="fl">102</span>,</span>
 <span>  childConceptIds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">40485452</span>, <span class="fl">4285883</span><span class="op">)</span>,</span>
@@ -69,6 +71,14 @@
 <dd><p>(<code>logical(1)</code>: <code>TRUE</code>) Keep the reference to the perinatal extension table? default = TRUE</p></dd>
 
 
+<dt id="arg-childcohorttablename">childCohortTableName<a class="anchor" aria-label="anchor" href="#arg-childcohorttablename"></a></dt>
+<dd><p>(<code>character(1)</code>: <code>"child_cohort"</code>) Name to assign to to child cohort table</p></dd>
+
+
+<dt id="arg-pregnancycohorttablename">pregnancyCohortTableName<a class="anchor" aria-label="anchor" href="#arg-pregnancycohorttablename"></a></dt>
+<dd><p>(<code>character(1)</code>: <code>"pregnancy_cohort"</code>) Pregnancy cohort table name</p></dd>
+
+
 <dt id="arg-collapseduprecords">collapseDupRecords<a class="anchor" aria-label="anchor" href="#arg-collapseduprecords"></a></dt>
 <dd><p>(<code>logical(1)</code>: <code>TRUE</code>) When TRUE, collapses duplicated records to one record per child. In the case that a subject id is duplicated but the rest of the record isn't, all records for the subject_id will be filtered out</p></dd>
 
@@ -94,6 +104,44 @@
     <p>After collapsing duplicate records (collapseDupRecords = TRUE) or not (collapseDupRecords = FALSE), records with identical subject_ids will be completely filtered out. Every record with that subject ID will be filtered out of child_cohort.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="co"># Example CDM with a pregnancy extension table</span></span></span>
+<span class="r-in"><span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"exampleData"</span>, package <span class="op">=</span> <span class="st">"PETConnector"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">cdm</span> <span class="op">&lt;-</span> <span class="fu">TestGenerator</span><span class="fu">::</span><span class="fu"><a href="https://darwin-eu.github.io/TestGenerator/reference/patientsCDM.html" class="external-link">patientsCDM</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span> pathJson <span class="op">=</span> <span class="va">path</span>,</span></span>
+<span class="r-in"><span> testName <span class="op">=</span> <span class="st">"example_patients"</span>,</span></span>
+<span class="r-in"><span> cdmVersion <span class="op">=</span> <span class="st">"5.4"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Create a pregnancy cohort</span></span></span>
+<span class="r-in"><span><span class="va">cdm</span> <span class="op">&lt;-</span> <span class="fu">PETConnector</span><span class="fu">::</span><span class="fu"><a href="createPregnancyCohort.html">createPregnancyCohort</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span> cdm <span class="op">=</span> <span class="va">cdm</span>,</span></span>
+<span class="r-in"><span> petTable <span class="op">=</span> <span class="st">"pregnancy"</span>,</span></span>
+<span class="r-in"><span> petSchema <span class="op">=</span> <span class="st">"main"</span>,</span></span>
+<span class="r-in"><span> pregnancyCohortTableName <span class="op">=</span> <span class="st">"pregnancy_cohort"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Create a child cohort table using a child extension table</span></span></span>
+<span class="r-in"><span><span class="va">cdm</span> <span class="op">&lt;-</span> <span class="fu">PETConnector</span><span class="fu">::</span><span class="fu">createChildCohort</span><span class="op">(</span></span></span>
+<span class="r-in"><span> cdm <span class="op">=</span> <span class="va">cdm</span>,</span></span>
+<span class="r-in"><span> childTable <span class="op">=</span> <span class="st">"infant"</span>,</span></span>
+<span class="r-in"><span> childSchema <span class="op">=</span> <span class="st">"main"</span>,</span></span>
+<span class="r-in"><span> childCohortTableName <span class="op">=</span> <span class="st">"child_cohort1"</span>,</span></span>
+<span class="r-in"><span> pregnancyCohortTableName <span class="op">=</span> <span class="st">"pregnancy_cohort"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Create a child cohort table using the fact_relationship table</span></span></span>
+<span class="r-in"><span><span class="va">cdm</span> <span class="op">&lt;-</span> <span class="fu">PETConnector</span><span class="fu">::</span><span class="fu">createChildCohort</span><span class="op">(</span></span></span>
+<span class="r-in"><span> cdm <span class="op">=</span> <span class="va">cdm</span>,</span></span>
+<span class="r-in"><span> childCohortTableName <span class="op">=</span> <span class="st">"child_cohort2"</span>,</span></span>
+<span class="r-in"><span> pregnancyCohortTableName <span class="op">=</span> <span class="st">"pregnancy_cohort"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

@@ -42,6 +42,7 @@
 <span>  <span class="va">petTable</span>,</span>
 <span>  <span class="va">petSchema</span>,</span>
 <span>  keepExtensionTable <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  pregnancyCohortTableName <span class="op">=</span> <span class="st">"pregnancy_cohort"</span>,</span>
 <span>  samePregDiffDates <span class="op">=</span> <span class="st">"None"</span>,</span>
 <span>  cohortDefinitionID <span class="op">=</span> <span class="fl">101</span>,</span>
 <span>  minGestationalDuration <span class="op">=</span> <span class="fl">0</span>,</span>
@@ -51,7 +52,7 @@
 <span>  startDate <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  endDate <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sex <span class="op">=</span> <span class="st">"Female"</span>,</span>
-<span>  <span class="va">outputDir</span>,</span>
+<span>  outcomeIds <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  .softValidation <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -76,8 +77,12 @@
 <dd><p>(<code>logical(1)</code>: <code>TRUE</code>) Keep the reference to the pregnancy extension table? default = TRUE</p></dd>
 
 
+<dt id="arg-pregnancycohorttablename">pregnancyCohortTableName<a class="anchor" aria-label="anchor" href="#arg-pregnancycohorttablename"></a></dt>
+<dd><p>(<code>character(1)</code>: <code>"pregnancy_cohort"</code>) Name to assign to to pregnancy cohort table</p></dd>
+
+
 <dt id="arg-samepregdiffdates">samePregDiffDates<a class="anchor" aria-label="anchor" href="#arg-samepregdiffdates"></a></dt>
-<dd><p>(<code>character(1)</code>: <code>"none"</code>) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "None" will drop all records, "Earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "Earliest" or "Latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.</p></dd>
+<dd><p>(<code>character(1)</code>: <code>"None"</code>) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "None" will drop all records, "Earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "Earliest" or "Latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.</p></dd>
 
 
 <dt id="arg-cohortdefinitionid">cohortDefinitionID<a class="anchor" aria-label="anchor" href="#arg-cohortdefinitionid"></a></dt>
@@ -85,11 +90,11 @@
 
 
 <dt id="arg-mingestationalduration">minGestationalDuration<a class="anchor" aria-label="anchor" href="#arg-mingestationalduration"></a></dt>
-<dd><p>(<code>numeric(1)</code>: <code>NULL</code>) Minimum gestational duration to include.</p></dd>
+<dd><p>(<code>numeric(1)</code>: <code>0</code>) Minimum gestational duration (days) to include.</p></dd>
 
 
 <dt id="arg-maxgestationalduration">maxGestationalDuration<a class="anchor" aria-label="anchor" href="#arg-maxgestationalduration"></a></dt>
-<dd><p>(<code>numeric(1)</code>: <code>308</code>) Maximum gestational duration to include.</p></dd>
+<dd><p>(<code>numeric(1)</code>: <code>308</code>) Maximum gestational duration (days) to include.</p></dd>
 
 
 <dt id="arg-minage">minAge<a class="anchor" aria-label="anchor" href="#arg-minage"></a></dt>
@@ -112,8 +117,8 @@
 <dd><p>(<code>character(2)</code>: <code>"Female"</code>) Sexes to include. One of or both <code>c("Female", "Male")</code>.</p></dd>
 
 
-<dt id="arg-outputdir">outputDir<a class="anchor" aria-label="anchor" href="#arg-outputdir"></a></dt>
-<dd><p>(<code>path</code>) Path to output pregnancy_duplicate_map.csv to</p></dd>
+<dt id="arg-outcomeids">outcomeIds<a class="anchor" aria-label="anchor" href="#arg-outcomeids"></a></dt>
+<dd><p>(<code>numeric(n)</code>: <code>NULL</code>) Vector of IDs to filter pregnancy outcomes</p></dd>
 
 
 <dt id="arg--softvalidation">.softValidation<a class="anchor" aria-label="anchor" href="#arg--softvalidation"></a></dt>
@@ -131,6 +136,27 @@
 </ul><p>A pregnancy which appears as multiple records with differing dates (same pregnancy_id, different dates) will be dropped</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="co"># Example CDM with a pregnancy extension table</span></span></span>
+<span class="r-in"><span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"exampleData"</span>, package <span class="op">=</span> <span class="st">"PETConnector"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">cdm</span> <span class="op">&lt;-</span> <span class="fu">TestGenerator</span><span class="fu">::</span><span class="fu"><a href="https://darwin-eu.github.io/TestGenerator/reference/patientsCDM.html" class="external-link">patientsCDM</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span> pathJson <span class="op">=</span> <span class="va">path</span>,</span></span>
+<span class="r-in"><span> testName <span class="op">=</span> <span class="st">"example_patients"</span>,</span></span>
+<span class="r-in"><span> cdmVersion <span class="op">=</span> <span class="st">"5.4"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Create a pregnancy cohort on default parameters</span></span></span>
+<span class="r-in"><span><span class="fu">PETConnector</span><span class="fu">::</span><span class="fu">createPregnancyCohort</span><span class="op">(</span></span></span>
+<span class="r-in"><span> cdm <span class="op">=</span> <span class="va">cdm</span>,</span></span>
+<span class="r-in"><span> petTable <span class="op">=</span> <span class="st">"pregnancy"</span>,</span></span>
+<span class="r-in"><span> petSchema <span class="op">=</span> <span class="st">"main"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
