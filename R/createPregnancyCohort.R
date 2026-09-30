@@ -304,10 +304,10 @@ intersectCohorts <- function(tbl1, tbl2) {
 #' @param petSchema (`character(1)`)  Name of the schema where the Pregnancy Extension Table resides
 #' @param keepExtensionTable (`logical(1)`: `TRUE`) Keep the reference to the pregnancy extension table? default = TRUE
 #' @param pregnancyCohortTableName (`character(1)`: `"pregnancy_cohort"`) Name to assign to to pregnancy cohort table
-#' @param samePregDiffDates (`character(1)`: `"none"`) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "None" will drop all records, "Earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "Earliest" or "Latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.
+#' @param samePregDiffDates (`character(1)`: `"None"`) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "None" will drop all records, "Earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "Earliest" or "Latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.
 #' @param cohortDefinitionID (`numeric(1)`: `101`) Cohort definition id to assign to newly created cohort
-#' @param minGestationalDuration (`numeric(1)`: `NULL`) Minimum gestational duration to include.
-#' @param maxGestationalDuration (`numeric(1)`: `308`) Maximum gestational duration to include.
+#' @param minGestationalDuration (`numeric(1)`: `0`) Minimum gestational duration (days) to include.
+#' @param maxGestationalDuration (`numeric(1)`: `308`) Maximum gestational duration (days) to include.
 #' @param minAge (`numeric(1)`: `12`) Minimum age to include.
 #' @param maxAge (`numeric(1)`: `55`) Maximum age to include.
 #' @param startDate (`Date(1)`: `NULL`) Earliest pregnancy start date to include, e.g. as.Date("2001-09-20", "%Y-%m-%d")
