@@ -34,13 +34,13 @@ createPregnancyCohort(
 
 \item{pregnancyCohortTableName}{(\code{character(1)}: \code{"pregnancy_cohort"}) Name to assign to to pregnancy cohort table}
 
-\item{samePregDiffDates}{(\code{character(1)}: \code{"none"}) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "None" will drop all records, "Earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "Earliest" or "Latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.}
+\item{samePregDiffDates}{(\code{character(1)}: \code{"None"}) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "None" will drop all records, "Earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "Earliest" or "Latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.}
 
 \item{cohortDefinitionID}{(\code{numeric(1)}: \code{101}) Cohort definition id to assign to newly created cohort}
 
-\item{minGestationalDuration}{(\code{numeric(1)}: \code{NULL}) Minimum gestational duration to include.}
+\item{minGestationalDuration}{(\code{numeric(1)}: \code{0}) Minimum gestational duration (days) to include.}
 
-\item{maxGestationalDuration}{(\code{numeric(1)}: \code{308}) Maximum gestational duration to include.}
+\item{maxGestationalDuration}{(\code{numeric(1)}: \code{308}) Maximum gestational duration (days) to include.}
 
 \item{minAge}{(\code{numeric(1)}: \code{12}) Minimum age to include.}
 
