@@ -12,8 +12,8 @@ getNumberRecords <- function(tbl) {
     dplyr::pull(.data$n)
 }
 
-createPerinatalCohortFromTbl <- function(cdm, keepExtensionTable, cohortDefinitionID) {
-  cdm$child_cohort <- cdm$perinatal_extension_table %>%
+createPerinatalCohortFromTbl <- function(cdm, keepExtensionTable, cohortDefinitionID, childCohortTableName, pregnancyCohortTableName) {
+  cdm[[childCohortTableName]] <- cdm$perinatal_extension_table %>%
     dplyr::left_join(
       cdm[["pregnancy_duplicate_map"]] %>%
         dplyr::select("removed_pregnancy_id", "kept_pregnancy_id"),
@@ -25,13 +25,13 @@ createPerinatalCohortFromTbl <- function(cdm, keepExtensionTable, cohortDefiniti
     ) %>%
     dplyr::select(-c("kept_pregnancy_id")) %>%
     dplyr::compute(
-      name = "child_cohort",
+      name = childCohortTableName,
       temporary = FALSE,
       overwrite = TRUE
     )
 
-  cdm$child_cohort <- cdm$child_cohort %>%
-    dplyr::left_join(cdm$pregnancy_cohort, by = dplyr::join_by(pregnancy_id == pregnancy_id)) %>%
+  cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
+    dplyr::left_join(cdm[[pregnancyCohortTableName]], by = dplyr::join_by(pregnancy_id == pregnancy_id)) %>%
     dplyr::mutate(
       cohort_definition_id = cohortDefinitionID,
       parent_id = .data$subject_id # subject_id comes from pregnancy_cohort
@@ -44,7 +44,7 @@ createPerinatalCohortFromTbl <- function(cdm, keepExtensionTable, cohortDefiniti
       cohort_start_date = as.Date(.data$observation_period_start_date),
       cohort_end_date = as.Date(.data$observation_period_end_date)
     ) %>%
-    dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
+    dplyr::compute(name = childCohortTableName, temporary = FALSE, overwrite = TRUE) %>%
     omopgenerics::newCohortTable(
       cohortSetRef = data.frame(
         cohort_definition_id = cohortDefinitionID,
@@ -59,10 +59,10 @@ createPerinatalCohortFromTbl <- function(cdm, keepExtensionTable, cohortDefiniti
   return(cdm)
 }
 
-createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRecords, cohortDefinitionID) {
-  pregnancyCols <- colnames(cdm$pregnancy_cohort)
+createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRecords, cohortDefinitionID, childCohortTableName, pregnancyCohortTableName) {
+  pregnancyCols <- colnames(cdm[[pregnancyCohortTableName]])
 
-  cdm$child_cohort <- cdm[["fact_relationship"]] %>%
+  cdm[[childCohortTableName]] <- cdm[["fact_relationship"]] %>%
     dplyr::filter(.data$relationship_concept_id %in% childConceptIds) %>%
     dplyr::rename(
       subject_id = "fact_id_1",
@@ -74,7 +74,7 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
       cohort_start_date = as.Date(.data$observation_period_start_date),
       cohort_end_date = as.Date(.data$observation_period_end_date)
     ) %>%
-    dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
+    dplyr::compute(name = childCohortTableName, temporary = FALSE, overwrite = TRUE) %>%
     omopgenerics::newCohortTable(
       cohortSetRef = data.frame(
         cohort_definition_id = cohortDefinitionID,
@@ -85,12 +85,12 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
 
   attrition <- data.frame(
     reason = "Initial qualifying events",
-    number_subjects = getNumberSubjects(cdm$child_cohort),
-    number_records = getNumberRecords(cdm$child_cohort)
+    number_subjects = getNumberSubjects(cdm[[childCohortTableName]]),
+    number_records = getNumberRecords(cdm[[childCohortTableName]])
   )
 
-  cdm$child_cohort <- cdm$child_cohort %>%
-    dplyr::left_join(cdm$pregnancy_cohort, by = dplyr::join_by(parent_id == subject_id)) %>%
+  cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
+    dplyr::left_join(cdm[[pregnancyCohortTableName]], by = dplyr::join_by(parent_id == subject_id)) %>%
     dplyr::select(
       "parent_id",
       cohort_definition_id = "cohort_definition_id.x",
@@ -100,73 +100,75 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
       dplyr::any_of(pregnancyCols)
     ) %>%
     dplyr::filter(!is.na(.data$pregnancy_id)) %>%
-    dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
+    dplyr::compute(name = childCohortTableName, temporary = FALSE, overwrite = TRUE)
 
   attrition <- dplyr::bind_rows(
     attrition,
     data.frame(
       reason = "Filter children for birthing parent in pregnancy cohort",
-      number_subjects = getNumberSubjects(cdm$child_cohort),
-      number_records = getNumberRecords(cdm$child_cohort)
+      number_subjects = getNumberSubjects(cdm[[childCohortTableName]]),
+      number_records = getNumberRecords(cdm[[childCohortTableName]])
     )
   )
 
-  cdm$child_cohort <- cdm$child_cohort %>%
+  cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
     dplyr::left_join(cdm$person, by = dplyr::join_by(subject_id == person_id)) %>%
     dplyr::mutate(year_match = !!CDMConnector::datepart(date = "pregnancy_end_date", interval = "year")) %>%
     dplyr::filter(.data$year_match == .data$year_of_birth) %>%
-    dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
+    dplyr::compute(name = childCohortTableName, temporary = FALSE, overwrite = TRUE)
 
   attrition <- dplyr::bind_rows(
     attrition,
     data.frame(
       reason = "Filter children where birth_year == birthing parent's year of pregnancy_end_date",
       # "Filter children correct pregnancy for birthing parent in pregnancy Cohort"
-      number_subjects = getNumberSubjects(cdm$child_cohort),
-      number_records = getNumberRecords(cdm$child_cohort)
+      number_subjects = getNumberSubjects(cdm[[childCohortTableName]]),
+      number_records = getNumberRecords(cdm[[childCohortTableName]])
     )
   )
 
 
   if (isTRUE(collapseDupRecords)) {
-    cdm$child_cohort <- cdm$child_cohort %>%
+    cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
       dplyr::distinct() %>%
-      dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
+      dplyr::compute(name = childCohortTableName, temporary = FALSE, overwrite = TRUE)
 
     attrition <- dplyr::bind_rows(
       attrition,
       data.frame(
         reason = "Filter duplicate infants to keep only one record",
-        number_subjects = getNumberSubjects(cdm$child_cohort),
-        number_records = getNumberRecords(cdm$child_cohort)
+        number_subjects = getNumberSubjects(cdm[[childCohortTableName]]),
+        number_records = getNumberRecords(cdm[[childCohortTableName]])
       )
     )
   }
 
-  filterDuplicateIds(cdm$child_cohort)
+  cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
+    filterDuplicateIds(childCohortTableName) %>%
+    dplyr::compute(name = childCohortTableName, temporary = FALSE, overwrite = TRUE)
 
   attrition <- dplyr::bind_rows(
     attrition,
     data.frame(
       reason = "Filter out infants with duplicated subject_id",
-      number_subjects = getNumberSubjects(cdm$child_cohort),
-      number_records = getNumberRecords(cdm$child_cohort)
+      number_subjects = getNumberSubjects(cdm[[childCohortTableName]]),
+      number_records = getNumberRecords(cdm[[childCohortTableName]])
     )
   )
 
-  cdm$child_cohort <- cdm$child_cohort %>%
+  cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
     filterLiveBirth() %>%
-    dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
+    dplyr::compute(name = childCohortTableName, temporary = FALSE, overwrite = TRUE)
 
   attrition <- dplyr::bind_rows(
     attrition,
     data.frame(
       reason = "Filter to live births",
-      number_subjects = getNumberSubjects(cdm$child_cohort),
-      number_records = getNumberRecords(cdm$child_cohort)
+      number_subjects = getNumberSubjects(cdm[[childCohortTableName]]),
+      number_records = getNumberRecords(cdm[[childCohortTableName]])
     )
   )
-  cdm$child_cohort <- cdm$child_cohort %>%
+  cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
     dplyr::select("cohort_definition_id", "subject_id", "cohort_start_date", "cohort_end_date") %>%
     omopgenerics::newCohortTable(
       cohortSetRef = data.frame(
@@ -187,7 +189,7 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
     ) %>%
     dplyr::relocate("cohort_definition_id", "number_records", "number_subjects", "reason_id", "reason", "excluded_records", .before = "excluded_subjects")
 
-  cdm$child_cohort %>%
+  cdm[[childCohortTableName]] %>%
     omopgenerics::newCohortTable(
       cohortSetRef = data.frame(
         cohort_definition_id = cohortDefinitionID,
@@ -200,7 +202,7 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
   return(cdm)
 }
 
-filterDuplicateIds <- function(tbl) {
+filterDuplicateIds <- function(tbl, childCohortTableName) {
   multipleIds <- tbl %>% # based on subject_id only, filter OUT instances of duplicate children
     dplyr::group_by(.data$subject_id) %>%
     dplyr::summarise(n = dplyr::n()) %>%
@@ -209,7 +211,7 @@ filterDuplicateIds <- function(tbl) {
 
   tbl <- tbl %>%
     dplyr::filter(!.data$subject_id %in% multipleIds$subject_id) %>%
-    dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
+    dplyr::compute(name = childCohortTableName, temporary = FALSE, overwrite = TRUE)
 }
 
 filterLiveBirth <- function(tbl) {
@@ -225,6 +227,8 @@ filterLiveBirth <- function(tbl) {
 #' @param childTable (`character(1)`: `NULL`) Name of the Child Extension Table
 #' @param childSchema (`character(1)`: `NULL`) Name of the schema where the Child Extension Table resides
 #' @param keepExtensionTable (`logical(1)`: `TRUE`) Keep the reference to the perinatal extension table? default = TRUE
+#' @param childCohortTableName (`character(1)`: `"child_cohort"`) Name to assign to to child cohort table
+#' @param pregnancyCohortTableName (`character(1)`: `"pregnancy_cohort"`) Pregnancy cohort table name
 #' @param collapseDupRecords (`logical(1)`: `TRUE`) When TRUE, collapses duplicated records to one record per child. In the case that a subject id is duplicated but the rest of the record isn't, all records for the subject_id will be filtered out
 #' @param cohortDefinitionID (`numeric(1)`: `102`) Cohort definition id to assign to newly created cohort
 #' @param childConceptIds (`numeric(n)`: `c(40485452, 4285883)`) Concepts to use to link the child to the parent. I.e. `40485452` = Child of subject
@@ -233,17 +237,50 @@ filterLiveBirth <- function(tbl) {
 #' @note After collapsing duplicate records (collapseDupRecords = TRUE) or not (collapseDupRecords = FALSE), records with identical subject_ids will be completely filtered out. Every record with that subject ID will be filtered out of child_cohort.
 #'
 #' @returns `cdm_reference`
-#' @import dplyr
-#' @import CDMConnector
-#' @import PatientProfiles
-#' @import checkmate
-#' @importFrom omopgenerics newCohortTable recordCohortAttrition
+#'
 #' @export
+#' @examples
+#' if (interactive()) {
+#' # Example CDM with a pregnancy extension table
+#' path <- system.file("exampleData", package = "PETConnector")
+#'
+#'cdm <- TestGenerator::patientsCDM(
+#'  pathJson = path,
+#'  testName = "example_patients",
+#'  cdmVersion = "5.4"
+#')
+#'
+#' # Create a pregnancy cohort
+#'cdm <- PETConnector::createPregnancyCohort(
+#'  cdm = cdm,
+#'  petTable = "pregnancy",
+#'  petSchema = "main",
+#'  pregnancyCohortTableName = "pregnancy_cohort"
+#')
+#'
+#' # Create a child cohort table using a child extension table
+#'cdm <- PETConnector::createChildCohort(
+#'  cdm = cdm,
+#'  childTable = "infant",
+#'  childSchema = "main",
+#'  childCohortTableName = "child_cohort1",
+#'  pregnancyCohortTableName = "pregnancy_cohort"
+#')
+#'
+#' # Create a child cohort table using the fact_relationship table
+#'cdm <- PETConnector::createChildCohort(
+#'  cdm = cdm,
+#'  childCohortTableName = "child_cohort2",
+#'  pregnancyCohortTableName = "pregnancy_cohort"
+#')
+#'}
 createChildCohort <- function(
     cdm,
     childTable = NULL,
     childSchema = NULL,
     keepExtensionTable = TRUE,
+    childCohortTableName = "child_cohort",
+    pregnancyCohortTableName = "pregnancy_cohort",
     collapseDupRecords = TRUE,
     cohortDefinitionID = 102,
     childConceptIds = c(40485452, 4285883), # child -> parent ("child of subject" non-standard, "child" standard)
@@ -256,6 +293,8 @@ createChildCohort <- function(
   checkmate::assertNumber(x = cohortDefinitionID, add = assertions)
   checkmate::assertClass(x = childSchema, classes = "character", null.ok = TRUE, add = assertions) # don't need to check against (attr(cdm, "write_schema")
   checkmate::assertClass(x = childTable, classes = "character", null.ok = TRUE, add = assertions) # don't need to check against names(cdm)
+  checkmate::assertClass(x = childCohortTableName, classes = "character", add = assertions)
+  checkmate::assertClass(x = pregnancyCohortTableName, classes = "character", add = assertions)
   checkmate::assertLogical(x = collapseDupRecords, len = 1, add = assertions)
 
   if (is.null(childTable) & is.null(childSchema)) { # meaning, we create child_cohort from fact_relationship (parentCohortTable) + childConceptIds
@@ -268,7 +307,7 @@ createChildCohort <- function(
   }
 
   if ((!is.null(childTable) & is.null(childSchema)) |
-    (is.null(childTable) & !is.null(childSchema))) {
+      (is.null(childTable) & !is.null(childSchema))) {
     assertions$push(
       "Double check that you have provided both a childTable and childSchema if you want to create the child_cohort from the childTable."
     )
@@ -291,37 +330,39 @@ createChildCohort <- function(
     cdm <- createPerinatalCohortFromTbl(
       cdm = cdm,
       keepExtensionTable = keepExtensionTable,
-      cohortDefinitionID = cohortDefinitionID
+      cohortDefinitionID = cohortDefinitionID,
+      childCohortTableName = childCohortTableName,
+      pregnancyCohortTableName = pregnancyCohortTableName
     )
 
     # Check validity of child extension table
     if (isFALSE(.softValidation)) {
-      keptIds <- cdm$pregnancy_cohort %>%
+      keptIds <- cdm[[pregnancyCohortTableName]] %>%
         dplyr::select("pregnancy_id") %>%
         dplyr::pull()
 
-      cdm$child_cohort <- cdm$child_cohort %>%
+      cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
         dplyr::filter(.data$pregnancy_id %in% keptIds) %>%
-        dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE) %>%
+        dplyr::compute(name = childCohortTableName, temporary = FALSE, overwrite = TRUE) %>%
         omopgenerics::recordCohortAttrition(reason = "Filter only children with parent in pregnancy cohort")
 
       if (isTRUE(collapseDupRecords)) {
-        cdm$child_cohort <- cdm$child_cohort %>%
+        cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
           dplyr::distinct() %>%
           omopgenerics::recordCohortAttrition("Filter duplicate infants to keep only one record")
       }
 
-      cdm$child_cohort <- cdm$child_cohort %>%
-        filterDuplicateIds() %>%
+      cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
+        filterDuplicateIds(childCohortTableName) %>%
         omopgenerics::recordCohortAttrition("Filter out infants with duplicated subject_id") %>%
         filterLiveBirth() %>% # cohort attrition recorded in function
         omopgenerics::recordCohortAttrition(reason = "Filter to live births")
     }
 
-    cdm$child_cohort <- cdm$child_cohort %>%
+    cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
       dplyr::select(-c("person_id")) %>%
       dplyr::select("cohort_definition_id", "subject_id", "cohort_start_date", "cohort_end_date", dplyr::any_of(childColnames)) %>%
-      dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
+      dplyr::compute(name = childCohortTableName, temporary = FALSE, overwrite = TRUE)
 
     # Create child_cohort from fact_relationship table ----
   } else { # will be is.null(childTable) & is.null(childSchema), we have a checkmate catch for cases when 1/2 args provided
@@ -330,11 +371,13 @@ createChildCohort <- function(
       cdm = cdm,
       childConceptIds = childConceptIds,
       collapseDupRecords = collapseDupRecords,
-      cohortDefinitionID = cohortDefinitionID
+      cohortDefinitionID = cohortDefinitionID,
+      childCohortTableName = childCohortTableName,
+      pregnancyCohortTableName = pregnancyCohortTableName
     )
 
-    cdm$child_cohort <- cdm$child_cohort %>%
-      dplyr::compute(name = "child_cohort", temporary = FALSE, overwrite = TRUE)
+    cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
+      dplyr::compute(name = childCohortTableName, temporary = FALSE, overwrite = TRUE)
   }
 
   return(cdm)

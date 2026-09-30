@@ -9,12 +9,26 @@
 #'
 #' @returns (`cdm_reference`) Returns the CDM with attached extension table
 #'
-#' @import checkmate
-#' @import dplyr
-#' @importFrom DBI Id
-#'
-#'
 #' @export
+#' @examples
+#' if (interactive()) {
+#' # Example CDM with a pregnancy extension table
+#' path <- system.file("exampleData", package = "PETConnector")
+#'
+#'cdm <- TestGenerator::patientsCDM(
+#'  pathJson = path,
+#'  testName = "example_patients",
+#'  cdmVersion = "5.4"
+#')
+#'
+#' # Attach a pregnancy extension table
+#'cdm <- attachExtensionTable(
+#'  cdm = cdm,
+#'  table = "pregnancy",
+#'  schema = "main",
+#'  name = "pregnancy_extension_table"
+#')
+#'}
 attachExtensionTable <- function(
     cdm,
     table,
