@@ -408,7 +408,7 @@ createPregnancyCohort <- function(
       cdm = cdm,
       minGestationalDuration = minGestationalDuration,
       maxGestationalDuration = maxGestationalDuration,
-      samePregDiffDates = samePregDiffDates,
+      samePregDiffDates = stringr::str_to_sentence(samePregDiffDates),
       pregnancyCohortTableName = pregnancyCohortTableName,
       .softValidation = .softValidation # alt to isTRUE(.softValidation) (connection to .softValidation as arg, arg FALSE returns FALSE, arg TRUE returns TRUE)
     )
