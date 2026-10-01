@@ -18,4 +18,6 @@ Authors:
 
 - Maarten van Kessel <m.l.vankessel@erasmusmc.nl>
 
+- Ger Inberg <g.inberg@erasmusmc.nl>
+
 - Ross Williams <r.williams@erasmusmc.nl>
