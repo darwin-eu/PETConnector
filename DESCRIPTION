@@ -1,9 +1,10 @@
 Package: PETConnector
 Title: Connect to Perinatal Extension Tables Complementary to an OMOP Common Data Model
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person("Arianna", "Alamshahi", email = "a.alamshahi@erasmusmc.nl", role = c("aut", "cre")),
     person("Maarten", "van Kessel", email = "m.l.vankessel@erasmusmc.nl", role = "aut"),
+    person("Ger", "Inberg", email = "g.inberg@erasmusmc.nl", role = "aut"),
     person("Ross", "Williams", email = "r.williams@erasmusmc.nl", role = "aut")
   )
 Description: Provides tools to create cohorts from Perinatal Extension Tables (PET)

@@ -21,6 +21,7 @@ Useful links:
 Authors:
 \itemize{
   \item Maarten van Kessel \email{m.l.vankessel@erasmusmc.nl}
+  \item Ger Inberg \email{g.inberg@erasmusmc.nl}
   \item Ross Williams \email{r.williams@erasmusmc.nl}
 }
 
