@@ -1,13 +1,12 @@
 #' attachExtensionTable
 #'
-#' Copies an extra CDM table as an extension table in a specified schema
+#' Creates a lazy reference to an extension table in a specified schema
 #'
 #' @param cdm (`cdm_reference`) CDM reference object
 #' @param table (`character(1)`) Name of the extension table
-#' @param schema (`character(1)`) Name of the schema where the extension table resides
-#' @param name (`character(1)`) How the copy of the extension table should be named
+#' @param tableSchema (`character(1)`) Name of the schema where the extension table resides
 #'
-#' @returns (`cdm_reference`) Returns the CDM with attached extension table
+#' @returns (`cdm_reference`) Returns the CDM reference with attached extension table
 #'
 #' @export
 #' @examples
@@ -25,23 +24,20 @@
 #'cdm <- attachExtensionTable(
 #'  cdm = cdm,
 #'  table = "pregnancy",
-#'  schema = "main",
-#'  name = "pregnancy_extension_table"
+#'  tableSchema = "main"
 #')
 #'}
 attachExtensionTable <- function(
     cdm,
     table,
-    schema,
-    name) {
+    tableSchema) {
 
   # Check inputs ----
   assertions <- checkmate::makeAssertCollection()
 
   checkmate::assertClass(x = cdm, classes = "cdm_reference", add = assertions)
   checkmate::assertClass(x = table, classes = "character", add = assertions)
-  checkmate::assertClass(x = schema, classes = "character", add = assertions)
-  checkmate::assertClass(x = name, classes = "character", add = assertions)
+  checkmate::assertClass(x = tableSchema, classes = "character", add = assertions)
 
   checkmate::reportAssertions(assertions)
 
@@ -49,12 +45,11 @@ attachExtensionTable <- function(
   con <- attr(cdm, "dbcon")
 
   tableRef <- DBI::Id(
-    name = table,
-    schema = schema
+    table = table,
+    schema = tableSchema
   )
 
-  cdm[[name]] <- dplyr::tbl(con, tableRef) %>%
-    dplyr::compute(name = name, temporary = FALSE, overwrite = TRUE)
+  cdm[[table]] <- dplyr::tbl(con, tableRef)
 
   return(cdm)
 }

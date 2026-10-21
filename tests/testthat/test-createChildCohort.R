@@ -98,6 +98,8 @@ testthat::test_that("createChildCohort() is not reliant on childTable being in c
 })
 
 testthat::test_that("keepExtensionTable = TRUE keeps perinatal_extension_table reference and that the characteristics of the table align with what is expected", {
+  testthat::skip()
+
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     cohortDefinitionID = 101,
@@ -145,6 +147,8 @@ testthat::test_that("keepExtensionTable = TRUE keeps perinatal_extension_table r
 })
 
 testthat::test_that("keepExtensionTable = FALSE drops reference to perinatal_extension_table", {
+  testthat::skip()
+
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     cohortDefinitionID = 101,

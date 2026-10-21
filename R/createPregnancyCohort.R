@@ -1,7 +1,11 @@
-initPregnancyCohort <- function(cdm, keepExtensionTable, cohortDefinitionID, pregnancyCohortTableName) {
-  cdm[[pregnancyCohortTableName]] <- cdm$pregnancy_extension_table %>%
+initPregnancyCohort <- function(cdm, pregnancyCohortTableName, petTable, cohortDefinitionID, keepExtensionTable) { # add arg
+  cdm[[pregnancyCohortTableName]] <- cdm[[petTable]] %>%
     dplyr::mutate(
       cohort_definition_id = cohortDefinitionID,
+      pregnancy_start_date = as.Date(.data$pregnancy_start_date),
+      pregnancy_end_date = as.Date(.data$pregnancy_end_date)
+    ) %>%
+    dplyr::mutate(
       cohort_start_date = .data$pregnancy_start_date,
       cohort_end_date = .data$pregnancy_end_date
     ) %>%
@@ -10,7 +14,7 @@ initPregnancyCohort <- function(cdm, keepExtensionTable, cohortDefinitionID, pre
     omopgenerics::newCohortTable(.softValidation = TRUE)
 
   if (isFALSE(keepExtensionTable)) {
-    cdm$pregnancy_extension_table <- NULL
+    cdm[[petTable]] <- NULL
   }
 
   return(cdm)
@@ -425,26 +429,20 @@ createPregnancyCohort <- function(
   cdm <- attachExtensionTable(
     cdm = cdm,
     table = petTable,
-    schema = petSchema,
-    name = "pregnancy_extension_table"
+    tableSchema = petSchema
   )
 
   message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Pregnancy extension table attached"))
-
-  cdm$pregnancy_extension_table <- cdm$pregnancy_extension_table %>%
-    dplyr::mutate(
-      pregnancy_start_date = as.Date(.data$pregnancy_start_date),
-      pregnancy_end_date = as.Date(.data$pregnancy_end_date)
-    )
 
   # pregnancy_cohort table ----
   message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Initializing pregnancy cohort table"))
 
   cdm <- initPregnancyCohort(
     cdm = cdm,
-    keepExtensionTable = keepExtensionTable,
+    pregnancyCohortTableName = pregnancyCohortTableName,
+    petTable = petTable,
     cohortDefinitionID = cohortDefinitionID,
-    pregnancyCohortTableName = pregnancyCohortTableName
+    keepExtensionTable = keepExtensionTable
   )
 
   message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Pregnancy cohort table initialized"))

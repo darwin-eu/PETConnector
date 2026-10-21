@@ -12,8 +12,8 @@ getNumberRecords <- function(tbl) {
     dplyr::pull(.data$n)
 }
 
-createPerinatalCohortFromTbl <- function(cdm, keepExtensionTable, cohortDefinitionID, childCohortTableName, pregnancyCohortTableName) {
-  cdm[[childCohortTableName]] <- cdm$perinatal_extension_table %>%
+createPerinatalCohortFromTbl <- function(cdm, childCohortTableName, childTable, pregnancyCohortTableName, cohortDefinitionID, keepExtensionTable) {
+  cdm[[childCohortTableName]] <- cdm[[childTable]] %>%
     dplyr::left_join(
       cdm[["pregnancy_duplicate_map"]] %>%
         dplyr::select("removed_pregnancy_id", "kept_pregnancy_id"),
@@ -54,7 +54,7 @@ createPerinatalCohortFromTbl <- function(cdm, keepExtensionTable, cohortDefiniti
     )
 
   if (isFALSE(keepExtensionTable)) {
-    cdm$perinatal_extension_table <- NULL
+    cdm[[childTable]] <- NULL
   }
   return(cdm)
 }
@@ -320,19 +320,19 @@ createChildCohort <- function(
     cdm <- attachExtensionTable(
       cdm = cdm,
       table = childTable,
-      schema = childSchema,
-      name = "perinatal_extension_table"
+      tableSchema = childSchema
     )
 
-    childColnames <- cdm$perinatal_extension_table %>%
+    childColnames <- cdm[[childTable]] %>%
       colnames()
 
     cdm <- createPerinatalCohortFromTbl(
       cdm = cdm,
-      keepExtensionTable = keepExtensionTable,
-      cohortDefinitionID = cohortDefinitionID,
       childCohortTableName = childCohortTableName,
-      pregnancyCohortTableName = pregnancyCohortTableName
+      childTable = childTable,
+      pregnancyCohortTableName = pregnancyCohortTableName,
+      cohortDefinitionID = cohortDefinitionID,
+      keepExtensionTable = keepExtensionTable
     )
 
     # Check validity of child extension table
