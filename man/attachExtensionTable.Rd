@@ -4,22 +4,20 @@
 \alias{attachExtensionTable}
 \title{attachExtensionTable}
 \usage{
-attachExtensionTable(cdm, table, schema, name)
+attachExtensionTable(cdm, table, tableSchema)
 }
 \arguments{
 \item{cdm}{(\code{cdm_reference}) CDM reference object}
 
 \item{table}{(\code{character(1)}) Name of the extension table}
 
-\item{schema}{(\code{character(1)}) Name of the schema where the extension table resides}
-
-\item{name}{(\code{character(1)}) How the copy of the extension table should be named}
+\item{tableSchema}{(\code{character(1)}) Name of the schema where the extension table resides}
 }
 \value{
-(\code{cdm_reference}) Returns the CDM with attached extension table
+(\code{cdm_reference}) Returns the CDM reference with attached extension table
 }
 \description{
-Copies an extra CDM table as an extension table in a specified schema
+Creates a lazy reference to an extension table in a specified schema
 }
 \examples{
 if (interactive()) {
@@ -36,8 +34,7 @@ cdm <- TestGenerator::patientsCDM(
 cdm <- attachExtensionTable(
  cdm = cdm,
  table = "pregnancy",
- schema = "main",
- name = "pregnancy_extension_table"
+ tableSchema = "main"
 )
 }
 }
