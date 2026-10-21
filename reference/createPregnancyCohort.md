@@ -3,9 +3,31 @@
 Creates the pregnancy cohort from a specified pregnancy extension table
 (PET) in a specified schema
 
+Creates the pregnancy cohort from a specified pregnancy extension table
+(PET) in a specified schema
+
 ## Usage
 
 ``` r
+createPregnancyCohort(
+  cdm,
+  petTable,
+  petSchema,
+  keepExtensionTable = TRUE,
+  pregnancyCohortTableName = "pregnancy_cohort",
+  samePregDiffDates = "None",
+  cohortDefinitionID = 101,
+  minGestationalDuration = 0,
+  maxGestationalDuration = 308,
+  minAge = 12,
+  maxAge = 55,
+  startDate = NULL,
+  endDate = NULL,
+  sex = "Female",
+  outcomeIds = NULL,
+  .softValidation = FALSE
+)
+
 createPregnancyCohort(
   cdm,
   petTable,
@@ -112,7 +134,21 @@ createPregnancyCohort(
 
 (`cdm_reference`) Returns the CDM with the added cohort table.
 
+(`cdm_reference`) Returns the CDM with the added cohort table.
+
 ## Note
+
+A pregnancy of multiples will be recorded with one pregnancy record
+
+- Multiple pregnancies of the same pregnancy_id these will be collapsed
+  to one record.
+
+- If a multiples pregnancy with different pregnancy_ids for a birthing
+  parent is recognized, then this will be collapsed to one pregnancy
+  record with the smallest pregnancy_id kept to represent it
+
+A pregnancy which appears as multiple records with differing dates (same
+pregnancy_id, different dates) will be dropped
 
 A pregnancy of multiples will be recorded with one pregnancy record
 
@@ -129,6 +165,23 @@ pregnancy_id, different dates) will be dropped
 ## Examples
 
 ``` r
+if (interactive()) {
+# Example CDM with a pregnancy extension table
+path <- system.file("exampleData", package = "PETConnector")
+
+cdm <- TestGenerator::patientsCDM(
+ pathJson = path,
+ testName = "example_patients",
+ cdmVersion = "5.4"
+)
+
+# Create a pregnancy cohort on default parameters
+PETConnector::createPregnancyCohort(
+ cdm = cdm,
+ petTable = "pregnancy",
+ petSchema = "main"
+)
+}
 if (interactive()) {
 # Example CDM with a pregnancy extension table
 path <- system.file("exampleData", package = "PETConnector")

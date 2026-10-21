@@ -14,13 +14,13 @@
 
 Alamshahi A, van Kessel M, Inberg G, Williams R (2026). *PETConnector:
 Connect to Perinatal Extension Tables Complementary to an OMOP Common
-Data Model*. R package version 0.2.0,
+Data Model*. R package version 0.2.1,
 <https://darwin-eu-dev.github.io/PETConnector/>.
 
     @Manual{,
       title = {PETConnector: Connect to Perinatal Extension Tables Complementary to an OMOP Common Data Model},
       author = {Arianna Alamshahi and Maarten {van Kessel} and Ger Inberg and Ross Williams},
       year = {2026},
-      note = {R package version 0.2.0},
+      note = {R package version 0.2.1},
       url = {https://darwin-eu-dev.github.io/PETConnector/},
     }
