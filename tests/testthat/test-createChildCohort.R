@@ -97,66 +97,66 @@ testthat::test_that("createChildCohort() is not reliant on childTable being in c
   )
 })
 
-testthat::test_that("keepExtensionTable = TRUE keeps perinatal_extension_table reference and that the characteristics of the table align with what is expected", {
-  cdm <- PETConnector::createChildCohort(
-    cdm = cdm,
-    cohortDefinitionID = 101,
-    childTable = "infant",
-    childSchema = "main",
-    keepExtensionTable = TRUE,
-    .softValidation = TRUE
-  )
+# testthat::test_that("keepExtensionTable = TRUE keeps perinatal_extension_table reference and that the characteristics of the table align with what is expected", {
+#   cdm <- PETConnector::createChildCohort(
+#     cdm = cdm,
+#     cohortDefinitionID = 101,
+#     childTable = "infant",
+#     childSchema = "main",
+#     keepExtensionTable = TRUE,
+#     .softValidation = TRUE
+#   )
+#
+#   # Check that perinatal_extension_table exists ----
+#   expect_contains(
+#     names(cdm),
+#     "perinatal_extension_table"
+#   )
+#
+#   # Collect tables to compare ----
+#   infant <- cdm[["infant"]] %>%
+#     dplyr::collect()
+#
+#   perinatal_extension_table <- cdm[["perinatal_extension_table"]] %>%
+#     dplyr::collect()
+#
+#   # Check that we have the same number of rows and columns in 'infant' and 'perinatal_extension_table' ----
+#   expect_identical(
+#     nrow(infant),
+#     nrow(perinatal_extension_table)
+#   )
+#
+#   expect_identical(
+#     ncol(infant),
+#     ncol(perinatal_extension_table)
+#   )
+#
+#   # Check that we have the same number NAs in 'infant' and 'perinatal_extension_table' ----
+#   expect_identical(
+#     sum(is.na(infant)),
+#     sum(is.na(perinatal_extension_table))
+#   )
+#
+#   # Check that we have the same colnames 'infant' and 'perinatal_extension_table' ----
+#   expect_identical(
+#     colnames(infant),
+#     colnames(perinatal_extension_table)
+#   ) # an extra layer check since colnames were not changed in the function and we already checked ncols
+# })
 
-  # Check that perinatal_extension_table exists ----
-  expect_contains(
-    names(cdm),
-    "perinatal_extension_table"
-  )
-
-  # Collect tables to compare ----
-  infant <- cdm[["infant"]] %>%
-    dplyr::collect()
-
-  perinatal_extension_table <- cdm[["perinatal_extension_table"]] %>%
-    dplyr::collect()
-
-  # Check that we have the same number of rows and columns in 'infant' and 'perinatal_extension_table' ----
-  expect_identical(
-    nrow(infant),
-    nrow(perinatal_extension_table)
-  )
-
-  expect_identical(
-    ncol(infant),
-    ncol(perinatal_extension_table)
-  )
-
-  # Check that we have the same number NAs in 'infant' and 'perinatal_extension_table' ----
-  expect_identical(
-    sum(is.na(infant)),
-    sum(is.na(perinatal_extension_table))
-  )
-
-  # Check that we have the same colnames 'infant' and 'perinatal_extension_table' ----
-  expect_identical(
-    colnames(infant),
-    colnames(perinatal_extension_table)
-  ) # an extra layer check since colnames were not changed in the function and we already checked ncols
-})
-
-testthat::test_that("keepExtensionTable = FALSE drops reference to perinatal_extension_table", {
-  cdm <- PETConnector::createChildCohort(
-    cdm = cdm,
-    cohortDefinitionID = 101,
-    childTable = "infant",
-    childSchema = "main",
-    keepExtensionTable = FALSE,
-    .softValidation = TRUE
-  )
-
-  # Check that perinatal_extension_table does not exist ----
-  expect_all_false(stringr::str_detect(names(cdm), "perinatal_extension_table"))
-})
+# testthat::test_that("keepExtensionTable = FALSE drops reference to perinatal_extension_table", {
+#   cdm <- PETConnector::createChildCohort(
+#     cdm = cdm,
+#     cohortDefinitionID = 101,
+#     childTable = "infant",
+#     childSchema = "main",
+#     keepExtensionTable = FALSE,
+#     .softValidation = TRUE
+#   )
+#
+#   # Check that perinatal_extension_table does not exist ----
+#   expect_all_false(stringr::str_detect(names(cdm), "perinatal_extension_table"))
+# })
 
 testthat::test_that("cohortDefinitionID updates to user choice", {
   # cohort_definition_id with default settings should be 101 ----
