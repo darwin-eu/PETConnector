@@ -83,87 +83,90 @@ testthat::test_that("createPregnancyCohort() is not reliant on petTable being in
   )
 })
 
-# testthat::test_that("keepExtensionTable = TRUE keeps pregnancy_extension_table reference and that the characteristics of the table align with what is expected", {
-#   cdm <- PETConnector::createPregnancyCohort(
-#     cdm = cdm,
-#     petTable = "pregnancy",
-#     petSchema = "main",
-#     keepExtensionTable = TRUE
-#   )
-#
-#   # Check that pregnancy_extension_table exists ----
-#   expect_contains(
-#     names(cdm),
-#     "pregnancy_extension_table"
-#   )
-#
-#   # Collect tables to compare ----
-#   pregnancy <- cdm[["pregnancy"]] %>%
-#     dplyr::collect()
-#
-#   pregnancy_extension_table <- cdm[["pregnancy_extension_table"]] %>%
-#     dplyr::collect()
-#
-#   # Check that we have the same number of rows and columns in 'pregnancy' and 'pregnancy_extension_table' ----
-#   expect_identical(
-#     nrow(pregnancy),
-#     nrow(pregnancy_extension_table)
-#   )
-#
-#   expect_identical(
-#     ncol(pregnancy),
-#     ncol(pregnancy_extension_table)
-#   )
-#
-#   # Check that we have the same number NAs in 'pregnancy' and 'pregnancy_extension_table' ----
-#   expect_identical(
-#     sum(is.na(pregnancy)),
-#     sum(is.na(pregnancy_extension_table))
-#   )
-#
-#   # Check that we have the same colnames 'pregnancy' and 'pregnancy_extension_table' ----
-#   expect_identical(
-#     colnames(pregnancy),
-#     colnames(pregnancy_extension_table)
-#   ) # an extra layer check since colnames were not changed in the function and we already checked ncols
-#
-#   # Check that start and end dates are of "Date" class in pregnancy_extension_table ----
-#   expect_type(
-#     pregnancy %>%
-#       dplyr::pull(pregnancy_start_date),
-#     "character"
-#   ) # sanity check of original
-#
-#   expect_s3_class(
-#     pregnancy_extension_table %>%
-#       dplyr::pull(pregnancy_start_date),
-#     "Date"
-#   )
-#
-#   expect_type(
-#     pregnancy %>%
-#       dplyr::pull(pregnancy_end_date),
-#     "character"
-#   )
-#
-#   expect_s3_class(
-#     pregnancy_extension_table %>%
-#       dplyr::pull(pregnancy_end_date),
-#     "Date"
-#   )
-# })
+testthat::test_that("keepExtensionTable = TRUE keeps pregnancy_extension_table reference and that the characteristics of the table align with what is expected", {
+  testthat::skip()
 
-# testthat::test_that("keepExtensionTable = FALSE drops reference to pregnancy_extension_table", {
-#   cdm <- PETConnector::createPregnancyCohort(
-#     cdm = cdm,
-#     petTable = "pregnancy",
-#     petSchema = "main",
-#     keepExtensionTable = FALSE
-#   )
-#
-#   # Check that pregnancy_extension_table does not exist ----
-#   expect_all_false(stringr::str_detect(names(cdm), "pregnancy_extension_table"))
-# })
+  cdm <- PETConnector::createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    keepExtensionTable = TRUE
+  )
+
+  # Check that pregnancy_extension_table exists ----
+  expect_contains(
+    names(cdm),
+    "pregnancy_extension_table"
+  )
+
+  # Collect tables to compare ----
+  pregnancy <- cdm[["pregnancy"]] %>%
+    dplyr::collect()
+
+  pregnancy_extension_table <- cdm[["pregnancy_extension_table"]] %>%
+    dplyr::collect()
+
+  # Check that we have the same number of rows and columns in 'pregnancy' and 'pregnancy_extension_table' ----
+  expect_identical(
+    nrow(pregnancy),
+    nrow(pregnancy_extension_table)
+  )
+
+  expect_identical(
+    ncol(pregnancy),
+    ncol(pregnancy_extension_table)
+  )
+
+  # Check that we have the same number NAs in 'pregnancy' and 'pregnancy_extension_table' ----
+  expect_identical(
+    sum(is.na(pregnancy)),
+    sum(is.na(pregnancy_extension_table))
+  )
+
+  # Check that we have the same colnames 'pregnancy' and 'pregnancy_extension_table' ----
+  expect_identical(
+    colnames(pregnancy),
+    colnames(pregnancy_extension_table)
+  ) # an extra layer check since colnames were not changed in the function and we already checked ncols
+
+  # Check that start and end dates are of "Date" class in pregnancy_extension_table ----
+  expect_type(
+    pregnancy %>%
+      dplyr::pull(pregnancy_start_date),
+    "character"
+  ) # sanity check of original
+
+  expect_s3_class(
+    pregnancy_extension_table %>%
+      dplyr::pull(pregnancy_start_date),
+    "Date"
+  )
+
+  expect_type(
+    pregnancy %>%
+      dplyr::pull(pregnancy_end_date),
+    "character"
+  )
+
+  expect_s3_class(
+    pregnancy_extension_table %>%
+      dplyr::pull(pregnancy_end_date),
+    "Date"
+  )
+})
+
+testthat::test_that("keepExtensionTable = FALSE drops reference to pregnancy_extension_table", {
+  testthat::skip()
+  cdm <- PETConnector::createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    keepExtensionTable = FALSE
+  )
+
+  # Check that pregnancy_extension_table does not exist ----
+  expect_all_false(stringr::str_detect(names(cdm), "pregnancy_extension_table"))
+})
 
 testthat::test_that("cohortDefinitionID updates to user choice", {
   # cohort_definition_id with default settings should be 101 ----
