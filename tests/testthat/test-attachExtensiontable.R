@@ -3,7 +3,8 @@ testthat::test_that("input args are as expected", {
     PETConnector::attachExtensionTable(
       cdm = "hello",
       table = 123,
-      schema = FALSE,
+      tableSchema = FALSE,
+      writeSchema = "main",
       name = NULL
     ),
     "4 assertions failed:"
@@ -13,7 +14,8 @@ testthat::test_that("input args are as expected", {
     PETConnector::attachExtensionTable(
       cdm = cdm,
       table = "pregnancy",
-      schema = "main",
+      tableSchema = "main",
+      writeSchema = "main",
       name = "pregnancy_extension_table"
     )
   )
@@ -23,7 +25,8 @@ testthat::test_that("pregnancy_extension_table is created and attached to cdm", 
   cdm <- PETConnector::attachExtensionTable(
     cdm = cdm,
     table = "pregnancy",
-    schema = "main",
+    tableSchema = "main",
+    writeSchema = "main",
     name = "pregnancy_extension_table"
   )
 
