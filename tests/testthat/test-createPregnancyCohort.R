@@ -367,7 +367,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 4) # 4, Pregnancy end date > pregnancy start_date
+    dplyr::filter(reason_id == 4) # 4, Pregnancy start date <= pregnancy end date
 
   expect_equal(
     attrition_subset %>%

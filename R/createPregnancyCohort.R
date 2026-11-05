@@ -86,7 +86,7 @@ filterStartEndDate <- function(tbl, pregnancyCohortTableName) {
   tbl %>%
     dplyr::filter(.data$pregnancy_start_date <= .data$pregnancy_end_date) %>%
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE) %>%
-    omopgenerics::recordCohortAttrition(reason = "Pregnancy end date > pregnancy start_date")
+    omopgenerics::recordCohortAttrition(reason = "Pregnancy start date <= pregnancy end date")
 
   message(paste(getDateTime(), "Filtering: filterStartEndDate() filtering complete"))
 
