@@ -5,6 +5,8 @@
 
 <!-- badges: start -->
 
+[![Codecov test
+coverage](https://codecov.io/gh/darwin-eu-dev/PETConnector/graph/badge.svg)](https://app.codecov.io/gh/darwin-eu-dev/PETConnector)
 <!-- badges: end -->
 
 Provides tools to create cohorts from Perinatal Extension Tables (PET)

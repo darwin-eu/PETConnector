@@ -16,6 +16,7 @@ knitr::opts_chunk$set(
 # PETConnector
 
 <!-- badges: start -->
+[![Codecov test coverage](https://codecov.io/gh/darwin-eu-dev/PETConnector/graph/badge.svg)](https://app.codecov.io/gh/darwin-eu-dev/PETConnector)
 <!-- badges: end -->
 
 Provides tools to create cohorts from Perinatal Extension Tables (PET) of the Observational Medical Outcomes Partnership (OMOP) Common Data Model (CDM).
