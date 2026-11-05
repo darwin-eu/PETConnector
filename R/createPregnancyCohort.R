@@ -1,4 +1,4 @@
-initPregnancyCohort <- function(cdm, pregnancyCohortTableName, petTable, cohortDefinitionID, keepExtensionTable) { # add arg
+initPregnancyCohort <- function(cdm, pregnancyCohortTableName, pregnancyCohortName, petTable, cohortDefinitionID, keepExtensionTable) { # add arg
   cdm[[pregnancyCohortTableName]] <- cdm[[petTable]] %>%
     dplyr::mutate(
       cohort_definition_id = cohortDefinitionID,
@@ -12,6 +12,10 @@ initPregnancyCohort <- function(cdm, pregnancyCohortTableName, petTable, cohortD
     dplyr::rename(subject_id = "person_id") %>%
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE, overwrite = TRUE) %>%
     omopgenerics::newCohortTable(.softValidation = TRUE)
+
+  # update cohort_name in the cohort definition set
+  cdm[[pregnancyCohortTableName]] <- cdm[[pregnancyCohortTableName]] %>%
+    CohortConstructor::renameCohort(newCohortName = pregnancyCohortName)
 
   if (isFALSE(keepExtensionTable)) {
     cdm[[petTable]] <- NULL
@@ -345,6 +349,7 @@ intersectCohorts <- function(tbl1, tbl2) {
 #' @param petSchema (`character(1)`)  Name of the schema where the Pregnancy Extension Table resides
 #' @param keepExtensionTable (`logical(1)`: `TRUE`) Keep the reference to the pregnancy extension table? default = TRUE
 #' @param pregnancyCohortTableName (`character(1)`: `"pregnancy_cohort"`) Name to assign to to pregnancy cohort table
+#' @param pregnancyCohortName (`character(1)`: `"pregnancy"`) Name to assign cohort_name in cohort definition set
 #' @param samePregDiffDates (`character(1)`: `"None"`) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "None" will drop all records, "Earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "Earliest" or "Latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.
 #' @param cohortDefinitionID (`numeric(1)`: `101`) Cohort definition id to assign to newly created cohort
 #' @param minGestationalDuration (`numeric(1)`: `0`) Minimum gestational duration (days) to include.
@@ -389,6 +394,7 @@ createPregnancyCohort <- function(
     petSchema,
     keepExtensionTable = TRUE,
     pregnancyCohortTableName = "pregnancy_cohort",
+    pregnancyCohortName = "pregnancy",
     samePregDiffDates = "None",
     cohortDefinitionID = 101,
     minGestationalDuration = 0,
@@ -409,6 +415,7 @@ createPregnancyCohort <- function(
   checkmate::assertClass(x = petSchema, classes = "character", add = assertions) # don't need to check against (attr(cdm, "write_schema")
   checkmate::assertLogical(x = keepExtensionTable, len = 1, add = assertions)
   checkmate::assertClass(x = pregnancyCohortTableName, classes = "character", add = assertions)
+  checkmate::assertClass(x = pregnancyCohortName, classes = "character", add = assertions)
   checkmate::assertNumber(x = cohortDefinitionID, add = assertions)
   checkmate::assertNumber(x = minGestationalDuration, finite = TRUE, add = assertions)
   checkmate::assertNumber(x = maxGestationalDuration, finite = TRUE, add = assertions)
@@ -440,6 +447,7 @@ createPregnancyCohort <- function(
   cdm <- initPregnancyCohort(
     cdm = cdm,
     pregnancyCohortTableName = pregnancyCohortTableName,
+    pregnancyCohortName = pregnancyCohortName,
     petTable = petTable,
     cohortDefinitionID = cohortDefinitionID,
     keepExtensionTable = keepExtensionTable

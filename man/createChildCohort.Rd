@@ -10,6 +10,7 @@ createChildCohort(
   childSchema = NULL,
   keepExtensionTable = TRUE,
   childCohortTableName = "child_cohort",
+  childCohortName = "child",
   pregnancyCohortTableName = "pregnancy_cohort",
   collapseDupRecords = TRUE,
   cohortDefinitionID = 102,
@@ -27,6 +28,8 @@ createChildCohort(
 \item{keepExtensionTable}{(\code{logical(1)}: \code{TRUE}) Keep the reference to the perinatal extension table? default = TRUE}
 
 \item{childCohortTableName}{(\code{character(1)}: \code{"child_cohort"}) Name to assign to to child cohort table}
+
+\item{childCohortName}{(\code{character(1)}: \code{"child"}) Name to assign cohort_name in cohort definition set}
 
 \item{pregnancyCohortTableName}{(\code{character(1)}: \code{"pregnancy_cohort"}) Pregnancy cohort table name}
 

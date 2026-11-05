@@ -20,11 +20,12 @@ testthat::test_that("input args are as expected", {
       childTable = "infant",
       keepExtensionTable = "FALSE", # character instead of logical
       childCohortTableName = FALSE, # logical instead of character
+      childCohortName = TRUE, # logical instead of character
       pregnancyCohortTableName = 123, # numeric instead of character
       childConceptIds = c("40485452", "4285883"), # won't be checked, character instead of numeric
       .softValidation = NULL # NULL instead of logical
     ),
-    "7 assertions failed:"
+    "8 assertions failed:"
   )
 
   expect_error(
@@ -62,6 +63,7 @@ testthat::test_that("input args are as expected", {
       childTable = "infant",
       keepExtensionTable = TRUE,
       childCohortTableName = "cohort_child", # character, no error
+      childCohortName = "child", # character, no error
       pregnancyCohortTableName = "pregnancy_cohort", # exists, no error
       childConceptIds = NULL, # not used when creating from childTable
       .softValidation = TRUE
@@ -296,6 +298,65 @@ testthat::test_that("Child cohort table name reflects user choice when creating 
   )
 })
 
+testthat::test_that("cohort_name reflects user choice when creating child_cohort from childTable", {
+  # Sanity check that cohort_name is "child" by default  ----
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    childTable = "infant",
+    childSchema = "main",
+    keepExtensionTable = TRUE
+  )
+
+  expect_equal(
+    omopgenerics::settings(cdm$child_cohort) %>%
+      dplyr::pull(cohort_name),
+    "child"
+  )
+
+  # Sanity check that childohortName is actually being used to update cohort_name ----
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    childTable = "infant",
+    childSchema = "main",
+    keepExtensionTable = TRUE,
+    childCohortName = "another_child"
+  )
+
+  expect_equal(
+    omopgenerics::settings(cdm$child_cohort) %>%
+      dplyr::pull(cohort_name),
+    "another_child"
+  )
+})
+
+testthat::test_that("cohort_name reflects user choice when creating child_cohort from fact_relationship (parentCohortTable)", {
+  # Sanity check that cohort_name is "child" by default  ----
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    collapseDupRecords = TRUE
+  )
+
+  expect_equal(
+    omopgenerics::settings(cdm$child_cohort) %>%
+      dplyr::pull(cohort_name),
+    "child"
+  )
+
+  # Sanity check that childohortName is actually being used to update cohort_name ----
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    collapseDupRecords = TRUE,
+    childCohortName = "another_child"
+  )
+
+  expect_equal(
+    omopgenerics::settings(cdm$child_cohort) %>%
+      dplyr::pull(cohort_name),
+    "another_child"
+  )
+
+})
+
 testthat::test_that("createChildCohort() looks for pregnancy cohort based on name provided in pregnancyCohortTableName", {
   expect_error(
     PETConnector::createChildCohort(
@@ -335,6 +396,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
     childSchema = "main",
     keepExtensionTable = TRUE,
     childCohortTableName = "child_cohort", # default
+    childCohortName = "child", # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     .softValidation = TRUE
   )
@@ -398,6 +460,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     childSchema = "main",
     keepExtensionTable = TRUE,
     childCohortTableName = "child_cohort", # default
+    childCohortName = "child", # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     collapseDupRecords = TRUE,
     .softValidation = FALSE
@@ -548,6 +611,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     childSchema = "main",
     keepExtensionTable = TRUE,
     childCohortTableName = "child_cohort", # default
+    childCohortName = "child", # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     collapseDupRecords = FALSE,
     .softValidation = FALSE
@@ -651,6 +715,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
     cdm = cdm,
     cohortDefinitionID = 101,
     childCohortTableName = "child_cohort", # default
+    childCohortName = "child", # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     collapseDupRecords = TRUE
   )
@@ -809,6 +874,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
     cdm = cdm,
     cohortDefinitionID = 101,
     childCohortTableName = "child_cohort", # default
+    childCohortName = "child", # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     collapseDupRecords = FALSE
   )
