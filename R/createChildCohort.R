@@ -107,13 +107,13 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
   attrition <- dplyr::bind_rows(
     attrition,
     data.frame(
-      reason = "Filter children for birthing parent in pregnancy cohort",
+      reason = "Birthing parent in pregnancy cohort",
       number_subjects = getNumberSubjects(cdm[[childCohortTableName]]),
       number_records = getNumberRecords(cdm[[childCohortTableName]])
     )
   )
 
-  message(paste(getDateTime(), "Filtering: 'children for birthing parent in pregnancy cohort' filtering complete"))
+  message(paste(getDateTime(), "Filtering: 'birthing parent in pregnancy cohort' filtering complete"))
 
   cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
     dplyr::left_join(cdm$person, by = dplyr::join_by(subject_id == person_id)) %>%
@@ -124,14 +124,13 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
   attrition <- dplyr::bind_rows(
     attrition,
     data.frame(
-      reason = "Filter children where birth_year == birthing parent's year of pregnancy_end_date",
-      # "Filter children correct pregnancy for birthing parent in pregnancy Cohort"
+      reason = "birth_year == birthing parent's year of pregnancy_end_date",
       number_subjects = getNumberSubjects(cdm[[childCohortTableName]]),
       number_records = getNumberRecords(cdm[[childCohortTableName]])
     )
   )
 
-  message(paste(getDateTime(), "Filtering: 'children where birth_year == birthing parent's year of pregnancy_end_date' filtering complete"))
+  message(paste(getDateTime(), "Filtering: 'birth_year == birthing parent's year of pregnancy_end_date' filtering complete"))
 
   if (isTRUE(collapseDupRecords)) {
     cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
@@ -141,13 +140,13 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
     attrition <- dplyr::bind_rows(
       attrition,
       data.frame(
-        reason = "Filter duplicate infants to keep only one record",
+        reason = "One record per exactly duplicated infant",
         number_subjects = getNumberSubjects(cdm[[childCohortTableName]]),
         number_records = getNumberRecords(cdm[[childCohortTableName]])
       )
     )
 
-    message(paste(getDateTime(), "Filtering: 'duplicate infants to keep only one record' filtering complete"))
+    message(paste(getDateTime(), "Filtering: 'one record per exactly duplicated infant' filtering complete"))
   }
 
   cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
@@ -157,7 +156,7 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
   attrition <- dplyr::bind_rows(
     attrition,
     data.frame(
-      reason = "Filter out infants with duplicated subject_id",
+      reason = "Infant subject ID appears only once",
       number_subjects = getNumberSubjects(cdm[[childCohortTableName]]),
       number_records = getNumberRecords(cdm[[childCohortTableName]])
     )
@@ -172,7 +171,7 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
   attrition <- dplyr::bind_rows(
     attrition,
     data.frame(
-      reason = "Filter to live births",
+      reason = "Live births",
       number_subjects = getNumberSubjects(cdm[[childCohortTableName]]),
       number_records = getNumberRecords(cdm[[childCohortTableName]])
     )
@@ -368,30 +367,29 @@ createChildCohort <- function(
       cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
         dplyr::filter(.data$pregnancy_id %in% keptIds) %>%
         dplyr::compute(name = childCohortTableName, temporary = FALSE, overwrite = TRUE) %>%
-        omopgenerics::recordCohortAttrition(reason = "Filter only children with parent in pregnancy cohort")
+        omopgenerics::recordCohortAttrition(reason = "Children with parent in pregnancy cohort")
 
-      message(paste(getDateTime(), "Filtering: 'only children with parent in pregancy cohort' filtering complete"))
+      message(paste(getDateTime(), "Filtering: 'children with parent in pregancy cohort' filtering complete"))
 
 
       if (isTRUE(collapseDupRecords)) {
         cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
           dplyr::distinct() %>%
-          omopgenerics::recordCohortAttrition("Filter duplicate infants to keep only one record")
+          omopgenerics::recordCohortAttrition("One record per exactly duplicated infant")
 
-        message(paste(getDateTime(), "Filtering: 'duplicate infants to keep only one record' filtering complete"))
+        message(paste(getDateTime(), "Filtering: 'one record per exactly duplicated infant' filtering complete"))
       }
 
       cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
         filterDuplicateIds(childCohortTableName) %>%
-        omopgenerics::recordCohortAttrition("Filter out infants with duplicated subject_id")
+        omopgenerics::recordCohortAttrition("Infant subject ID appears only once")
 
       message(paste(getDateTime(), "Filtering: filterDuplicateIds() filtering complete"))
 
       cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
-        filterLiveBirth() %>% # cohort attrition recorded in function
-        omopgenerics::recordCohortAttrition(reason = "Filter to live births")
+        filterLiveBirth() %>%
+        omopgenerics::recordCohortAttrition(reason = "Live births")
 
-      message(paste(getDateTime(), "Filtering: filterLiveBirth() filtering complete"))
 
       message(paste(getDateTime(), "Child cohort table filtered"))
     }

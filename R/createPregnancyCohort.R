@@ -178,7 +178,7 @@ filterMultiplePregnancies <- function(cdm, samePregDiffDates, pregnancyCohortTab
     dplyr::distinct() %>%
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE, overwrite = TRUE) %>%
     omopgenerics::recordCohortAttrition(
-      reason = "Removed identical pregnancy duplicates"
+      reason = "One record per exactly duplicated pregnancy" # reduces identical pregnancy duplicates to just one record
     )
 
   message(paste(getDateTime(), "Filtering: filterMultiplePregnancies(), identical pregnancy duplicates filtering complete"))
@@ -190,7 +190,7 @@ filterMultiplePregnancies <- function(cdm, samePregDiffDates, pregnancyCohortTab
       dplyr::ungroup() %>%
       dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE, overwrite = TRUE) %>%
       omopgenerics::recordCohortAttrition(
-        reason = "Removed identical pregnancies with differing dates"
+        reason = "Pregnancy ID appears only once" # Removes identical pregnancies with differing dates
       )
   } else if (samePregDiffDates == "Earliest" | samePregDiffDates == "Latest") {
     if (samePregDiffDates == "Earliest") {
@@ -205,7 +205,7 @@ filterMultiplePregnancies <- function(cdm, samePregDiffDates, pregnancyCohortTab
       dplyr::slice_max(!!CDMConnector::datediff("pregnancy_start_date", "pregnancy_end_date", interval = "day"), n = 1, with_ties = FALSE) %>% # use gest_length as tiebreaker
       dplyr::ungroup() %>%
       dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE, overwrite = TRUE) %>%
-      omopgenerics::recordCohortAttrition(reason = sprintf("Keeping only record with %s start date for identical pregnancies with differing dates", samePregDiffDates))
+      omopgenerics::recordCohortAttrition(reason = sprintf("%s start date for identical pregnancies with differing dates", samePregDiffDates)) # keeping only earliest/latest
   }
 
   message(paste(getDateTime(), "Filtering: filterMultiplePregnancies(), identical pregnancy with differing dates filtering complete"))
@@ -237,7 +237,7 @@ filterMultiplePregnancies <- function(cdm, samePregDiffDates, pregnancyCohortTab
     ) %>%
     dplyr::select(!c("observation_period_start_date", "observation_period_end_date")) %>%
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE) %>%
-    omopgenerics::recordCohortAttrition(reason = "No overlapping pregnancy records")
+    omopgenerics::recordCohortAttrition(reason = "Non-overlapping pregnancy records")
 
   message(paste(getDateTime(), "Filtering: filterMultiplePregnancies(), overlapping pregnancy records filtering complete"))
 

@@ -516,7 +516,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 2) # 2, Filter only children with parent in pregnancy cohort
+    dplyr::filter(reason_id == 2) # 2, Children with parent in pregnancy cohort
 
   expect_equal(
     attrition_subset %>%
@@ -540,7 +540,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 3) # 3, Filter duplicate infants to keep only one record
+    dplyr::filter(reason_id == 3) # 3, One record per exactly duplicated infant
 
   expect_equal(
     attrition_subset %>%
@@ -564,7 +564,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 4) # 4, Filter out infants with duplicated subject_id
+    dplyr::filter(reason_id == 4) # 4, Infant subject ID appears only once
 
   expect_equal(
     attrition_subset %>%
@@ -667,7 +667,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 2) # 2, Filter only children with parent in pregnancy cohort
+    dplyr::filter(reason_id == 2) # 2, Children with parent in pregnancy cohort
 
   expect_equal(
     attrition_subset %>%
@@ -695,7 +695,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 3) # 4, Filter out infants with duplicated subject_id
+    dplyr::filter(reason_id == 3) # 4, Infant subject ID appears only once
 
   expect_equal(
     attrition_subset %>%
@@ -758,7 +758,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 2) # 2, Filter children for birthing parent in pregnancy cohort
+    dplyr::filter(reason_id == 2) # 2, Birthing parent in pregnancy cohort
 
   expect_equal(
     attrition_subset %>%
@@ -782,7 +782,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 3) # 3, Filter children where birth_year == birthing parent's year of pregnancy_end_date
+    dplyr::filter(reason_id == 3) # 3, birth_year == birthing parent's year of pregnancy_end_date
 
   expect_equal(
     attrition_subset %>%
@@ -806,7 +806,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 4) # 4, Filter duplicate infants to keep only one record
+    dplyr::filter(reason_id == 4) # 4, One record per exactly duplicated infant
 
   expect_equal(
     attrition_subset %>%
@@ -830,7 +830,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 5) # 5, Filter out infants with duplicated subject_id
+    dplyr::filter(reason_id == 5) # 5, Infant subject ID appears only once
 
   expect_equal(
     attrition_subset %>%
@@ -854,7 +854,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 6) # 6, Filter to live births
+    dplyr::filter(reason_id == 6) # 6, Live births
 
   expect_equal(
     attrition_subset %>%
@@ -918,7 +918,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 2) # 2, Filter children for birthing parent in pregnancy cohort
+    dplyr::filter(reason_id == 2) # 2, Birthing parent in pregnancy cohort
 
   expect_equal(
     attrition_subset %>%
@@ -942,7 +942,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 3) # 3, Filter children where birth_year == birthing parent's year of pregnancy_end_date
+    dplyr::filter(reason_id == 3) # 3, birth_year == birthing parent's year of pregnancy_end_date
 
   expect_equal(
     attrition_subset %>%
@@ -967,7 +967,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 4) # 4, Filter out infants with duplicated subject_id
+    dplyr::filter(reason_id == 4) # 4, infant subject ID appears only once
 
   expect_equal(
     attrition_subset %>%
@@ -991,7 +991,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 5) # 5, Filter to live births
+    dplyr::filter(reason_id == 5) # 5, Live births
 
   expect_equal(
     attrition_subset %>%

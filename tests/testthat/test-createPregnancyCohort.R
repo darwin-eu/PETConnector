@@ -407,7 +407,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 7) # 7, Removed identical pregnancy duplicates
+    dplyr::filter(reason_id == 7) # 7, One record per exactly duplicated pregnancy
 
   expect_equal(
     attrition_subset %>%
@@ -434,7 +434,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 8) # 8, Removed identical pregnancies with differing dates
+    dplyr::filter(reason_id == 8) # 8, Pregnancy ID appears only once
 
   expect_equal(
     attrition_subset %>%
@@ -461,7 +461,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 9) # 9, No overlapping pregnancy records
+    dplyr::filter(reason_id == 9) # 9, Non-overlapping pregnancy records
 
   expect_equal(
     attrition_subset %>%
@@ -954,7 +954,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'Earliest' goes as expec
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 8) # 8, Keeping only record with earliest start date for identical pregnancies with differing dates
+    dplyr::filter(reason_id == 8) # 8, Earliest start date for identical pregnancies with differing dates
 
   expect_equal(
     attrition_subset %>%
@@ -1023,7 +1023,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'Latest' goes as expecte
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 8) # 8, Keeping only record with latest start date for identical pregnancies with differing dates
+    dplyr::filter(reason_id == 8) # 8, Latest start date for identical pregnancies with differing dates
 
   expect_equal(
     attrition_subset %>%
