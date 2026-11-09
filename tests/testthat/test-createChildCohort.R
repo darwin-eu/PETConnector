@@ -18,14 +18,13 @@ testthat::test_that("input args are as expected", {
       collapseDupRecords = "TRUE", # character instead of logical
       childSchema = TRUE, # logical instead of character
       childTable = "infant",
-      keepExtensionTable = "FALSE", # character instead of logical
       childCohortTableName = FALSE, # logical instead of character
       childCohortName = TRUE, # logical instead of character
       pregnancyCohortTableName = 123, # numeric instead of character
       childConceptIds = c("40485452", "4285883"), # won't be checked, character instead of numeric
       .softValidation = NULL # NULL instead of logical
     ),
-    "8 assertions failed:"
+    "7 assertions failed:"
   )
 
   expect_error(
@@ -35,7 +34,6 @@ testthat::test_that("input args are as expected", {
       collapseDupRecords = TRUE,
       childSchema = "main", # provided childSchema without childTable
       childTable = NULL, # provided childTable without childSchema
-      keepExtensionTable = "FALSE", # won't be checked, didn't provide both childTable and childSchema
       childConceptIds = c("40485452"), # won't be checked, character instead of numeric
       .softValidation = FALSE
     ),
@@ -48,7 +46,6 @@ testthat::test_that("input args are as expected", {
       collapseDupRecords = 123, # numeric instead of logical,
       childSchema = NULL,
       childTable = NULL,
-      keepExtensionTable = "TRUE", # won't be checked, didn't provide childTable and childSchema
       childConceptIds = NULL, # NULL instead of character
       .softValidation = "FALSE" # won't be checked, character instead of logical
     ),
@@ -61,7 +58,6 @@ testthat::test_that("input args are as expected", {
       collapseDupRecords = FALSE,
       childSchema = "main",
       childTable = "infant",
-      keepExtensionTable = TRUE,
       childCohortTableName = "cohort_child", # character, no error
       childCohortName = "child", # character, no error
       pregnancyCohortTableName = "pregnancy_cohort", # exists, no error
@@ -88,7 +84,6 @@ testthat::test_that("createChildCohort() is not reliant on childTable being in c
     cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = FALSE,
     .softValidation = TRUE
   )
 
@@ -107,7 +102,7 @@ testthat::test_that("keepExtensionTable = TRUE keeps perinatal_extension_table r
     cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = TRUE,
+    # keepExtensionTable = TRUE,
     .softValidation = TRUE
   )
 
@@ -156,7 +151,7 @@ testthat::test_that("keepExtensionTable = FALSE drops reference to perinatal_ext
     cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = FALSE,
+    # keepExtensionTable = FALSE,
     .softValidation = TRUE
   )
 
@@ -169,8 +164,7 @@ testthat::test_that("cohortDefinitionID updates to user choice", {
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     childTable = "infant",
-    childSchema = "main",
-    keepExtensionTable = TRUE
+    childSchema = "main"
   )
 
   child_cohort <- cdm[["child_cohort"]] %>%
@@ -199,7 +193,6 @@ testthat::test_that("cohortDefinitionID updates to user choice", {
     cdm = cdm,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = TRUE,
     cohortDefinitionID = 405
   )
   child_cohort <- cdm[["child_cohort"]] %>%
@@ -230,8 +223,7 @@ testthat::test_that("Child cohort table name reflects user choice when creating 
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     childTable = "infant",
-    childSchema = "main",
-    keepExtensionTable = TRUE
+    childSchema = "main"
   )
 
   expect_contains(
@@ -244,7 +236,6 @@ testthat::test_that("Child cohort table name reflects user choice when creating 
     cdm = cdm,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = TRUE,
     childCohortTableName = "another_child_cohort"
   )
 
@@ -303,8 +294,7 @@ testthat::test_that("cohort_name reflects user choice when creating child_cohort
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     childTable = "infant",
-    childSchema = "main",
-    keepExtensionTable = TRUE
+    childSchema = "main"
   )
 
   expect_equal(
@@ -318,7 +308,6 @@ testthat::test_that("cohort_name reflects user choice when creating child_cohort
     cdm = cdm,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = TRUE,
     childCohortName = "another_child"
   )
 
@@ -363,8 +352,7 @@ testthat::test_that("createChildCohort() looks for pregnancy cohort based on nam
       cdm = cdm,
       childTable = "infant",
       childSchema = "main",
-      pregnancyCohortTableName = "preg_cohort",
-      keepExtensionTable = TRUE
+      pregnancyCohortTableName = "preg_cohort"
     ),
     "preg_cohort does not exist in the cdm_reference object"
   )
@@ -381,8 +369,7 @@ testthat::test_that("createChildCohort() looks for pregnancy cohort based on nam
       cdm = cdm,
       childTable = "infant",
       childSchema = "main",
-      pregnancyCohortTableName = "preg_cohort",
-      keepExtensionTable = TRUE
+      pregnancyCohortTableName = "preg_cohort"
     )
   )
 
@@ -394,7 +381,6 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
     cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = TRUE,
     childCohortTableName = "child_cohort", # default
     childCohortName = "child", # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
@@ -458,7 +444,6 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = TRUE,
     childCohortTableName = "child_cohort", # default
     childCohortName = "child", # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
@@ -609,7 +594,6 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = TRUE,
     childCohortTableName = "child_cohort", # default
     childCohortName = "child", # default
     pregnancyCohortTableName = "pregnancy_cohort", # default

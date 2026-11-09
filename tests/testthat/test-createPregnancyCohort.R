@@ -4,7 +4,6 @@ testthat::test_that("input args are as expected", {
       cdm = cdm,
       petTable = "pregnancy",
       petSchema = "main",
-      keepExtensionTable = "no", # should be logical TRUE/FALSE
       pregnancyCohortTableName = 123, # numeric instead of character
       pregnancyCohortName = FALSE, # logical instead of character
       cohortDefinitionID = "101", # character instead of number
@@ -19,7 +18,7 @@ testthat::test_that("input args are as expected", {
       outcomeIds = c("test1", "test2", "test3"), # character vec instead of numeric
       .softValidation = c(TRUE, FALSE) # length 2 instead of 1
     ),
-    "14 assertions failed:"
+    "13 assertions failed:"
   )
 
 
@@ -40,7 +39,6 @@ testthat::test_that("input args are as expected", {
       cdm = cdm,
       petTable = "pregnancy",
       petSchema = "main",
-      keepExtensionTable = c(TRUE, FALSE), # length 2 instead of 1
       pregnancyCohortTableName = "preg_cohort", # no error, character
       pregnancyCohortName = "pregnancy", # no error, character
       cohortDefinitionID = c(101, 102), # length 2 instead of 1
@@ -54,7 +52,7 @@ testthat::test_that("input args are as expected", {
       sex = NULL, # NULL instead of "Female", "Male" or c("Female", "Male")
       .softValidation = "FALSE" # character instead of logical
     ),
-    "8 assertions failed:"
+    "7 assertions failed:"
   )
 
   expect_no_error(
@@ -74,8 +72,7 @@ testthat::test_that("createPregnancyCohort() is not reliant on petTable being in
   cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
-    petSchema = "main",
-    keepExtensionTable = TRUE
+    petSchema = "main"
   )
 
   # Check that pregnancy_cohort exists ----
@@ -91,8 +88,8 @@ testthat::test_that("keepExtensionTable = TRUE keeps pregnancy_extension_table r
   cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
-    petSchema = "main",
-    keepExtensionTable = TRUE
+    petSchema = "main"#,
+    # keepExtensionTable = TRUE
   )
 
   # Check that pregnancy_extension_table exists ----
@@ -162,8 +159,8 @@ testthat::test_that("keepExtensionTable = FALSE drops reference to pregnancy_ext
   cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
-    petSchema = "main",
-    keepExtensionTable = FALSE
+    petSchema = "main"#,
+    # keepExtensionTable = FALSE
   )
 
   # Check that pregnancy_extension_table does not exist ----
@@ -272,7 +269,6 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
@@ -481,7 +477,6 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
@@ -583,7 +578,6 @@ testthat::test_that("Filtering on Age goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
@@ -673,7 +667,6 @@ testthat::test_that("Filtering on startDate goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
@@ -745,7 +738,6 @@ testthat::test_that("Filtering on endDate goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
@@ -824,7 +816,6 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
@@ -905,7 +896,6 @@ testthat::test_that("Filtering with samePregDiffDates = 'Earliest' goes as expec
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     pregnancyCohortName = "pregnancy", # default
     minGestationalDuration = 0, # default
@@ -974,7 +964,6 @@ testthat::test_that("Filtering with samePregDiffDates = 'Latest' goes as expecte
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     pregnancyCohortName = "pregnancy", # default
     minGestationalDuration = 0, # default
@@ -1043,7 +1032,6 @@ testthat::test_that("Filtering on sex goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
@@ -1093,7 +1081,6 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
@@ -1151,7 +1138,6 @@ testthat::test_that("Filtering on outcome goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default

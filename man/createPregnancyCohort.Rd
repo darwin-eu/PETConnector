@@ -8,7 +8,6 @@ createPregnancyCohort(
   cdm,
   petTable,
   petSchema,
-  keepExtensionTable = TRUE,
   pregnancyCohortTableName = "pregnancy_cohort",
   pregnancyCohortName = "pregnancy",
   samePregDiffDates = "None",
@@ -30,8 +29,6 @@ createPregnancyCohort(
 \item{petTable}{(\code{character(1)}) Name of the Pregnancy Extension Table.}
 
 \item{petSchema}{(\code{character(1)})  Name of the schema where the Pregnancy Extension Table resides}
-
-\item{keepExtensionTable}{(\code{logical(1)}: \code{TRUE}) Keep the reference to the pregnancy extension table? default = TRUE}
 
 \item{pregnancyCohortTableName}{(\code{character(1)}: \code{"pregnancy_cohort"}) Name to assign to to pregnancy cohort table}
 

@@ -12,7 +12,7 @@ getNumberRecords <- function(tbl) {
     dplyr::pull(.data$n)
 }
 
-createPerinatalCohortFromTbl <- function(cdm, childCohortTableName, childCohortName, childTable, pregnancyCohortTableName, cohortDefinitionID, keepExtensionTable) {
+createPerinatalCohortFromTbl <- function(cdm, childCohortTableName, childCohortName, childTable, pregnancyCohortTableName, cohortDefinitionID) {
   cdm[[childCohortTableName]] <- cdm[[childTable]] %>%
     dplyr::left_join(
       cdm[["pregnancy_duplicate_map"]] %>%
@@ -53,9 +53,6 @@ createPerinatalCohortFromTbl <- function(cdm, childCohortTableName, childCohortN
       .softValidation = TRUE
     )
 
-  if (isFALSE(keepExtensionTable)) {
-    cdm[[childTable]] <- NULL
-  }
   return(cdm)
 }
 
@@ -237,7 +234,6 @@ filterLiveBirth <- function(tbl) {
 #' @param cdm (`cdm_reference`) CDM reference object
 #' @param childTable (`character(1)`: `NULL`) Name of the Child Extension Table
 #' @param childSchema (`character(1)`: `NULL`) Name of the schema where the Child Extension Table resides
-#' @param keepExtensionTable (`logical(1)`: `TRUE`) Keep the reference to the perinatal extension table? default = TRUE
 #' @param childCohortTableName (`character(1)`: `"child_cohort"`) Name to assign to to child cohort table
 #' @param childCohortName (`character(1)`: `"child"`) Name to assign cohort_name in cohort definition set
 #' @param pregnancyCohortTableName (`character(1)`: `"pregnancy_cohort"`) Pregnancy cohort table name
@@ -290,7 +286,6 @@ createChildCohort <- function(
     cdm,
     childTable = NULL,
     childSchema = NULL,
-    keepExtensionTable = TRUE,
     childCohortTableName = "child_cohort",
     childCohortName = "child",
     pregnancyCohortTableName = "pregnancy_cohort",
@@ -316,7 +311,6 @@ createChildCohort <- function(
   }
 
   if (!is.null(childTable) & !is.null(childSchema)) {
-    checkmate::assertLogical(x = keepExtensionTable, len = 1, add = assertions)
     checkmate::assertLogical(x = .softValidation, len = 1, add = assertions)
   }
 
@@ -352,8 +346,7 @@ createChildCohort <- function(
       childTable = childTable,
       childCohortName = childCohortName,
       pregnancyCohortTableName = pregnancyCohortTableName,
-      cohortDefinitionID = cohortDefinitionID,
-      keepExtensionTable = keepExtensionTable
+      cohortDefinitionID = cohortDefinitionID
     )
 
     message(paste(getDateTime(), "Child cohort table created"))

@@ -8,7 +8,6 @@ createChildCohort(
   cdm,
   childTable = NULL,
   childSchema = NULL,
-  keepExtensionTable = TRUE,
   childCohortTableName = "child_cohort",
   childCohortName = "child",
   pregnancyCohortTableName = "pregnancy_cohort",
@@ -24,8 +23,6 @@ createChildCohort(
 \item{childTable}{(\code{character(1)}: \code{NULL}) Name of the Child Extension Table}
 
 \item{childSchema}{(\code{character(1)}: \code{NULL}) Name of the schema where the Child Extension Table resides}
-
-\item{keepExtensionTable}{(\code{logical(1)}: \code{TRUE}) Keep the reference to the perinatal extension table? default = TRUE}
 
 \item{childCohortTableName}{(\code{character(1)}: \code{"child_cohort"}) Name to assign to to child cohort table}
 
