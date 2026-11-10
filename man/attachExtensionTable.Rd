@@ -14,10 +14,10 @@ attachExtensionTable(cdm, table, tableSchema)
 \item{tableSchema}{(\code{character(1)}) Name of the schema where the extension table resides}
 }
 \value{
-(\code{cdm_reference}) Returns the CDM reference with attached extension table
+(\code{cdm_reference}) Returns the CDM reference with extension table
 }
 \description{
-Creates a lazy reference to an extension table in a specified schema
+Adds an extension table to the CDM reference
 }
 \examples{
 if (interactive()) {
@@ -30,7 +30,7 @@ cdm <- TestGenerator::patientsCDM(
  cdmVersion = "5.4"
 )
 
-# Attach a pregnancy extension table
+# Create lazy ref
 cdm <- attachExtensionTable(
  cdm = cdm,
  table = "pregnancy",
