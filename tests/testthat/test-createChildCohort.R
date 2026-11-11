@@ -673,13 +673,13 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    0 # number_records == 25; attrition recording occurs after left_join() with observation_period with "bad" duplicate
+    0 # number_records == 27; attrition recording occurs after left_join() with observation_period with "bad" duplicate
   )
 
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_subjects),
-    0 # number_subjects == 14; c(1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 25)
+    0 # number_subjects == 16; c(1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 25, 107, 108)
   )
 
   # Parent not in pregnancy_cohort ----
@@ -698,13 +698,37 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    19
+    20
   )
 
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_subjects),
-    10
+    11
+  )
+
+  # Child's end of observation is before birthing parent's pregnancy end  ----
+  childObsBeforePregEnd <- child_cohort %>%
+    dplyr::filter(subject_id == 108)
+
+  expect_equal(
+    nrow(childObsBeforePregEnd),
+    0
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 3) # 3, Filter children for birthing parent's pregnancy end date <= end of child's observation period
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
+    1
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
+    1
   )
 
   # Parent's pregnancy end year doesn't match child's birth year ----
@@ -717,7 +741,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 3) # 3, Filter children where birth_year == birthing parent's year of pregnancy_end_date
+    dplyr::filter(reason_id == 4) # 4, Filter children where birth_year == birthing parent's year of pregnancy_end_date
 
   expect_equal(
     attrition_subset %>%
@@ -741,7 +765,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 4) # 4, Filter duplicate infants to keep only one record
+    dplyr::filter(reason_id == 5) # 5, Filter duplicate infants to keep only one record
 
   expect_equal(
     attrition_subset %>%
@@ -765,7 +789,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 5) # 5, Filter out infants with duplicated subject_id
+    dplyr::filter(reason_id == 6) # 6, Filter out infants with duplicated subject_id
 
   expect_equal(
     attrition_subset %>%
@@ -789,7 +813,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 6) # 6, Filter to live births
+    dplyr::filter(reason_id == 7) # 7, Filter to live births
 
   expect_equal(
     attrition_subset %>%
@@ -831,13 +855,13 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    0 # number_records == 25; attrition recording occurs after left_join() with observation_period with "bad" duplicate
+    0 # number_records == 27; attrition recording occurs after left_join() with observation_period with "bad" duplicate
   )
 
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_subjects),
-    0 # number_subjects == 14; c(1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 25)
+    0 # number_subjects == 16; c(1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 25, 107, 108)
   )
 
   # Parent not in pregnancy_cohort ----
@@ -857,13 +881,37 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    19
+    20
   )
 
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_subjects),
-    10
+    11
+  )
+
+  # Child's end of observation is before birthing parent's pregnancy end  ----
+  childObsBeforePregEnd <- child_cohort %>%
+    dplyr::filter(subject_id == 108)
+
+  expect_equal(
+    nrow(childObsBeforePregEnd),
+    0
+  )
+
+  attrition_subset <- attrition_tbl %>%
+    dplyr::filter(reason_id == 3) # 3, Filter children for birthing parent's pregnancy end date <= end of child's observation period
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_records),
+    1
+  )
+
+  expect_equal(
+    attrition_subset %>%
+      dplyr::pull(excluded_subjects),
+    1
   )
 
   # Parent's pregnancy end year doesn't match child's birth year ----
@@ -876,7 +924,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 3) # 3, Filter children where birth_year == birthing parent's year of pregnancy_end_date
+    dplyr::filter(reason_id == 4) # 4, Filter children where birth_year == birthing parent's year of pregnancy_end_date
 
   expect_equal(
     attrition_subset %>%
@@ -901,7 +949,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 4) # 4, Filter out infants with duplicated subject_id
+    dplyr::filter(reason_id == 5) # 5, Filter out infants with duplicated subject_id
 
   expect_equal(
     attrition_subset %>%
@@ -925,7 +973,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 5) # 5, Filter to live births
+    dplyr::filter(reason_id == 6) # 6, Filter to live births
 
   expect_equal(
     attrition_subset %>%
