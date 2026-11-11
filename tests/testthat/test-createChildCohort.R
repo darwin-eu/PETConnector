@@ -701,7 +701,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 3) # 3, Filter children for birthing parent's pregnancy end date <= end of child's observation period
+    dplyr::filter(reason_id == 3) # 3, Birthing parent's pregnancy end date <= end of child's observation period
 
   expect_equal(
     attrition_subset %>%
@@ -885,7 +885,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 3) # 3, Filter children for birthing parent's pregnancy end date <= end of child's observation period
+    dplyr::filter(reason_id == 3) # 3, Birthing parent's pregnancy end date <= end of child's observation period
 
   expect_equal(
     attrition_subset %>%
