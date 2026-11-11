@@ -113,6 +113,20 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
   message(paste(getDateTime(), "Filtering: 'birthing parent in pregnancy cohort' filtering complete"))
 
   cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
+    dplyr::filter(.data$cohort_start_date <= .data$cohort_end_date) %>%
+    # Meaning birthing parent's pregnancy end date (child's cohort start date) needs to be before end of child observation (child's cohort start date)
+    dplyr::compute(name = childCohortTableName, temporary = FALSE, overwrite = TRUE)
+
+  attrition <- dplyr::bind_rows(
+    attrition,
+    data.frame(
+      reason = "Filter children for birthing parent's pregnancy end date <= end of child's observation period",
+      number_subjects = getNumberSubjects(cdm[[childCohortTableName]]),
+      number_records = getNumberRecords(cdm[[childCohortTableName]])
+    )
+  )
+
+  cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
     dplyr::left_join(cdm$person, by = dplyr::join_by(subject_id == person_id)) %>%
     dplyr::mutate(year_match = !!CDMConnector::datepart(date = "pregnancy_end_date", interval = "year")) %>%
     dplyr::filter(.data$year_match == .data$year_of_birth) %>%
