@@ -359,8 +359,8 @@ createChildCohort <- function(
     cdm <- createPerinatalCohortFromTbl(
       cdm = cdm,
       childCohortTableName = childCohortTableName,
-      childTable = childTable,
       childCohortName = childCohortName,
+      childTable = childTable,
       pregnancyCohortTableName = pregnancyCohortTableName,
       cohortDefinitionID = cohortDefinitionID
     )

@@ -292,8 +292,7 @@ inclusionCriteria <- function(tbl, minAge, maxAge, sex, startDate, endDate, outc
     filterPregnancyOutcome(outcomeIds, pregnancyCohortTableName)
 }
 
-filterPregnancyTable <- function(cdm, minGestationalDuration, maxGestationalDuration, samePregDiffDates,
-                                 pregnancyCohortTableName, .softValidation) {
+filterPregnancyTable <- function(cdm, minGestationalDuration, maxGestationalDuration, samePregDiffDates, pregnancyCohortTableName, .softValidation) {
   if (isFALSE(.softValidation)) {
     cdm[[pregnancyCohortTableName]] <- cdm[[pregnancyCohortTableName]] %>%
       filterInObservation(pregnancyCohortTableName) %>%
@@ -328,13 +327,6 @@ filterPregnancyOutcome <- function(tbl, outcomeIds, pregnancyCohortTableName) {
     return(tbl)
   }
 }
-
-intersectCohorts <- function(tbl1, tbl2) {
-  tbl1 %>%
-    dplyr::inner_join(tbl2, dplyr::join_by(subject_id == subject_id), suffix = c("", "_y")) %>%
-    dplyr::select(-c("cohort_definition_id_y", "cohort_start_date_y", "cohort_end_date_y"))
-}
-
 
 #' createPregnancyCohort
 #'
