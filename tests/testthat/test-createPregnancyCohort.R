@@ -207,7 +207,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   # With .softValidation = FALSE and all set to default ----
   expect_equal(
     nrow(pregnancy_cohort),
-    8
+    9
   )
 
   # Pregnancy starts prior to observation start ----
@@ -429,6 +429,7 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
       | (subject_id == 100 & pregnancy_id == 100)
       | (subject_id == 102 & pregnancy_id == 71)
       | (subject_id == 102 & pregnancy_id == 72)
+      | (subject_id == 107 & pregnancy_id == 47)
     )
 
   expect_equal(
@@ -442,13 +443,13 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    6 # 2 pregnancy record for subject 11 before this
+    7 # 2 pregnancy record for subject 11 before this
   )
 
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_subjects),
-    4
+  5
   )
 
   # Gestation duration less than minGestationalDuration ----
@@ -531,6 +532,7 @@ testthat::test_that("Filtering on Age goes as expected", {
       (subject_id == 11 & pregnancy_id == 6)
       | (subject_id == 100 & pregnancy_id == 100)
       | (subject_id == 102 & pregnancy_id == 71)
+      | (subject_id == 107 & pregnancy_id == 47)
     )
 
   expect_equal(
@@ -567,13 +569,13 @@ testthat::test_that("Filtering on Age goes as expected", {
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    4 # 1 pregnancy record for subject 11 before this
+    5 # 1 pregnancy record for subject 11 before this
   )
 
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_subjects),
-    4
+    5
   )
 })
 
@@ -608,10 +610,10 @@ testthat::test_that("Filtering on startDate goes as expected", {
     0
   )
 
-  # With startDate value, we expect 7 pregnancies in pregnancy_extension table ----
+  # With startDate value, we expect 8 pregnancies in pregnancy_extension table ----
   expect_equal(
     nrow(pregnancy_cohort),
-    7
+    8
   )
 
   # Pregnancy starts before our startDate ----
@@ -679,10 +681,10 @@ testthat::test_that("Filtering on endDate goes as expected", {
     0
   )
 
-  # With endDate value, we expect 6 pregnancies in pregnancy_extension table ----
+  # With endDate value, we expect 7 pregnancies in pregnancy_extension table ----
   expect_equal(
     nrow(pregnancy_cohort),
-    6
+    7
   )
 
   # Pregnancy ends after our endDate ----
@@ -702,11 +704,12 @@ testthat::test_that("Filtering on endDate goes as expected", {
       (subject_id == 11 & pregnancy_id == 6)
       | (subject_id == 100 & pregnancy_id == 100)
       | (subject_id == 102 & pregnancy_id == 71)
+      | (subject_id == 107 & pregnancy_id == 47)
     )
 
   expect_equal(
     nrow(onEndDate), # to sanity check that these specifically are still included
-    3
+    4
   )
 
   # Check of attrition table ----
@@ -757,10 +760,10 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
     0
   )
 
-  # With startDate and endDate values, we expect 5 pregnancies in pregnancy_extension table ----
+  # With startDate and endDate values, we expect 6 pregnancies in pregnancy_extension table ----
   expect_equal(
     nrow(pregnancy_cohort),
-    5
+    6
   )
 
   # Pregnancy ends after our endDate ----
@@ -782,11 +785,12 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
       | (subject_id == 11 & pregnancy_id == 6)
       | (subject_id == 100 & pregnancy_id == 100)
       | (subject_id == 102 & pregnancy_id == 71)
+      | (subject_id == 107 & pregnancy_id == 47)
     )
 
   expect_equal(
     nrow(onStartEnd), # to sanity check that these specifically are still included
-    4
+    5
   )
 
   # Check of attrition table ----
@@ -836,10 +840,10 @@ testthat::test_that("Filtering with samePregDiffDates = 'Earliest' goes as expec
     2
   )
 
-  # With samePregDiffDates = 'Earliest', we expect 10 pregnancies in pregnancy_extension table ----
+  # With samePregDiffDates = 'Earliest', we expect 11 pregnancies in pregnancy_extension table ----
   expect_equal(
     nrow(pregnancy_cohort),
-    10
+    11
   )
 
   # Same birthing parent, same pregnancy IDs but different dates ----
@@ -904,10 +908,10 @@ testthat::test_that("Filtering with samePregDiffDates = 'Latest' goes as expecte
     2
   )
 
-  # With samePregDiffDates = 'Latest', we expect 10 pregnancies in pregnancy_extension table ----
+  # With samePregDiffDates = 'Latest', we expect 11 pregnancies in pregnancy_extension table ----
   expect_equal(
     nrow(pregnancy_cohort),
-    10
+    11
   )
 
   # Same birthing parent, same pregnancy IDs but different dates ----
@@ -977,17 +981,17 @@ testthat::test_that("Filtering on sex goes as expected", {
   attrition_subset <- attrition_tbl %>%
     dplyr::filter(reason_id == 11) # 11 Sex: Male
 
-  # The 8 pregnancies in pregnancy_cohort on default settings are still there until filtering on sex
+  # The 9 pregnancies in pregnancy_cohort on default settings are still there until filtering on sex
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    8
+    9
   )
 
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_subjects),
-    7
+    8
   ) # other subject 9 has two pregnancies
 })
 
@@ -1016,10 +1020,10 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected", {
   pregnancy_cohort <- cdm[["pregnancy_cohort"]] %>%
     dplyr::collect()
 
-  # With .softValidation, we expect 23 records in pregnancy_extension table ----
+  # With .softValidation, we expect 25 records in pregnancy_extension table ----
   expect_equal(
     nrow(pregnancy_cohort),
-    24
+    25
   )
 
   # Outside of age at pregnancy start range ----
@@ -1081,15 +1085,15 @@ testthat::test_that("Filtering on outcome goes as expected", {
   attrition_subset <- attrition_tbl %>%
     dplyr::filter(reason_id == 13) # Filter pregnancies by outcomeIds 443213 (comma sep if more Ids)
 
-  # 5 pregnancies have another outcome
+  # 6 pregnancies have another outcome
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    5
+    6
   )
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_subjects),
-    4
+    5
   )
 })
