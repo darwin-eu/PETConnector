@@ -1,6 +1,6 @@
 Package: PETConnector
 Title: Connect to Perinatal Extension Tables Complementary to an OMOP Common Data Model
-Version: 0.2.2
+Version: 0.3.0
 Authors@R: c(
     person("Arianna", "Alamshahi", email = "a.alamshahi@erasmusmc.nl", role = c("aut", "cre")),
     person("Maarten", "van Kessel", email = "m.l.vankessel@erasmusmc.nl", role = "aut"),
