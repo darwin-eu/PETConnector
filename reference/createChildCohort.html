@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">PETConnector</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,8 +41,8 @@
 <span>  <span class="va">cdm</span>,</span>
 <span>  childTable <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  childSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  keepExtensionTable <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  childCohortTableName <span class="op">=</span> <span class="st">"child_cohort"</span>,</span>
+<span>  childCohortName <span class="op">=</span> <span class="st">"child"</span>,</span>
 <span>  pregnancyCohortTableName <span class="op">=</span> <span class="st">"pregnancy_cohort"</span>,</span>
 <span>  collapseDupRecords <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  cohortDefinitionID <span class="op">=</span> <span class="fl">102</span>,</span>
@@ -67,12 +67,12 @@
 <dd><p>(<code>character(1)</code>: <code>NULL</code>) Name of the schema where the Child Extension Table resides</p></dd>
 
 
-<dt id="arg-keepextensiontable">keepExtensionTable<a class="anchor" aria-label="anchor" href="#arg-keepextensiontable"></a></dt>
-<dd><p>(<code>logical(1)</code>: <code>TRUE</code>) Keep the reference to the perinatal extension table? default = TRUE</p></dd>
-
-
 <dt id="arg-childcohorttablename">childCohortTableName<a class="anchor" aria-label="anchor" href="#arg-childcohorttablename"></a></dt>
 <dd><p>(<code>character(1)</code>: <code>"child_cohort"</code>) Name to assign to to child cohort table</p></dd>
+
+
+<dt id="arg-childcohortname">childCohortName<a class="anchor" aria-label="anchor" href="#arg-childcohortname"></a></dt>
+<dd><p>(<code>character(1)</code>: <code>"child"</code>) Name to assign cohort_name in cohort definition set</p></dd>
 
 
 <dt id="arg-pregnancycohorttablename">pregnancyCohortTableName<a class="anchor" aria-label="anchor" href="#arg-pregnancycohorttablename"></a></dt>
