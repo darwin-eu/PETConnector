@@ -1,12 +1,12 @@
 #' attachExtensionTable
 #'
-#' Creates a lazy reference to an extension table in a specified schema
+#' Adds an extension table to the CDM reference
 #'
 #' @param cdm (`cdm_reference`) CDM reference object
 #' @param table (`character(1)`) Name of the extension table
 #' @param tableSchema (`character(1)`) Name of the schema where the extension table resides
 #'
-#' @returns (`cdm_reference`) Returns the CDM reference with attached extension table
+#' @returns (`cdm_reference`) Returns the CDM reference with extension table
 #'
 #' @export
 #' @examples
@@ -20,7 +20,7 @@
 #'  cdmVersion = "5.4"
 #')
 #'
-#' # Attach a pregnancy extension table
+#' # Create lazy ref
 #'cdm <- attachExtensionTable(
 #'  cdm = cdm,
 #'  table = "pregnancy",

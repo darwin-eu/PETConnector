@@ -18,8 +18,8 @@ testthat::test_that("input args are as expected", {
       collapseDupRecords = "TRUE", # character instead of logical
       childSchema = TRUE, # logical instead of character
       childTable = "infant",
-      keepExtensionTable = "FALSE", # character instead of logical
       childCohortTableName = FALSE, # logical instead of character
+      childCohortName = TRUE, # logical instead of character
       pregnancyCohortTableName = 123, # numeric instead of character
       childConceptIds = c("40485452", "4285883"), # won't be checked, character instead of numeric
       .softValidation = NULL # NULL instead of logical
@@ -34,7 +34,6 @@ testthat::test_that("input args are as expected", {
       collapseDupRecords = TRUE,
       childSchema = "main", # provided childSchema without childTable
       childTable = NULL, # provided childTable without childSchema
-      keepExtensionTable = "FALSE", # won't be checked, didn't provide both childTable and childSchema
       childConceptIds = c("40485452"), # won't be checked, character instead of numeric
       .softValidation = FALSE
     ),
@@ -47,7 +46,6 @@ testthat::test_that("input args are as expected", {
       collapseDupRecords = 123, # numeric instead of logical,
       childSchema = NULL,
       childTable = NULL,
-      keepExtensionTable = "TRUE", # won't be checked, didn't provide childTable and childSchema
       childConceptIds = NULL, # NULL instead of character
       .softValidation = "FALSE" # won't be checked, character instead of logical
     ),
@@ -60,8 +58,8 @@ testthat::test_that("input args are as expected", {
       collapseDupRecords = FALSE,
       childSchema = "main",
       childTable = "infant",
-      keepExtensionTable = TRUE,
       childCohortTableName = "cohort_child", # character, no error
+      childCohortName = "child", # character, no error
       pregnancyCohortTableName = "pregnancy_cohort", # exists, no error
       childConceptIds = NULL, # not used when creating from childTable
       .softValidation = TRUE
@@ -86,7 +84,6 @@ testthat::test_that("createChildCohort() is not reliant on childTable being in c
     cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = FALSE,
     .softValidation = TRUE
   )
 
@@ -97,78 +94,12 @@ testthat::test_that("createChildCohort() is not reliant on childTable being in c
   )
 })
 
-testthat::test_that("keepExtensionTable = TRUE keeps perinatal_extension_table reference and that the characteristics of the table align with what is expected", {
-  testthat::skip()
-
-  cdm <- PETConnector::createChildCohort(
-    cdm = cdm,
-    cohortDefinitionID = 101,
-    childTable = "infant",
-    childSchema = "main",
-    keepExtensionTable = TRUE,
-    .softValidation = TRUE
-  )
-
-  # Check that perinatal_extension_table exists ----
-  expect_contains(
-    names(cdm),
-    "perinatal_extension_table"
-  )
-
-  # Collect tables to compare ----
-  infant <- cdm[["infant"]] %>%
-    dplyr::collect()
-
-  perinatal_extension_table <- cdm[["perinatal_extension_table"]] %>%
-    dplyr::collect()
-
-  # Check that we have the same number of rows and columns in 'infant' and 'perinatal_extension_table' ----
-  expect_identical(
-    nrow(infant),
-    nrow(perinatal_extension_table)
-  )
-
-  expect_identical(
-    ncol(infant),
-    ncol(perinatal_extension_table)
-  )
-
-  # Check that we have the same number NAs in 'infant' and 'perinatal_extension_table' ----
-  expect_identical(
-    sum(is.na(infant)),
-    sum(is.na(perinatal_extension_table))
-  )
-
-  # Check that we have the same colnames 'infant' and 'perinatal_extension_table' ----
-  expect_identical(
-    colnames(infant),
-    colnames(perinatal_extension_table)
-  ) # an extra layer check since colnames were not changed in the function and we already checked ncols
-})
-
-testthat::test_that("keepExtensionTable = FALSE drops reference to perinatal_extension_table", {
-  testthat::skip()
-
-  cdm <- PETConnector::createChildCohort(
-    cdm = cdm,
-    cohortDefinitionID = 101,
-    childTable = "infant",
-    childSchema = "main",
-    keepExtensionTable = FALSE,
-    .softValidation = TRUE
-  )
-
-  # Check that perinatal_extension_table does not exist ----
-  expect_all_false(stringr::str_detect(names(cdm), "perinatal_extension_table"))
-})
-
 testthat::test_that("cohortDefinitionID updates to user choice", {
   # cohort_definition_id with default settings should be 101 ----
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     childTable = "infant",
-    childSchema = "main",
-    keepExtensionTable = TRUE
+    childSchema = "main"
   )
 
   child_cohort <- cdm[["child_cohort"]] %>%
@@ -197,7 +128,6 @@ testthat::test_that("cohortDefinitionID updates to user choice", {
     cdm = cdm,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = TRUE,
     cohortDefinitionID = 405
   )
   child_cohort <- cdm[["child_cohort"]] %>%
@@ -228,8 +158,7 @@ testthat::test_that("Child cohort table name reflects user choice when creating 
   cdm <- PETConnector::createChildCohort(
     cdm = cdm,
     childTable = "infant",
-    childSchema = "main",
-    keepExtensionTable = TRUE
+    childSchema = "main"
   )
 
   expect_contains(
@@ -242,7 +171,6 @@ testthat::test_that("Child cohort table name reflects user choice when creating 
     cdm = cdm,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = TRUE,
     childCohortTableName = "another_child_cohort"
   )
 
@@ -296,14 +224,70 @@ testthat::test_that("Child cohort table name reflects user choice when creating 
   )
 })
 
+testthat::test_that("cohort_name reflects user choice when creating child_cohort from childTable", {
+  # Sanity check that cohort_name is "child" by default  ----
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    childTable = "infant",
+    childSchema = "main"
+  )
+
+  expect_equal(
+    omopgenerics::settings(cdm$child_cohort) %>%
+      dplyr::pull(cohort_name),
+    "child"
+  )
+
+  # Sanity check that childohortName is actually being used to update cohort_name ----
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    childTable = "infant",
+    childSchema = "main",
+    childCohortName = "another_child"
+  )
+
+  expect_equal(
+    omopgenerics::settings(cdm$child_cohort) %>%
+      dplyr::pull(cohort_name),
+    "another_child"
+  )
+})
+
+testthat::test_that("cohort_name reflects user choice when creating child_cohort from fact_relationship (parentCohortTable)", {
+  # Sanity check that cohort_name is "child" by default  ----
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    collapseDupRecords = TRUE
+  )
+
+  expect_equal(
+    omopgenerics::settings(cdm$child_cohort) %>%
+      dplyr::pull(cohort_name),
+    "child"
+  )
+
+  # Sanity check that childohortName is actually being used to update cohort_name ----
+  cdm <- PETConnector::createChildCohort(
+    cdm = cdm,
+    collapseDupRecords = TRUE,
+    childCohortName = "another_child"
+  )
+
+  expect_equal(
+    omopgenerics::settings(cdm$child_cohort) %>%
+      dplyr::pull(cohort_name),
+    "another_child"
+  )
+
+})
+
 testthat::test_that("createChildCohort() looks for pregnancy cohort based on name provided in pregnancyCohortTableName", {
   expect_error(
     PETConnector::createChildCohort(
       cdm = cdm,
       childTable = "infant",
       childSchema = "main",
-      pregnancyCohortTableName = "preg_cohort",
-      keepExtensionTable = TRUE
+      pregnancyCohortTableName = "preg_cohort"
     ),
     "preg_cohort does not exist in the cdm_reference object"
   )
@@ -320,8 +304,7 @@ testthat::test_that("createChildCohort() looks for pregnancy cohort based on nam
       cdm = cdm,
       childTable = "infant",
       childSchema = "main",
-      pregnancyCohortTableName = "preg_cohort",
-      keepExtensionTable = TRUE
+      pregnancyCohortTableName = "preg_cohort"
     )
   )
 
@@ -333,8 +316,8 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = T
     cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = TRUE,
     childCohortTableName = "child_cohort", # default
+    childCohortName = "child", # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     .softValidation = TRUE
   )
@@ -396,8 +379,8 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = TRUE,
     childCohortTableName = "child_cohort", # default
+    childCohortName = "child", # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     collapseDupRecords = TRUE,
     .softValidation = FALSE
@@ -453,7 +436,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 2) # 2, Filter only children with parent in pregnancy cohort
+    dplyr::filter(reason_id == 2) # 2, Children with parent in pregnancy cohort
 
   expect_equal(
     attrition_subset %>%
@@ -477,7 +460,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 3) # 3, Filter duplicate infants to keep only one record
+    dplyr::filter(reason_id == 3) # 3, One record per exactly duplicated infant
 
   expect_equal(
     attrition_subset %>%
@@ -501,7 +484,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 4) # 4, Filter out infants with duplicated subject_id
+    dplyr::filter(reason_id == 4) # 4, Infant subject ID appears only once
 
   expect_equal(
     attrition_subset %>%
@@ -546,8 +529,8 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
     cohortDefinitionID = 101,
     childTable = "infant",
     childSchema = "main",
-    keepExtensionTable = TRUE,
     childCohortTableName = "child_cohort", # default
+    childCohortName = "child", # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     collapseDupRecords = FALSE,
     .softValidation = FALSE
@@ -603,7 +586,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 2) # 2, Filter only children with parent in pregnancy cohort
+    dplyr::filter(reason_id == 2) # 2, Children with parent in pregnancy cohort
 
   expect_equal(
     attrition_subset %>%
@@ -631,7 +614,7 @@ testthat::test_that("Creating child_cohort from childTable + .softValidation = F
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 3) # 4, Filter out infants with duplicated subject_id
+    dplyr::filter(reason_id == 3) # 4, Infant subject ID appears only once
 
   expect_equal(
     attrition_subset %>%
@@ -651,6 +634,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
     cdm = cdm,
     cohortDefinitionID = 101,
     childCohortTableName = "child_cohort", # default
+    childCohortName = "child", # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     collapseDupRecords = TRUE
   )
@@ -693,7 +677,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 2) # 2, Filter children for birthing parent in pregnancy cohort
+    dplyr::filter(reason_id == 2) # 2, Birthing parent in pregnancy cohort
 
   expect_equal(
     attrition_subset %>%
@@ -717,7 +701,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 3) # 3, Filter children for birthing parent's pregnancy end date <= end of child's observation period
+    dplyr::filter(reason_id == 3) # 3, Birthing parent's pregnancy end date <= end of child's observation period
 
   expect_equal(
     attrition_subset %>%
@@ -833,6 +817,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
     cdm = cdm,
     cohortDefinitionID = 101,
     childCohortTableName = "child_cohort", # default
+    childCohortName = "child", # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
     collapseDupRecords = FALSE
   )
@@ -876,7 +861,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 2) # 2, Filter children for birthing parent in pregnancy cohort
+    dplyr::filter(reason_id == 2) # 2, Birthing parent in pregnancy cohort
 
   expect_equal(
     attrition_subset %>%
@@ -900,7 +885,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 3) # 3, Filter children for birthing parent's pregnancy end date <= end of child's observation period
+    dplyr::filter(reason_id == 3) # 3, Birthing parent's pregnancy end date <= end of child's observation period
 
   expect_equal(
     attrition_subset %>%

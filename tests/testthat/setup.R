@@ -15,11 +15,6 @@ cdm <- TestGenerator::patientsCDM(
   cdmVersion = "5.4"
 )
 
-# Re-used paths
-outputDir <- testthat::test_path("testthat_testOutput")
-dir.create(outputDir, recursive = FALSE)
-pregDupFile <- file.path(outputDir, "pregnancy_duplicate_map.csv")
-
 # Create a pregnancy cohort table to test createChildCohort()
 pregnancy_cohort <- tibble::tibble( # excluded will make it more difficult with twin preg 6
   cohort_definition_id = c(101, 101, 101, 101, 101, 101, 101, 101, 101, 101),

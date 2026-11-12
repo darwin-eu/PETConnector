@@ -4,8 +4,8 @@ testthat::test_that("input args are as expected", {
       cdm = cdm,
       petTable = "pregnancy",
       petSchema = "main",
-      keepExtensionTable = "no", # should be logical TRUE/FALSE
       pregnancyCohortTableName = 123, # numeric instead of character
+      pregnancyCohortName = FALSE, # logical instead of character
       cohortDefinitionID = "101", # character instead of number
       minGestationalDuration = "20", # character instead of number
       maxGestationalDuration = "308", # character instead of number
@@ -39,8 +39,8 @@ testthat::test_that("input args are as expected", {
       cdm = cdm,
       petTable = "pregnancy",
       petSchema = "main",
-      keepExtensionTable = c(TRUE, FALSE), # length 2 instead of 1
       pregnancyCohortTableName = "preg_cohort", # no error, character
+      pregnancyCohortName = "pregnancy", # no error, character
       cohortDefinitionID = c(101, 102), # length 2 instead of 1
       minGestationalDuration = NULL, # NULL instead of number
       maxGestationalDuration = Inf, # infinite
@@ -52,7 +52,7 @@ testthat::test_that("input args are as expected", {
       sex = NULL, # NULL instead of "Female", "Male" or c("Female", "Male")
       .softValidation = "FALSE" # character instead of logical
     ),
-    "8 assertions failed:"
+    "7 assertions failed:"
   )
 
   expect_no_error(
@@ -72,8 +72,7 @@ testthat::test_that("createPregnancyCohort() is not reliant on petTable being in
   cdm <- PETConnector::createPregnancyCohort(
     cdm = cdm,
     petTable = "pregnancy",
-    petSchema = "main",
-    keepExtensionTable = TRUE
+    petSchema = "main"
   )
 
   # Check that pregnancy_cohort exists ----
@@ -81,91 +80,6 @@ testthat::test_that("createPregnancyCohort() is not reliant on petTable being in
     names(cdm),
     "pregnancy_cohort"
   )
-})
-
-testthat::test_that("keepExtensionTable = TRUE keeps pregnancy_extension_table reference and that the characteristics of the table align with what is expected", {
-  testthat::skip()
-
-  cdm <- PETConnector::createPregnancyCohort(
-    cdm = cdm,
-    petTable = "pregnancy",
-    petSchema = "main",
-    keepExtensionTable = TRUE
-  )
-
-  # Check that pregnancy_extension_table exists ----
-  expect_contains(
-    names(cdm),
-    "pregnancy_extension_table"
-  )
-
-  # Collect tables to compare ----
-  pregnancy <- cdm[["pregnancy"]] %>%
-    dplyr::collect()
-
-  pregnancy_extension_table <- cdm[["pregnancy_extension_table"]] %>%
-    dplyr::collect()
-
-  # Check that we have the same number of rows and columns in 'pregnancy' and 'pregnancy_extension_table' ----
-  expect_identical(
-    nrow(pregnancy),
-    nrow(pregnancy_extension_table)
-  )
-
-  expect_identical(
-    ncol(pregnancy),
-    ncol(pregnancy_extension_table)
-  )
-
-  # Check that we have the same number NAs in 'pregnancy' and 'pregnancy_extension_table' ----
-  expect_identical(
-    sum(is.na(pregnancy)),
-    sum(is.na(pregnancy_extension_table))
-  )
-
-  # Check that we have the same colnames 'pregnancy' and 'pregnancy_extension_table' ----
-  expect_identical(
-    colnames(pregnancy),
-    colnames(pregnancy_extension_table)
-  ) # an extra layer check since colnames were not changed in the function and we already checked ncols
-
-  # Check that start and end dates are of "Date" class in pregnancy_extension_table ----
-  expect_type(
-    pregnancy %>%
-      dplyr::pull(pregnancy_start_date),
-    "character"
-  ) # sanity check of original
-
-  expect_s3_class(
-    pregnancy_extension_table %>%
-      dplyr::pull(pregnancy_start_date),
-    "Date"
-  )
-
-  expect_type(
-    pregnancy %>%
-      dplyr::pull(pregnancy_end_date),
-    "character"
-  )
-
-  expect_s3_class(
-    pregnancy_extension_table %>%
-      dplyr::pull(pregnancy_end_date),
-    "Date"
-  )
-})
-
-testthat::test_that("keepExtensionTable = FALSE drops reference to pregnancy_extension_table", {
-  testthat::skip()
-  cdm <- PETConnector::createPregnancyCohort(
-    cdm = cdm,
-    petTable = "pregnancy",
-    petSchema = "main",
-    keepExtensionTable = FALSE
-  )
-
-  # Check that pregnancy_extension_table does not exist ----
-  expect_all_false(stringr::str_detect(names(cdm), "pregnancy_extension_table"))
 })
 
 testthat::test_that("cohortDefinitionID updates to user choice", {
@@ -197,6 +111,35 @@ testthat::test_that("cohortDefinitionID updates to user choice", {
   expect_all_equal(
     pregnancy_cohort$cohort_definition_id,
     404
+  )
+})
+
+testthat::test_that("cohort_name reflects user choice", {
+  # Sanity check that cohort_name is "pregnancy" by default  ----
+  cdm <- PETConnector::createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main"
+  )
+
+  expect_equal(
+    omopgenerics::settings(cdm$pregnancy_cohort) %>%
+      dplyr::pull(cohort_name),
+    "pregnancy"
+  )
+
+  # Sanity check that pregnancyCohortName is actually being used to update cohort_name ----
+  cdm <- PETConnector::createPregnancyCohort(
+    cdm = cdm,
+    petTable = "pregnancy",
+    petSchema = "main",
+    pregnancyCohortName = "preg"
+  )
+
+  expect_equal(
+    omopgenerics::settings(cdm$pregnancy_cohort) %>%
+      dplyr::pull(cohort_name),
+    "preg"
   )
 })
 
@@ -232,7 +175,7 @@ testthat::test_that("Pregnancy cohort table name reflects user choice", {
                dplyr::collect(),
              cdm$another_pregnancy_cohort %>%
                dplyr::collect()
-             )
+    )
   )
 })
 
@@ -241,8 +184,8 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
+    pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -335,7 +278,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 4) # 4, Pregnancy end date > pregnancy start_date
+    dplyr::filter(reason_id == 4) # 4, Pregnancy start date <= pregnancy end date
 
   expect_equal(
     attrition_subset %>%
@@ -375,7 +318,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 7) # 7, Removed identical pregnancy duplicates
+    dplyr::filter(reason_id == 7) # 7, One record per exactly duplicated pregnancy
 
   expect_equal(
     attrition_subset %>%
@@ -402,7 +345,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 8) # 8, Removed identical pregnancies with differing dates
+    dplyr::filter(reason_id == 8) # 8, Pregnancy ID appears only once
 
   expect_equal(
     attrition_subset %>%
@@ -429,7 +372,7 @@ testthat::test_that("Filtering of pregnancy_cohort with defaults occurs as expec
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 9) # 9, No overlapping pregnancy records
+    dplyr::filter(reason_id == 9) # 9, Non-overlapping pregnancy records
 
   expect_equal(
     attrition_subset %>%
@@ -449,8 +392,8 @@ testthat::test_that("Filtering on GestationalDuration goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
+    pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 6,
     maxGestationalDuration = 266,
@@ -551,8 +494,8 @@ testthat::test_that("Filtering on Age goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
+    pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -641,8 +584,8 @@ testthat::test_that("Filtering on startDate goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
+    pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -712,8 +655,8 @@ testthat::test_that("Filtering on endDate goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
+    pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -791,8 +734,8 @@ testthat::test_that("Filtering on startDate AND endDate goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
+    pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -872,8 +815,8 @@ testthat::test_that("Filtering with samePregDiffDates = 'Earliest' goes as expec
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
+    pregnancyCohortName = "pregnancy", # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -920,7 +863,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'Earliest' goes as expec
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 8) # 8, Keeping only record with earliest start date for identical pregnancies with differing dates
+    dplyr::filter(reason_id == 8) # 8, Earliest start date for identical pregnancies with differing dates
 
   expect_equal(
     attrition_subset %>%
@@ -940,8 +883,8 @@ testthat::test_that("Filtering with samePregDiffDates = 'Latest' goes as expecte
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
+    pregnancyCohortName = "pregnancy", # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
     minAge = 12, # default
@@ -988,7 +931,7 @@ testthat::test_that("Filtering with samePregDiffDates = 'Latest' goes as expecte
   )
 
   attrition_subset <- attrition_tbl %>%
-    dplyr::filter(reason_id == 8) # 8, Keeping only record with latest start date for identical pregnancies with differing dates
+    dplyr::filter(reason_id == 8) # 8, Latest start date for identical pregnancies with differing dates
 
   expect_equal(
     attrition_subset %>%
@@ -1008,8 +951,8 @@ testthat::test_that("Filtering on sex goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
+    pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -1057,8 +1000,8 @@ testthat::test_that("Filtering when .softValidation = TRUE goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     pregnancyCohortTableName = "pregnancy_cohort", # default
+    pregnancyCohortName = "pregnancy", # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
@@ -1114,7 +1057,6 @@ testthat::test_that("Filtering on outcome goes as expected", {
     cdm = cdm,
     petTable = "pregnancy",
     petSchema = "main",
-    keepExtensionTable = TRUE, # default
     cohortDefinitionID = 101, # default
     minGestationalDuration = 0, # default
     maxGestationalDuration = 308, # default
