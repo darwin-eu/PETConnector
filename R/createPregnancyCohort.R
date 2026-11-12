@@ -1,4 +1,4 @@
-initPregnancyCohort <- function(cdm, pregnancyCohortTableName, petTable, cohortDefinitionID, keepExtensionTable) { # add arg
+initPregnancyCohort <- function(cdm, pregnancyCohortTableName, pregnancyCohortName, petTable, cohortDefinitionID) { # add arg
   cdm[[pregnancyCohortTableName]] <- cdm[[petTable]] %>%
     dplyr::mutate(
       cohort_definition_id = cohortDefinitionID,
@@ -13,9 +13,9 @@ initPregnancyCohort <- function(cdm, pregnancyCohortTableName, petTable, cohortD
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE, overwrite = TRUE) %>%
     omopgenerics::newCohortTable(.softValidation = TRUE)
 
-  if (isFALSE(keepExtensionTable)) {
-    cdm[[petTable]] <- NULL
-  }
+  # update cohort_name in the cohort definition set
+  cdm[[pregnancyCohortTableName]] <- cdm[[pregnancyCohortTableName]] %>%
+    CohortConstructor::renameCohort(newCohortName = pregnancyCohortName)
 
   return(cdm)
 }
@@ -29,7 +29,7 @@ inclusionAge <- function(tbl, minAge, maxAge, pregnancyCohortTableName) {
       reason = sprintf("Age at pregnancy start date in [%s, %s]", minAge, maxAge)
     )
 
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Filtering: inclusionAge() filtering complete"))
+  message(paste(getDateTime(), "Filtering: inclusionAge() filtering complete"))
 
   return(tbl)
 }
@@ -41,7 +41,7 @@ inclusionSex <- function(tbl, sex, pregnancyCohortTableName) {
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = sprintf("Sex: %s", paste(sex, collapse = ", ")))
 
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Filtering: inclusionSex() filtering complete"))
+  message(paste(getDateTime(), "Filtering: inclusionSex() filtering complete"))
 
   return(tbl)
 }
@@ -54,7 +54,7 @@ filterInObservationStart <- function(tbl, pregnancyCohortTableName) {
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = "In observation at pregnancy start date")
 
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Filtering: filterInObservationStart() filtering complete"))
+  message(paste(getDateTime(), "Filtering: filterInObservationStart() filtering complete"))
 
   return(tbl)
 }
@@ -67,7 +67,7 @@ filterInObservationEnd <- function(tbl, pregnancyCohortTableName) {
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = "In observation at pregnancy end date")
 
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Filtering: filterInObservationEnd() filtering complete"))
+  message(paste(getDateTime(), "Filtering: filterInObservationEnd() filtering complete"))
 
   return(tbl)
 }
@@ -82,9 +82,9 @@ filterStartEndDate <- function(tbl, pregnancyCohortTableName) {
   tbl %>%
     dplyr::filter(.data$pregnancy_start_date <= .data$pregnancy_end_date) %>%
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE) %>%
-    omopgenerics::recordCohortAttrition(reason = "Pregnancy end date > pregnancy start_date")
+    omopgenerics::recordCohortAttrition(reason = "Pregnancy start date <= pregnancy end date")
 
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Filtering: filterStartEndDate() filtering complete"))
+  message(paste(getDateTime(), "Filtering: filterStartEndDate() filtering complete"))
 
   return(tbl)
 }
@@ -98,7 +98,7 @@ filterGestationalLength <- function(tbl, nDays_min, nDays_max, pregnancyCohortTa
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE) %>%
     omopgenerics::recordCohortAttrition(reason = sprintf("Gestational length >= %s days ", nDays_min))
 
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Filtering: filterGestationalLength() filtering complete"))
+  message(paste(getDateTime(), "Filtering: filterGestationalLength() filtering complete"))
 
   return(tbl)
 }
@@ -174,10 +174,10 @@ filterMultiplePregnancies <- function(cdm, samePregDiffDates, pregnancyCohortTab
     dplyr::distinct() %>%
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE, overwrite = TRUE) %>%
     omopgenerics::recordCohortAttrition(
-      reason = "Removed identical pregnancy duplicates"
+      reason = "One record per exactly duplicated pregnancy" # reduces identical pregnancy duplicates to just one record
     )
 
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Filtering: filterMultiplePregnancies(), identical pregnancy duplicates filtering complete"))
+  message(paste(getDateTime(), "Filtering: filterMultiplePregnancies(), identical pregnancy duplicates filtering complete"))
 
   if (samePregDiffDates == "None") {
     tbl %>%
@@ -186,7 +186,7 @@ filterMultiplePregnancies <- function(cdm, samePregDiffDates, pregnancyCohortTab
       dplyr::ungroup() %>%
       dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE, overwrite = TRUE) %>%
       omopgenerics::recordCohortAttrition(
-        reason = "Removed identical pregnancies with differing dates"
+        reason = "Pregnancy ID appears only once" # Removes identical pregnancies with differing dates
       )
   } else if (samePregDiffDates == "Earliest" | samePregDiffDates == "Latest") {
     if (samePregDiffDates == "Earliest") {
@@ -201,10 +201,10 @@ filterMultiplePregnancies <- function(cdm, samePregDiffDates, pregnancyCohortTab
       dplyr::slice_max(!!CDMConnector::datediff("pregnancy_start_date", "pregnancy_end_date", interval = "day"), n = 1, with_ties = FALSE) %>% # use gest_length as tiebreaker
       dplyr::ungroup() %>%
       dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE, overwrite = TRUE) %>%
-      omopgenerics::recordCohortAttrition(reason = sprintf("Keeping only record with %s start date for identical pregnancies with differing dates", samePregDiffDates))
+      omopgenerics::recordCohortAttrition(reason = sprintf("%s start date for identical pregnancies with differing dates", samePregDiffDates)) # keeping only earliest/latest
   }
 
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Filtering: filterMultiplePregnancies(), identical pregnancy with differing dates filtering complete"))
+  message(paste(getDateTime(), "Filtering: filterMultiplePregnancies(), identical pregnancy with differing dates filtering complete"))
 
   tbl %>%
     PatientProfiles::addCohortIntersectCount(
@@ -233,9 +233,9 @@ filterMultiplePregnancies <- function(cdm, samePregDiffDates, pregnancyCohortTab
     ) %>%
     dplyr::select(!c("observation_period_start_date", "observation_period_end_date")) %>%
     dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE) %>%
-    omopgenerics::recordCohortAttrition(reason = "No overlapping pregnancy records")
+    omopgenerics::recordCohortAttrition(reason = "Non-overlapping pregnancy records")
 
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Filtering: filterMultiplePregnancies(), overlapping pregnancy records filtering complete"))
+  message(paste(getDateTime(), "Filtering: filterMultiplePregnancies(), overlapping pregnancy records filtering complete"))
 
   return(cdm)
 }
@@ -268,7 +268,7 @@ filterStudyPeriod <- function(tbl, startDate, endDate, pregnancyCohortTableName)
       omopgenerics::recordCohortAttrition(reason = sprintf("Pregnancy end <= %s", endDate))
   }
 
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Filtering: filterStudyPeriod() filtering complete"))
+  message(paste(getDateTime(), "Filtering: filterStudyPeriod() filtering complete"))
 
 
   tbl %>%
@@ -292,8 +292,7 @@ inclusionCriteria <- function(tbl, minAge, maxAge, sex, startDate, endDate, outc
     filterPregnancyOutcome(outcomeIds, pregnancyCohortTableName)
 }
 
-filterPregnancyTable <- function(cdm, minGestationalDuration, maxGestationalDuration, samePregDiffDates,
-                                 pregnancyCohortTableName, .softValidation) {
+filterPregnancyTable <- function(cdm, minGestationalDuration, maxGestationalDuration, samePregDiffDates, pregnancyCohortTableName, .softValidation) {
   if (isFALSE(.softValidation)) {
     cdm[[pregnancyCohortTableName]] <- cdm[[pregnancyCohortTableName]] %>%
       filterInObservation(pregnancyCohortTableName) %>%
@@ -321,20 +320,13 @@ filterPregnancyOutcome <- function(tbl, outcomeIds, pregnancyCohortTableName) {
       dplyr::compute(name = pregnancyCohortTableName, temporary = FALSE) %>%
       omopgenerics::recordCohortAttrition(reason = sprintf("Filter pregnancies by outcomeIds %s", outcomeIdsStr))
 
-    message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Filtering: filterPregnancyOutcome() filtering complete"))
+    message(paste(getDateTime(), "Filtering: filterPregnancyOutcome() filtering complete"))
 
     return(tbl)
   } else {
     return(tbl)
   }
 }
-
-intersectCohorts <- function(tbl1, tbl2) {
-  tbl1 %>%
-    dplyr::inner_join(tbl2, dplyr::join_by(subject_id == subject_id), suffix = c("", "_y")) %>%
-    dplyr::select(-c("cohort_definition_id_y", "cohort_start_date_y", "cohort_end_date_y"))
-}
-
 
 #' createPregnancyCohort
 #'
@@ -343,8 +335,8 @@ intersectCohorts <- function(tbl1, tbl2) {
 #' @param cdm (`cdm_reference`) Created with i.e. `CDMConnector::cdmFromCon`.
 #' @param petTable (`character(1)`) Name of the Pregnancy Extension Table.
 #' @param petSchema (`character(1)`)  Name of the schema where the Pregnancy Extension Table resides
-#' @param keepExtensionTable (`logical(1)`: `TRUE`) Keep the reference to the pregnancy extension table? default = TRUE
 #' @param pregnancyCohortTableName (`character(1)`: `"pregnancy_cohort"`) Name to assign to to pregnancy cohort table
+#' @param pregnancyCohortName (`character(1)`: `"pregnancy"`) Name to assign cohort_name in cohort definition set
 #' @param samePregDiffDates (`character(1)`: `"None"`) In the case of same subject_id and pregnancy_id, but differing start/end dates, which record to keep? "None" will drop all records, "Earliest" will keep the record with the earliest pregnancy start date, and "latest" will keep the record with the latest start date. For selection of "Earliest" or "Latest", if there is more than one record with that start date, then the record with the greatest gestational duration for that start date will be kept.
 #' @param cohortDefinitionID (`numeric(1)`: `101`) Cohort definition id to assign to newly created cohort
 #' @param minGestationalDuration (`numeric(1)`: `0`) Minimum gestational duration (days) to include.
@@ -387,8 +379,8 @@ createPregnancyCohort <- function(
     cdm,
     petTable,
     petSchema,
-    keepExtensionTable = TRUE,
     pregnancyCohortTableName = "pregnancy_cohort",
+    pregnancyCohortName = "pregnancy",
     samePregDiffDates = "None",
     cohortDefinitionID = 101,
     minGestationalDuration = 0,
@@ -407,8 +399,8 @@ createPregnancyCohort <- function(
   checkmate::assertClass(x = cdm, classes = "cdm_reference", add = assertions)
   checkmate::assertClass(x = petTable, classes = "character", add = assertions) # don't need to check against names(cdm)
   checkmate::assertClass(x = petSchema, classes = "character", add = assertions) # don't need to check against (attr(cdm, "write_schema")
-  checkmate::assertLogical(x = keepExtensionTable, len = 1, add = assertions)
   checkmate::assertClass(x = pregnancyCohortTableName, classes = "character", add = assertions)
+  checkmate::assertClass(x = pregnancyCohortName, classes = "character", add = assertions)
   checkmate::assertNumber(x = cohortDefinitionID, add = assertions)
   checkmate::assertNumber(x = minGestationalDuration, finite = TRUE, add = assertions)
   checkmate::assertNumber(x = maxGestationalDuration, finite = TRUE, add = assertions)
@@ -424,7 +416,7 @@ createPregnancyCohort <- function(
   checkmate::reportAssertions(assertions)
 
   # pregnancy_extension_table ----
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Attaching pregnancy extension table"))
+  message(paste(getDateTime(), "Attaching pregnancy extension table"))
 
   cdm <- attachExtensionTable(
     cdm = cdm,
@@ -432,22 +424,22 @@ createPregnancyCohort <- function(
     tableSchema = petSchema
   )
 
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Pregnancy extension table attached"))
+  message(paste(getDateTime(), "Pregnancy extension table attached"))
 
   # pregnancy_cohort table ----
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Initializing pregnancy cohort table"))
+  message(paste(getDateTime(), "Initializing pregnancy cohort table"))
 
   cdm <- initPregnancyCohort(
     cdm = cdm,
     pregnancyCohortTableName = pregnancyCohortTableName,
+    pregnancyCohortName = pregnancyCohortName,
     petTable = petTable,
-    cohortDefinitionID = cohortDefinitionID,
-    keepExtensionTable = keepExtensionTable
+    cohortDefinitionID = cohortDefinitionID
   )
 
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Pregnancy cohort table initialized"))
+  message(paste(getDateTime(), "Pregnancy cohort table initialized"))
 
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Filtering pregnancy cohort table"))
+  message(paste(getDateTime(), "Filtering pregnancy cohort table"))
   cdm <- filterPregnancyTable(
       cdm = cdm,
       minGestationalDuration = minGestationalDuration,
@@ -468,7 +460,7 @@ createPregnancyCohort <- function(
       pregnancyCohortTableName = pregnancyCohortTableName
     )
 
-  message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Pregnancy cohort table filtered"))
+  message(paste(getDateTime(), "Pregnancy cohort table filtered"))
 
   return(cdm)
 }
