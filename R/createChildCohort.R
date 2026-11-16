@@ -95,7 +95,7 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
       "parent_id",
       cohort_definition_id = "cohort_definition_id.x",
       "subject_id",
-      cohort_start_date = "cohort_end_date.y", # y, child cohort_start_date = pregnancy cohort_end_date
+      cohort_start_date = "cohort_start_date.x", # x, child cohort_start_date = child observation_period_start_date
       cohort_end_date = "cohort_end_date.x",
       dplyr::any_of(pregnancyCols)
     ) %>%
@@ -112,8 +112,8 @@ createPerinatalCohortFromFactRel <- function(cdm, childConceptIds, collapseDupRe
   )
 
   cdm[[childCohortTableName]] <- cdm[[childCohortTableName]] %>%
-    dplyr::filter(.data$cohort_start_date <= .data$cohort_end_date) %>%
-    # Meaning birthing parent's pregnancy end date (child's cohort start date) needs to be before end of child observation (child's cohort start date)
+    dplyr::filter(.data$pregnancy_end_date <= .data$cohort_end_date) %>%
+    # Meaning birthing parent's pregnancy end date needs to be before end of child observation (child's cohort end date)
     dplyr::compute(name = childCohortTableName, temporary = FALSE, overwrite = TRUE)
 
   attrition <- dplyr::bind_rows(
