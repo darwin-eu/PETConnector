@@ -1,6 +1,6 @@
 # attachExtensionTable
 
-Adds an extension table to the CDM reference
+Creates a lazy reference to an extension table in a specified schema
 
 ## Usage
 
@@ -24,7 +24,8 @@ attachExtensionTable(cdm, table, tableSchema)
 
 ## Value
 
-(`cdm_reference`) Returns the CDM reference with extension table
+(`cdm_reference`) Returns the CDM reference with attached extension
+table
 
 ## Examples
 
@@ -39,7 +40,7 @@ cdm <- TestGenerator::patientsCDM(
  cdmVersion = "5.4"
 )
 
-# Create lazy ref
+# Attach a pregnancy extension table
 cdm <- attachExtensionTable(
  cdm = cdm,
  table = "pregnancy",
