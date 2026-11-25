@@ -647,7 +647,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   # Check of rows in final child_cohort ----
   expect_equal(
     nrow(child_cohort),
-    1
+    2
   )
 
   # Initial qualifying events attrition check ----
@@ -657,19 +657,19 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    0 # number_records == 27; attrition recording occurs after left_join() with observation_period with "bad" duplicate
+    0 # number_records == 29; attrition recording occurs after left_join() with observation_period with "bad" duplicate
   )
 
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_subjects),
-    0 # number_subjects == 16; c(1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 25, 107, 108)
+    0 # number_subjects == 17; c(1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 25, 107, 108, 109)
   )
 
   # Parent not in pregnancy_cohort ----
   notInPregCohort <- child_cohort %>%
-    dplyr::filter(subject_id %in% c(1, 2, 3, 4, 5, 6, 7, 8, 11, 14))
-  # linked to parents c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15) who aren't in pregnancy_cohort
+    dplyr::filter(subject_id %in% c(1, 2, 3, 4, 5, 6, 7, 8, 11, 14, 107))
+  # linked to parents c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15, 108, 109) who aren't in pregnancy_cohort
 
   expect_equal(
     nrow(notInPregCohort),
@@ -682,7 +682,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    20
+    19
   )
 
   expect_equal(
@@ -706,7 +706,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    1
+    2 # there are two records for subject 108 at this point, both associated with preg 47 and preg 48 because of the join
   )
 
   expect_equal(
@@ -730,13 +730,13 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    1
+    2
   )
 
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_subjects),
-    1
+    1 # we still maintain the subject 109/preg 48 while we've dropped subject 109/preg 47
   )
 
   # Duplicate child, records are exactly identical ----
@@ -830,7 +830,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   # Check of rows in final child_cohort ----
   expect_equal(
     nrow(child_cohort),
-    0
+    1
   )
 
   # Initial qualifying events attrition check ----
@@ -840,19 +840,19 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    0 # number_records == 27; attrition recording occurs after left_join() with observation_period with "bad" duplicate
+    0 # number_records == 29; attrition recording occurs after left_join() with observation_period with "bad" duplicate
   )
 
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_subjects),
-    0 # number_subjects == 16; c(1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 25, 107, 108)
+    0 # number_subjects == 17; c(1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 25, 107, 108, 109)
   )
 
   # Parent not in pregnancy_cohort ----
   notInPregCohort <- child_cohort %>%
-    dplyr::filter(subject_id %in% c(1, 2, 3, 4, 5, 6, 7, 8, 11, 14))
-  # linked to parents c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15) who aren't in pregnancy_cohort
+    dplyr::filter(subject_id %in% c(1, 2, 3, 4, 5, 6, 7, 8, 11, 14, 107))
+  # linked to parents c(1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15, 108, 109) who aren't in pregnancy_cohort
 
 
   expect_equal(
@@ -866,7 +866,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    20
+    19
   )
 
   expect_equal(
@@ -890,7 +890,7 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    1
+    2 # there are two records for subject 108 at this point, both associated with preg 47 and preg 48 because of the join
   )
 
   expect_equal(
@@ -914,13 +914,13 @@ testthat::test_that("Creating child_cohort from fact_relationship (parentCohortT
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_records),
-    1
+    2
   )
 
   expect_equal(
     attrition_subset %>%
       dplyr::pull(excluded_subjects),
-    1
+    1 # we still maintain the subject 109/preg 48 while we've dropped subject 109/preg 47
   )
 
   # Duplicate subject_id for child, collapseDupRecords = FALSE so these records can be duplicated ----
