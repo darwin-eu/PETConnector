@@ -11,8 +11,8 @@ createChildCohort(
   cdm,
   childTable = NULL,
   childSchema = NULL,
-  keepExtensionTable = TRUE,
   childCohortTableName = "child_cohort",
+  childCohortName = "child",
   pregnancyCohortTableName = "pregnancy_cohort",
   collapseDupRecords = TRUE,
   cohortDefinitionID = 102,
@@ -36,15 +36,15 @@ createChildCohort(
   (`character(1)`: `NULL`) Name of the schema where the Child Extension
   Table resides
 
-- keepExtensionTable:
-
-  (`logical(1)`: `TRUE`) Keep the reference to the perinatal extension
-  table? default = TRUE
-
 - childCohortTableName:
 
   (`character(1)`: `"child_cohort"`) Name to assign to to child cohort
   table
+
+- childCohortName:
+
+  (`character(1)`: `"child"`) Name to assign cohort_name in cohort
+  definition set
 
 - pregnancyCohortTableName:
 

@@ -10,8 +10,8 @@ createPregnancyCohort(
   cdm,
   petTable,
   petSchema,
-  keepExtensionTable = TRUE,
   pregnancyCohortTableName = "pregnancy_cohort",
+  pregnancyCohortName = "pregnancy",
   samePregDiffDates = "None",
   cohortDefinitionID = 101,
   minGestationalDuration = 0,
@@ -42,15 +42,15 @@ createPregnancyCohort(
   (`character(1)`) Name of the schema where the Pregnancy Extension
   Table resides
 
-- keepExtensionTable:
-
-  (`logical(1)`: `TRUE`) Keep the reference to the pregnancy extension
-  table? default = TRUE
-
 - pregnancyCohortTableName:
 
   (`character(1)`: `"pregnancy_cohort"`) Name to assign to to pregnancy
   cohort table
+
+- pregnancyCohortName:
+
+  (`character(1)`: `"pregnancy"`) Name to assign cohort_name in cohort
+  definition set
 
 - samePregDiffDates:
 
